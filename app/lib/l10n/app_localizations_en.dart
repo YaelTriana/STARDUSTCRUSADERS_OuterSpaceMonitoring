@@ -342,4 +342,182 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get helpTipBody =>
       'Measure at the same time of day and without exercise in the previous 30 min, to compare against your baseline.';
+
+  @override
+  String get trendViewChart => 'Chart';
+
+  @override
+  String get trendViewTable => 'Table';
+
+  @override
+  String get trendRange7 => '7 days';
+
+  @override
+  String get trendRange14 => '14 days';
+
+  @override
+  String trendToday(String value, String unit) {
+    return '$value $unit today';
+  }
+
+  @override
+  String get trendAvg7 => '7-day average';
+
+  @override
+  String get trendOutDays => 'Days out of range';
+
+  @override
+  String trendOutDaysValue(int out, int total) {
+    return '$out of $total';
+  }
+
+  @override
+  String get trendStreakAbove => 'Streak above baseline';
+
+  @override
+  String trendStreakValue(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get trendNoAlertTitle => 'No alerts';
+
+  @override
+  String get trendNoAlertBody => 'Your recent readings are within your range.';
+
+  @override
+  String trendAlertTitle(String status) {
+    return '$status: sustained trend';
+  }
+
+  @override
+  String trendAlertBody(int days) {
+    return 'You have been above your pre-flight range for $days days in a row. This is not an emergency, but your flight surgeon should take a look.';
+  }
+
+  @override
+  String get trendNoData => 'There is no sample data for this metric yet.';
+
+  @override
+  String get trendMeasure => 'Measure';
+
+  @override
+  String get trendPlanTitle => 'SUGGESTED PLAN';
+
+  @override
+  String get trendPlanBody =>
+      '1. Measure twice a day (morning and night) for 3 days.\n2. Log salt intake, sleep and stress for the day.\n3. Share the summary at your private medical conference.';
+
+  @override
+  String get trendAddSummary => 'Add to medical summary';
+
+  @override
+  String get trendAddedSummary => 'Added to the medical summary.';
+
+  @override
+  String trendSummaryEntry(String metric, int days, String value, String unit) {
+    return '$metric: $days days above baseline (today $value $unit)';
+  }
+
+  @override
+  String get trendHoldCmo => 'Press and hold to notify the CMO';
+
+  @override
+  String get trendCmoQueued => 'CMO notification on its way. You can undo it.';
+
+  @override
+  String get trendCmoUndo => 'Undo';
+
+  @override
+  String get trendCmoSent => 'Notification sent to the crew\'s CMO.';
+
+  @override
+  String get trendCmoCancelled => 'Notification cancelled.';
+
+  @override
+  String get trendExport => 'Export summary';
+
+  @override
+  String get trendExported => 'Summary copied to the clipboard';
+
+  @override
+  String get trendSummaryBoxTitle => 'MEDICAL CONFERENCE SUMMARY';
+
+  @override
+  String trendPointDetail(int day, String value, String unit) {
+    return 'Day $day · $value $unit';
+  }
+
+  @override
+  String get trendInRange => 'Within your range';
+
+  @override
+  String get trendOutOfRange => 'Out of your range';
+
+  @override
+  String get trendPrev => 'Previous point';
+
+  @override
+  String get trendNext => 'Next point';
+
+  @override
+  String trendChartSemantics(
+    String label,
+    int n,
+    String first,
+    String last,
+    String low,
+    String high,
+  ) {
+    return '$label over the last $n days: from $first to $last; pre-flight range $low to $high';
+  }
+
+  @override
+  String get trendTableDay => 'Day';
+
+  @override
+  String get trendTableValue => 'Value';
+
+  @override
+  String get trendTableState => 'Status';
+
+  @override
+  String get exportHeader => 'MEDICAL CONFERENCE SUMMARY · TIRELUS';
+
+  @override
+  String exportDay(int day) {
+    return 'Mission day $day';
+  }
+
+  @override
+  String get exportSampleNote =>
+      'Sample data. Thresholds are design assumptions; TIRELUS does not diagnose.';
+
+  @override
+  String exportMetricLine(
+    String metric,
+    String value,
+    String unit,
+    String low,
+    String high,
+    String avg,
+  ) {
+    return '$metric: today $value $unit; pre-flight range $low–$high; 7-day average $avg';
+  }
+
+  @override
+  String exportDaysLine(int out, int total, int streak) {
+    return '$out of $total days out of range; $streak days in a row above baseline.';
+  }
+
+  @override
+  String get exportItemsHeader => 'Items to discuss:';
+
+  @override
+  String get exportNoItems => 'No pending items.';
+
+  @override
+  String trendExportedFile(String filename) {
+    return 'Summary copied to the clipboard ($filename). Only for you, the CMO and the flight surgeon.';
+  }
 }

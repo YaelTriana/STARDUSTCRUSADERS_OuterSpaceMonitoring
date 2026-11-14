@@ -133,7 +133,7 @@ class _ShellState extends State<Shell> {
   Widget _screen() => switch (_index) {
         0 => DashboardScreen(onGoTo: (i) => setState(() => _index = i)),
         1 => const MeasurementScreen(),
-        2 => const TrendScreen(),
+        2 => TrendScreen(onGoTo: (i) => setState(() => _index = i)),
         3 => const AutonomousScreen(),
         4 => const BaseScreen(),
         5 => const VisorScreen(),

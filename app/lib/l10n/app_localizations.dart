@@ -685,6 +685,296 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Mide a la misma hora y sin haber hecho ejercicio en los 30 min previos, para comparar contra tu base.'**
   String get helpTipBody;
+
+  /// No description provided for @trendViewChart.
+  ///
+  /// In es, this message translates to:
+  /// **'Gráfica'**
+  String get trendViewChart;
+
+  /// No description provided for @trendViewTable.
+  ///
+  /// In es, this message translates to:
+  /// **'Tabla'**
+  String get trendViewTable;
+
+  /// No description provided for @trendRange7.
+  ///
+  /// In es, this message translates to:
+  /// **'7 días'**
+  String get trendRange7;
+
+  /// No description provided for @trendRange14.
+  ///
+  /// In es, this message translates to:
+  /// **'14 días'**
+  String get trendRange14;
+
+  /// No description provided for @trendToday.
+  ///
+  /// In es, this message translates to:
+  /// **'{value} {unit} hoy'**
+  String trendToday(String value, String unit);
+
+  /// No description provided for @trendAvg7.
+  ///
+  /// In es, this message translates to:
+  /// **'Promedio 7 días'**
+  String get trendAvg7;
+
+  /// No description provided for @trendOutDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Días fuera de rango'**
+  String get trendOutDays;
+
+  /// No description provided for @trendOutDaysValue.
+  ///
+  /// In es, this message translates to:
+  /// **'{out} de {total}'**
+  String trendOutDaysValue(int out, int total);
+
+  /// No description provided for @trendStreakAbove.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha sobre tu base'**
+  String get trendStreakAbove;
+
+  /// No description provided for @trendStreakValue.
+  ///
+  /// In es, this message translates to:
+  /// **'{days} días'**
+  String trendStreakValue(int days);
+
+  /// No description provided for @trendNoAlertTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin alertas'**
+  String get trendNoAlertTitle;
+
+  /// No description provided for @trendNoAlertBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus lecturas recientes están dentro de tu rango.'**
+  String get trendNoAlertBody;
+
+  /// No description provided for @trendAlertTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{status}: tendencia sostenida'**
+  String trendAlertTitle(String status);
+
+  /// No description provided for @trendAlertBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Llevas {days} días seguidos sobre tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.'**
+  String trendAlertBody(int days);
+
+  /// No description provided for @trendNoData.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay datos de ejemplo para esta métrica.'**
+  String get trendNoData;
+
+  /// No description provided for @trendMeasure.
+  ///
+  /// In es, this message translates to:
+  /// **'Medir'**
+  String get trendMeasure;
+
+  /// No description provided for @trendPlanTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAN SUGERIDO'**
+  String get trendPlanTitle;
+
+  /// No description provided for @trendPlanBody.
+  ///
+  /// In es, this message translates to:
+  /// **'1. Mide dos veces al día (mañana y noche) durante 3 días.\n2. Registra sal en la dieta, sueño y estrés del día.\n3. Comparte el resumen en tu conferencia médica privada.'**
+  String get trendPlanBody;
+
+  /// No description provided for @trendAddSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar al resumen médico'**
+  String get trendAddSummary;
+
+  /// No description provided for @trendAddedSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregado al resumen médico.'**
+  String get trendAddedSummary;
+
+  /// No description provided for @trendSummaryEntry.
+  ///
+  /// In es, this message translates to:
+  /// **'{metric}: {days} días sobre la base (hoy {value} {unit})'**
+  String trendSummaryEntry(String metric, int days, String value, String unit);
+
+  /// No description provided for @trendHoldCmo.
+  ///
+  /// In es, this message translates to:
+  /// **'Mantén presionado para avisar al CMO'**
+  String get trendHoldCmo;
+
+  /// No description provided for @trendCmoQueued.
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso al CMO en camino. Puedes deshacerlo.'**
+  String get trendCmoQueued;
+
+  /// No description provided for @trendCmoUndo.
+  ///
+  /// In es, this message translates to:
+  /// **'Deshacer'**
+  String get trendCmoUndo;
+
+  /// No description provided for @trendCmoSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso enviado al CMO de la tripulación.'**
+  String get trendCmoSent;
+
+  /// No description provided for @trendCmoCancelled.
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso cancelado.'**
+  String get trendCmoCancelled;
+
+  /// No description provided for @trendExport.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar resumen'**
+  String get trendExport;
+
+  /// No description provided for @trendExported.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen copiado al portapapeles'**
+  String get trendExported;
+
+  /// No description provided for @trendSummaryBoxTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'RESUMEN PARA LA CONFERENCIA MÉDICA'**
+  String get trendSummaryBoxTitle;
+
+  /// No description provided for @trendPointDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'Día {day} · {value} {unit}'**
+  String trendPointDetail(int day, String value, String unit);
+
+  /// No description provided for @trendInRange.
+  ///
+  /// In es, this message translates to:
+  /// **'Dentro de tu rango'**
+  String get trendInRange;
+
+  /// No description provided for @trendOutOfRange.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuera de tu rango'**
+  String get trendOutOfRange;
+
+  /// No description provided for @trendPrev.
+  ///
+  /// In es, this message translates to:
+  /// **'Punto anterior'**
+  String get trendPrev;
+
+  /// No description provided for @trendNext.
+  ///
+  /// In es, this message translates to:
+  /// **'Punto siguiente'**
+  String get trendNext;
+
+  /// No description provided for @trendChartSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{label} de los últimos {n} días: de {first} a {last}; rango prevuelo {low} a {high}'**
+  String trendChartSemantics(
+    String label,
+    int n,
+    String first,
+    String last,
+    String low,
+    String high,
+  );
+
+  /// No description provided for @trendTableDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día'**
+  String get trendTableDay;
+
+  /// No description provided for @trendTableValue.
+  ///
+  /// In es, this message translates to:
+  /// **'Valor'**
+  String get trendTableValue;
+
+  /// No description provided for @trendTableState.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado'**
+  String get trendTableState;
+
+  /// No description provided for @exportHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'RESUMEN PARA LA CONFERENCIA MÉDICA · TIRELUS'**
+  String get exportHeader;
+
+  /// No description provided for @exportDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día de misión {day}'**
+  String exportDay(int day);
+
+  /// No description provided for @exportSampleNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos de ejemplo. Los umbrales son supuestos de diseño; TIRELUS no diagnostica.'**
+  String get exportSampleNote;
+
+  /// No description provided for @exportMetricLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{metric}: hoy {value} {unit}; rango prevuelo {low}–{high}; promedio 7 días {avg}'**
+  String exportMetricLine(
+    String metric,
+    String value,
+    String unit,
+    String low,
+    String high,
+    String avg,
+  );
+
+  /// No description provided for @exportDaysLine.
+  ///
+  /// In es, this message translates to:
+  /// **'{out} de {total} días fuera de rango; {streak} días seguidos sobre la base.'**
+  String exportDaysLine(int out, int total, int streak);
+
+  /// No description provided for @exportItemsHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'Registros para comentar:'**
+  String get exportItemsHeader;
+
+  /// No description provided for @exportNoItems.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin registros pendientes.'**
+  String get exportNoItems;
+
+  /// No description provided for @trendExportedFile.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen copiado al portapapeles ({filename}). Solo para ti, el CMO y el flight surgeon.'**
+  String trendExportedFile(String filename);
 }
 
 class _AppLocalizationsDelegate
