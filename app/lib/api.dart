@@ -82,6 +82,9 @@ class TirelusApi {
   Future<VStatus> evaluate(String metric, double value) async =>
       statusFromApi((await _post('/evaluate/$metric', {'value': value}))['status'] as String?);
 
+  /// Respuesta completa de /evaluate: `status`, `delta_from_high` y `base` ({low, high} o null).
+  Future<Map<String, dynamic>> evaluateRaw(String metric, double value) => _post('/evaluate/$metric', {'value': value});
+
   // Atajos que ya usan las pantallas actuales.
   Future<Trend> systolicTrend() => trend('systolic');
 

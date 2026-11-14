@@ -1,11 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../core/touch.dart';
 import '../data/models.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/numeric_keypad.dart';
 
-/// Medición guiada de presión arterial. La evaluación la hace Python.
+/// Medición guiada de presión arterial en 4 pasos. La evaluación la hace Python.
+///
+/// Los rangos de "plausible" son supuestos de diseño para detectar errores de captura,
+/// no umbrales clínicos.
 class MeasurementScreen extends StatefulWidget {
   const MeasurementScreen({super.key});
 
@@ -13,16 +22,33 @@ class MeasurementScreen extends StatefulWidget {
   State<MeasurementScreen> createState() => _MeasurementScreenState();
 }
 
+enum _Field { sys, dia, hr }
+
 class _MeasurementScreenState extends State<MeasurementScreen> {
-  final _sys = TextEditingController(text: '132');
-  final _dia = TextEditingController(text: '84');
-  final _hr = TextEditingController(text: '64');
+  static const _steps = 4;
+  static const _repeatDelay = Duration(minutes: 5);
+
+  // Rangos plausibles por campo (mín, máx).
+  static const _plausible = {
+    _Field.sys: (70, 250),
+    _Field.dia: (40, 150),
+    _Field.hr: (30, 220),
+  };
+
+  int _step = 0;
+  _Field _active = _Field.sys;
+  // Valores de ejemplo para la demo (datos sintéticos).
+  final Map<_Field, String> _values = {_Field.sys: '132', _Field.dia: '84', _Field.hr: '64'};
+  String _source = 'manual';
+
   VStatus? _status;
   bool _busy = false;
+  int _evalSeq = 0;
+  double _baseLow = 110; // respaldo mientras Python no responde con la base
+  double _baseHigh = 126;
 
-  // Rango prevuelo (en producción viene del perfil del tripulante).
-  static const _baseLow = 110.0;
-  static const _baseHigh = 126.0;
+  Timer? _timer;
+  int _remaining = 0;
 
   @override
   void initState() {
@@ -32,13 +58,34 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
 
   @override
   void dispose() {
-    _sys.dispose();
-    _dia.dispose();
-    _hr.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
-  double? get _sysValue => double.tryParse(_sys.text);
+  double? get _sysValue => double.tryParse(_values[_Field.sys]!);
+
+  // ---- captura ----
+  void _press(String d) {
+    final cur = _values[_active]!;
+    if (cur.length >= 3) return;
+    setState(() => _values[_active] = cur == '0' ? d : cur + d);
+    if (_active == _Field.sys) _evaluate();
+  }
+
+  void _backspace() {
+    final cur = _values[_active]!;
+    if (cur.isEmpty) return;
+    setState(() => _values[_active] = cur.substring(0, cur.length - 1));
+    if (_active == _Field.sys) _evaluate();
+  }
+
+  void _nextField() => setState(() {
+        _active = switch (_active) {
+          _Field.sys => _Field.dia,
+          _Field.dia => _Field.hr,
+          _Field.hr => _Field.sys,
+        };
+      });
 
   Future<void> _evaluate() async {
     final v = _sysValue;
@@ -46,159 +93,345 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
       setState(() => _status = VStatus.sinDato);
       return;
     }
+    final seq = ++_evalSeq;
     setState(() => _busy = true);
     try {
-      final s = await AppScope.of(context).api.evaluateSystolic(v);
-      if (mounted) setState(() => _status = s);
+      final r = await AppScope.of(context).api.evaluateRaw('systolic', v);
+      if (!mounted || seq != _evalSeq) return;
+      setState(() {
+        _status = statusFromApi(r['status'] as String?);
+        final b = r['base'];
+        if (b is Map) {
+          _baseLow = (b['low'] as num).toDouble();
+          _baseHigh = (b['high'] as num).toDouble();
+        }
+      });
+    } catch (_) {
+      if (mounted && seq == _evalSeq) setState(() => _status = VStatus.sinDato);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && seq == _evalSeq) setState(() => _busy = false);
     }
   }
 
+  // ---- navegación entre pasos ----
+  void _back() {
+    if (_step > 0) setState(() => _step--);
+  }
+
+  Future<void> _next() async {
+    final l = AppLocalizations.of(context);
+    if (_step < 2) {
+      setState(() => _step++);
+      return;
+    }
+    // Paso 3 → resultado: validar antes de avanzar.
+    final sys = int.tryParse(_values[_Field.sys]!);
+    final dia = int.tryParse(_values[_Field.dia]!);
+    final messenger = ScaffoldMessenger.of(context);
+    if (sys == null || dia == null) {
+      messenger.showSnackBar(SnackBar(content: Text(l.measFillRequired)));
+      return;
+    }
+    if (sys <= dia) {
+      messenger.showSnackBar(SnackBar(content: Text(l.measSysLtDia)));
+      return;
+    }
+    for (final f in _Field.values) {
+      final v = int.tryParse(_values[f]!);
+      if (v == null) continue;
+      final (lo, hi) = _plausible[f]!;
+      if (v < lo || v > hi) {
+        final ok = await _confirmImplausible(v);
+        if (ok != true) {
+          setState(() => _active = f);
+          return;
+        }
+      }
+    }
+    await _evaluate();
+    if (mounted) setState(() => _step = 3);
+  }
+
+  Future<bool?> _confirmImplausible(int value) {
+    final l = AppLocalizations.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VColors.surface,
+        title: Text(l.measConfirmTitle('$value')),
+        content: Text(l.measConfirmBody, style: const TextStyle(fontSize: VType.body, height: 1.5)),
+        actionsOverflowButtonSpacing: Touch.gap,
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(minimumSize: Touch.minSize),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.measConfirmFix),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.measConfirmKeep)),
+        ],
+      ),
+    );
+  }
+
+  // ---- repetir en 5 min ----
+  void _startRepeat() {
+    _timer?.cancel();
+    setState(() => _remaining = _repeatDelay.inSeconds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
+      if (_remaining <= 1) {
+        t.cancel();
+        setState(() => _remaining = 0);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).repeatDue)));
+      } else {
+        setState(() => _remaining--);
+      }
+    });
+  }
+
+  void _cancelRepeat() {
+    _timer?.cancel();
+    setState(() => _remaining = 0);
+  }
+
+  String _mmss(int s) => '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
+  // ---- guardar ----
   Future<void> _save() async {
     final state = AppScope.of(context);
+    final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     if (_status != null && _status != VStatus.nominal) {
-      await state.addToSummary('PA ${_sys.text}/${_dia.text} mmHg · ${_status!.label.toLowerCase()} frente a tu base');
+      await state.addToSummary(l.summaryEntry(
+        _values[_Field.sys]!,
+        _values[_Field.dia]!,
+        l.status(_status!).toLowerCase(),
+      ));
     }
     messenger.showSnackBar(SnackBar(
-      content: Text(_status == VStatus.nominal
-          ? 'Medición guardada. Dentro de tu rango.'
-          : 'Medición guardada y agregada al resumen de tu conferencia médica.'),
+      content: Text(_status == VStatus.nominal ? l.savedOk : l.savedSummary),
     ));
   }
 
+  // ---- UI ----
+  String _stepTitle(AppLocalizations l, int i) =>
+      [l.measStep1Title, l.measStep2Title, l.measStep3Title, l.measStep4Title][i];
+  String _stepDetail(AppLocalizations l, int i) =>
+      [l.measStep1Detail, l.measStep2Detail, l.measStep3Detail, l.measStep4Detail][i];
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
-    final steps = Column(children: const [
-      _Step(title: 'Prepárate', detail: '5 min en reposo, anclado con los pies en la barra', done: true),
-      _Step(title: 'Coloca el brazalete', detail: 'Brazo izquierdo, 2 cm sobre el codo', done: true),
-      _Step(title: 'Mide y registra', detail: 'Lee el monitor o la prenda Bio-Monitor', current: true),
-      _Step(title: 'Cómo te sientes', detail: 'Síntomas y ánimo (opcional)'),
+
+    final header = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(l.measStepCounter(_step + 1, _steps, _stepTitle(l, _step)), style: overline()),
+      const SizedBox(height: VSpace.sm),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: LinearProgressIndicator(
+          value: (_step + 1) / _steps,
+          minHeight: 6,
+          backgroundColor: VColors.border,
+          color: VColors.signal,
+        ),
+      ),
     ]);
 
-    final form = SectionCard(
+    final body = switch (_step) {
+      0 => _InfoStep(icon: Icons.self_improvement, title: _stepTitle(l, 0), detail: _stepDetail(l, 0)),
+      1 => _InfoStep(icon: Icons.monitor_heart_outlined, title: _stepTitle(l, 1), detail: _stepDetail(l, 1)),
+      2 => _entry(l, t),
+      _ => _result(l, t),
+    };
+
+    final nav = Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, children: [
+      if (_step > 0) OutlinedButton(onPressed: _back, child: Text(l.measBack)),
+      if (_step < 3) FilledButton(onPressed: _next, child: Text(_step == 2 ? l.measSeeResult : l.measNext)),
+    ]);
+
+    final main = SectionCard(
       padding: const EdgeInsets.all(28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          Text('Registra tu lectura', style: t.headlineMedium),
-          if (_status != null) StatusChip(_status!),
-          if (_busy) const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-        ]),
-        const SizedBox(height: 22),
-        Wrap(spacing: 16, runSpacing: 16, children: [
-          _NumField(label: 'Sistólica (mmHg)', controller: _sys, onChanged: (_) => _evaluate()),
-          _NumField(label: 'Diastólica (mmHg)', controller: _dia),
-          _NumField(label: 'Frecuencia cardiaca (lpm)', controller: _hr),
-        ]),
-        const SizedBox(height: 22),
-        _RangeBar(value: _sysValue, low: _baseLow, high: _baseHigh, status: _status ?? VStatus.sinDato),
-        const SizedBox(height: 24),
-        Wrap(spacing: 12, runSpacing: 12, children: [
-          FilledButton(onPressed: _save, child: const Text('Guardar medición')),
-          OutlinedButton(
-            onPressed: () => ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text('Te recordaremos repetir la medición en 5 min.'))),
-            child: const Text('Repetir en 5 min'),
-          ),
-        ]),
+        header,
+        const SizedBox(height: VSpace.xl),
+        body,
+        const SizedBox(height: VSpace.xl),
+        nav,
       ]),
     );
 
-    const aside = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _InfoCard(
-          title: 'QUÉ ESTÁS MIDIENDO',
-          body: 'La fuerza con la que la sangre empuja las arterias: el número alto al latir el corazón, '
-              'el bajo entre latidos.'),
-      SizedBox(height: 16),
-      _InfoCard(
-          title: 'POR QUÉ IMPORTA AQUÍ',
-          body: 'Sin gravedad, los líquidos suben hacia el pecho y la cabeza. El sistema cardiovascular se '
-              'adapta y eso puede cambiar tus lecturas.'),
-      SizedBox(height: 16),
-      _InfoCard(
-          title: 'CONSEJO',
-          body: 'Mide a la misma hora y sin haber hecho ejercicio en los 30 min previos, para comparar '
-              'contra tu base.'),
+    final aside = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _HelpTile(title: l.helpWhatTitle, body: l.helpWhatBody),
+      const SizedBox(height: Touch.gap),
+      _HelpTile(title: l.helpWhyTitle, body: l.helpWhyBody),
+      const SizedBox(height: Touch.gap),
+      _HelpTile(title: l.helpTipTitle, body: l.helpTipBody),
     ]);
 
     return LayoutBuilder(builder: (context, c) {
-      final wide = c.maxWidth >= 1100;
+      final wide = c.maxWidth >= 1000;
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
+        padding: EdgeInsets.all(c.maxWidth < 600 ? VSpace.lg : 28),
         child: wide
             ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                SizedBox(width: 280, child: steps),
+                Expanded(child: main),
                 const SizedBox(width: 24),
-                Expanded(child: form),
-                const SizedBox(width: 24),
-                const SizedBox(width: 320, child: aside),
+                SizedBox(width: 320, child: aside),
               ])
-            : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                steps,
-                const SizedBox(height: 20),
-                form,
-                const SizedBox(height: 20),
-                aside,
-              ]),
+            : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [main, const SizedBox(height: 20), aside]),
       );
     });
   }
+
+  Widget _entry(AppLocalizations l, TextTheme t) {
+    String name(_Field f) => switch (f) { _Field.sys => l.measSys, _Field.dia => l.measDia, _Field.hr => l.measHr };
+    String unit(_Field f) => f == _Field.hr ? 'lpm' : 'mmHg';
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Text(l.measTitle, style: t.headlineMedium),
+        if (_status != null) StatusChip(_status!),
+        if (_busy) const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+      ]),
+      const SizedBox(height: VSpace.lg),
+      Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, children: [
+        for (final f in _Field.values)
+          _FieldTile(
+            label: name(f),
+            unit: unit(f),
+            value: _values[f]!,
+            selected: f == _active,
+            onTap: () => setState(() => _active = f),
+          ),
+      ]),
+      const SizedBox(height: VSpace.lg),
+      Text(l.measSource, style: overline(color: VColors.muted)),
+      const SizedBox(height: VSpace.sm),
+      Wrap(spacing: Touch.gap, runSpacing: Touch.gap, children: [
+        for (final (id, label) in [
+          ('manual', l.measSourceManual),
+          ('wearable', l.measSourceWearable),
+          ('ultrasound', l.measSourceUltrasound),
+        ])
+          ChoiceChip(
+            label: Text(label, style: const TextStyle(fontSize: VType.body)),
+            selected: _source == id,
+            onSelected: (_) => setState(() => _source = id),
+          ),
+      ]),
+      const SizedBox(height: VSpace.lg),
+      _RangeMeter(value: _sysValue, low: _baseLow, high: _baseHigh, status: _status ?? VStatus.sinDato),
+      const SizedBox(height: VSpace.lg),
+      Center(
+        child: NumericKeypad(
+          onDigit: _press,
+          onBackspace: _backspace,
+          onNextField: _nextField,
+          backspaceLabel: l.keypadBackspace,
+          nextFieldLabel: l.keypadNextField,
+        ),
+      ),
+    ]);
+  }
+
+  Widget _result(AppLocalizations l, TextTheme t) {
+    final status = _status ?? VStatus.sinDato;
+    final advice = switch (status) {
+      VStatus.nominal => l.resultNominal,
+      VStatus.atencion => l.resultAtencion,
+      VStatus.critico => l.resultCritico,
+      VStatus.sinDato => l.resultNoData,
+    };
+    final counting = _remaining > 0;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Text('${_values[_Field.sys]}/${_values[_Field.dia]}', style: mono(size: 40)),
+        Text('mmHg', style: mono(size: 16, color: VColors.muted)),
+        StatusChip(status),
+      ]),
+      const SizedBox(height: VSpace.lg),
+      _RangeMeter(value: _sysValue, low: _baseLow, high: _baseHigh, status: status),
+      const SizedBox(height: VSpace.xl),
+      Text(l.panelActionTitle, style: overline()),
+      const SizedBox(height: VSpace.sm),
+      Text(advice, style: const TextStyle(fontSize: VType.bodyLarge, height: 1.5)),
+      const SizedBox(height: VSpace.xl),
+      Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, children: [
+        FilledButton(onPressed: _save, child: Text(l.measSave)),
+        OutlinedButton(
+          onPressed: counting ? _cancelRepeat : _startRepeat,
+          child: Text(counting ? '${l.repeatCountdown(_mmss(_remaining))} · ${l.repeatCancel}' : l.repeatIn5),
+        ),
+      ]),
+    ]);
+  }
 }
 
-class _Step extends StatelessWidget {
-  const _Step({required this.title, required this.detail, this.done = false, this.current = false});
+class _InfoStep extends StatelessWidget {
+  const _InfoStep({required this.icon, required this.title, required this.detail});
+  final IconData icon;
   final String title;
   final String detail;
-  final bool done;
-  final bool current;
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: current ? VColors.surface2 : (done ? VColors.surface : Colors.transparent),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: current ? VColors.signal : VColors.border, width: current ? 2 : 1),
-        ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(done ? Icons.check_circle : (current ? Icons.radio_button_checked : Icons.radio_button_unchecked),
-              color: done ? VColors.nominal : (current ? VColors.signal : VColors.borderStrong)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: done || current ? VColors.text : VColors.muted)),
-              const SizedBox(height: 2),
-              Text(detail, style: const TextStyle(fontSize: 13, color: VColors.muted)),
-            ]),
-          ),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: VSpace.xl),
+        child: Column(children: [
+          Icon(icon, size: 72, color: VColors.signalSoft),
+          const SizedBox(height: VSpace.lg),
+          Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+          const SizedBox(height: VSpace.sm),
+          Text(detail, style: const TextStyle(fontSize: VType.bodyLarge, color: VColors.muted), textAlign: TextAlign.center),
         ]),
       );
 }
 
-class _NumField extends StatelessWidget {
-  const _NumField({required this.label, required this.controller, this.onChanged});
+/// Campo numérico que se elige tocando (no abre el teclado del sistema).
+class _FieldTile extends StatelessWidget {
+  const _FieldTile({required this.label, required this.unit, required this.value, required this.selected, required this.onTap});
   final String label;
-  final TextEditingController controller;
-  final ValueChanged<String>? onChanged;
+  final String unit;
+  final String value;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 200,
-        child: TextField(
-          controller: controller,
-          onChanged: onChanged,
-          keyboardType: TextInputType.number,
-          style: mono(size: 30),
-          decoration: InputDecoration(labelText: label),
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        selected: selected,
+        label: '$label, ${value.isEmpty ? '—' : value} $unit',
+        excludeSemantics: true,
+        child: Material(
+          color: selected ? VColors.surface : VColors.surface2,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: Container(
+              width: 190,
+              constraints: const BoxConstraints(minHeight: Touch.primary + 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: selected ? VColors.signal : VColors.borderStrong, width: selected ? 2 : 1),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
+                const SizedBox(height: 2),
+                Text.rich(TextSpan(children: [
+                  TextSpan(text: value.isEmpty ? '—' : value, style: mono(size: 30)),
+                  TextSpan(text: ' $unit', style: mono(size: 13, color: VColors.muted)),
+                ])),
+              ]),
+            ),
+          ),
         ),
       );
 }
 
-class _RangeBar extends StatelessWidget {
-  const _RangeBar({required this.value, required this.low, required this.high, required this.status});
+/// Medidor contra la línea base personal: banda del rango + marcador con forma (▼).
+class _RangeMeter extends StatelessWidget {
+  const _RangeMeter({required this.value, required this.low, required this.high, required this.status});
   final double? value;
   final double low;
   final double high;
@@ -209,44 +442,53 @@ class _RangeBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     double frac(double v) => ((v - _min) / (_max - _min)).clamp(0.0, 1.0);
     final delta = value == null ? null : value! - high;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       decoration: BoxDecoration(color: VColors.surface2, borderRadius: BorderRadius.circular(12)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          const Expanded(child: Text('Sistólica frente a tu rango personal', style: TextStyle(fontSize: 14))),
+        Wrap(alignment: WrapAlignment.spaceBetween, spacing: 12, runSpacing: 4, children: [
+          Text(l.rangeTitle, style: const TextStyle(fontSize: VType.body)),
           if (delta != null)
-            Text(delta > 0 ? '+${delta.toStringAsFixed(0)} sobre tu base' : 'dentro de tu base',
+            Text(delta > 0 ? l.rangeOver(delta.toStringAsFixed(0)) : l.rangeInside,
                 style: mono(size: 14, color: statusColor(status))),
         ]),
-        const SizedBox(height: 14),
+        const SizedBox(height: VSpace.md),
         LayoutBuilder(builder: (context, c) {
           final w = c.maxWidth;
           return SizedBox(
-            height: 26,
+            height: 44,
             child: Stack(clipBehavior: Clip.none, children: [
-              Positioned(top: 6, left: 0, right: 0, child: Container(height: 14, decoration: BoxDecoration(color: VColors.border, borderRadius: BorderRadius.circular(7)))),
               Positioned(
-                top: 6,
+                top: 24,
+                left: 0,
+                right: 0,
+                child: Container(height: 14, decoration: BoxDecoration(color: VColors.border, borderRadius: BorderRadius.circular(7))),
+              ),
+              Positioned(
+                top: 24,
                 left: w * frac(low),
                 width: w * (frac(high) - frac(low)),
                 child: Container(height: 14, decoration: BoxDecoration(color: const Color(0xFF2B6B4F), borderRadius: BorderRadius.circular(7))),
               ),
               if (value != null)
                 Positioned(
-                  left: (w * frac(value!) - 2).clamp(0.0, w - 4),
+                  left: (w * frac(value!) - 12).clamp(-4.0, w - 20),
                   top: 0,
-                  child: Container(width: 4, height: 26, decoration: BoxDecoration(color: statusColor(status), borderRadius: BorderRadius.circular(2))),
+                  child: Icon(Icons.arrow_drop_down, size: 24, color: statusColor(status)),
                 ),
             ]),
           );
         }),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text(_min.toStringAsFixed(0), style: mono(size: 12, color: VColors.muted)),
-          Text('Tu rango prevuelo ${low.toStringAsFixed(0)}–${high.toStringAsFixed(0)}', style: mono(size: 12, color: VColors.muted)),
+          Flexible(
+            child: Text(l.rangeBase(low.toStringAsFixed(0), high.toStringAsFixed(0)),
+                textAlign: TextAlign.center, style: mono(size: 12, color: VColors.muted)),
+          ),
           Text(_max.toStringAsFixed(0), style: mono(size: 12, color: VColors.muted)),
         ]),
       ]),
@@ -254,17 +496,29 @@ class _RangeBar extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.body});
+/// Ayuda desplegable para no saturar la pantalla.
+class _HelpTile extends StatelessWidget {
+  const _HelpTile({required this.title, required this.body});
   final String title;
   final String body;
 
   @override
-  Widget build(BuildContext context) => SectionCard(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: overline()),
-          const SizedBox(height: 10),
-          Text(body, style: const TextStyle(fontSize: 15, height: 1.55)),
-        ]),
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: VColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: VColors.border),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            minTileHeight: Touch.primary,
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20),
+            childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+            title: Text(title, style: overline()),
+            children: [Text(body, style: const TextStyle(fontSize: VType.body, height: 1.55))],
+          ),
+        ),
       );
 }

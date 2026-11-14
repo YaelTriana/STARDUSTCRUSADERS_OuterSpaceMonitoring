@@ -10,10 +10,25 @@
   "navHandheld": "De mano",
   "navMore": "Más",
   "missionDayLabel": "DÍA DE MISIÓN {day} · {env}",
-  "@missionDayLabel": { "placeholders": { "day": { "type": "String" }, "env": { "type": "String" } } },
+  "@missionDayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "env": {
+        "type": "String"
+      }
+    }
+  },
   "linkRealtime": "Enlace: tiempo real",
   "linkAutonomous": "Modo autónomo · {delay}",
-  "@linkAutonomous": { "placeholders": { "delay": { "type": "String" } } },
+  "@linkAutonomous": {
+    "placeholders": {
+      "delay": {
+        "type": "String"
+      }
+    }
+  },
   "sampleData": "Datos de ejemplo",
   "bootStarting": "Iniciando el motor en Python…",
   "bootError": "No se pudo iniciar el motor en Python.",
@@ -23,7 +38,13 @@
   "statusCritical": "Crítico",
   "statusNoData": "Sin dato",
   "statusSemantics": "Estado: {status}",
-  "@statusSemantics": { "placeholders": { "status": { "type": "String" } } },
+  "@statusSemantics": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "envIss": "ISS",
   "envMoon": "Luna",
   "envMars": "Marte",
@@ -31,5 +52,162 @@
   "delayMoon": "4–12 s",
   "delayMars": "hasta 20 min",
   "envSelectorLabel": "Entorno de misión",
-  "languageSwitchTooltip": "Cambiar idioma a inglés"
+  "languageSwitchTooltip": "Cambiar idioma a inglés",
+  "panelBodyTitle": "ESTADO POR SISTEMA · TOCA UNA ZONA",
+  "panelWhyTitle": "POR QUÉ CAMBIA EN EL ESPACIO",
+  "panelActionTitle": "QUÉ HACER AHORA",
+  "summaryAttention": "{count, plural, =1{1 sistema requiere atención} other{{count} sistemas requieren atención}}",
+  "@summaryAttention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryAllClear": "Todos tus sistemas están en rango",
+  "sourceChip": "Fuente: NASA HRP",
+  "sourceNoteTitle": "Sobre esta información",
+  "sourceNoteBody": "Las explicaciones se basan en publicaciones del Human Research Program (HRP) de NASA. Los umbrales de alerta de esta app son supuestos de diseño, no valores oficiales de vuelo. TIRELUS no diagnostica: te ayuda a decidir a quién avisar.",
+  "close": "Cerrar",
+  "noDataMeasure": "Sin dato · medir",
+  "errorEngine": "No se pudo leer el servidor Python local.",
+  "loading": "Cargando…",
+  "taskPending": "PENDIENTE · {time}",
+  "@taskPending": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "taskToday": "HOY · {time}",
+  "@taskToday": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "exerciseLabel": "EJERCICIO",
+  "exerciseProgress": "{hours} h {minutes} min de ~2 h",
+  "@exerciseProgress": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "streakLabel": "RACHA DE REGISTRO",
+  "streakDays": "días",
+  "streakBadge": "Insignia «Constancia orbital»",
+  "measTitle": "Registra tu lectura",
+  "measStepCounter": "Paso {step} de {total} · {title}",
+  "@measStepCounter": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "measStep1Title": "Prepárate",
+  "measStep1Detail": "5 min en reposo, anclado con los pies en la barra",
+  "measStep2Title": "Coloca el brazalete",
+  "measStep2Detail": "Brazo izquierdo, 2 cm sobre el codo",
+  "measStep3Title": "Mide y registra",
+  "measStep3Detail": "Lee el monitor o la prenda Bio-Monitor",
+  "measStep4Title": "Resultado",
+  "measStep4Detail": "Qué significa y qué hacer",
+  "measNext": "Siguiente",
+  "measBack": "Atrás",
+  "measSeeResult": "Ver resultado",
+  "measSys": "Sistólica",
+  "measDia": "Diastólica",
+  "measHr": "Frecuencia cardiaca",
+  "measSource": "Fuente del dato",
+  "measSourceManual": "Manual",
+  "measSourceWearable": "Wearable (ejemplo)",
+  "measSourceUltrasound": "Ultrasonido (ejemplo)",
+  "keypadBackspace": "Borrar",
+  "keypadNextField": "Siguiente campo",
+  "measFillRequired": "Escribe la sistólica y la diastólica.",
+  "measSysLtDia": "La sistólica debe ser mayor que la diastólica.",
+  "measConfirmTitle": "¿Seguro que es {value}?",
+  "@measConfirmTitle": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "measConfirmBody": "Ese valor es poco común. Revisa el monitor antes de guardarlo.",
+  "measConfirmFix": "Corregir",
+  "measConfirmKeep": "Sí, es correcto",
+  "rangeTitle": "Sistólica frente a tu rango personal",
+  "rangeOver": "+{delta} sobre tu base",
+  "@rangeOver": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeInside": "dentro de tu base",
+  "rangeBase": "Tu rango prevuelo {low}–{high}",
+  "@rangeBase": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      }
+    }
+  },
+  "resultNominal": "Dentro de tu rango. Sigue con tu rutina.",
+  "resultAtencion": "Repite la medición tras 5 min en reposo. Si sigue sobre tu base 3 días, TIRELUS la agrega al resumen de tu conferencia médica.",
+  "resultCritico": "Está muy por encima de tu base. TIRELUS no diagnostica: repite la medición en reposo y avisa a tu CMO.",
+  "resultNoData": "Aún no hay base para comparar esta lectura. Guárdala para que TIRELUS la tenga como referencia.",
+  "repeatIn5": "Repetir en 5 min",
+  "repeatCountdown": "Repetir en {time}",
+  "@repeatCountdown": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatCancel": "Cancelar recordatorio",
+  "repeatDue": "Es hora de repetir tu medición.",
+  "measSave": "Guardar medición",
+  "savedOk": "Medición guardada. Dentro de tu rango.",
+  "savedSummary": "Medición guardada y agregada al resumen de tu conferencia médica.",
+  "summaryEntry": "PA {sys}/{dia} mmHg · {status} frente a tu base",
+  "@summaryEntry": {
+    "placeholders": {
+      "sys": {
+        "type": "String"
+      },
+      "dia": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "helpWhatTitle": "Qué estás midiendo",
+  "helpWhatBody": "La fuerza con la que la sangre empuja las arterias: el número alto al latir el corazón, el bajo entre latidos.",
+  "helpWhyTitle": "Por qué importa aquí",
+  "helpWhyBody": "Sin gravedad, los líquidos suben hacia el pecho y la cabeza. El sistema cardiovascular se adapta y eso puede cambiar tus lecturas.",
+  "helpTipTitle": "Consejo",
+  "helpTipBody": "Mide a la misma hora y sin haber hecho ejercicio en los 30 min previos, para comparar contra tu base."
 }

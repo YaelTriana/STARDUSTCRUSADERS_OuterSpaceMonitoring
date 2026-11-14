@@ -92,7 +92,7 @@ class _ZoneButton extends StatelessWidget {
         selected: selected,
         label: '${system.name}, ${AppLocalizations.of(context).status(system.status)}',
         child: Material(
-          color: VColors.surface2,
+          color: selected ? VColors.surface : VColors.surface2,
           shape: StadiumBorder(
             side: BorderSide(color: selected ? VColors.signal : VColors.border, width: selected ? 2 : 1),
           ),
@@ -106,7 +106,12 @@ class _ZoneButton extends StatelessWidget {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   StatusShape(system.status, size: 12),
                   const SizedBox(width: 8),
-                  Flexible(child: Text(system.name, maxLines: 2, style: const TextStyle(fontSize: VType.body))),
+                  Flexible(
+                    child: Text(system.name,
+                        maxLines: 2,
+                        style: TextStyle(fontSize: VType.body, fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
+                  ),
+                  if (selected) ...[const SizedBox(width: 6), const Icon(Icons.check, size: 16, color: VColors.signalSoft)],
                 ]),
               ),
             ),

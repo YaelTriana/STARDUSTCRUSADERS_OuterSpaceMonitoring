@@ -186,27 +186,61 @@ class MetricTile extends StatelessWidget {
       );
 }
 
-/// Carga asíncrona con estados de espera y error.
-class AsyncView<T> extends StatelessWidget {
-  const AsyncView({super.key, required this.future, required this.builder});
-  final Future<T> future;
-  final Widget Function(BuildContext, T) builder;
+/// Bloque gris de relleno mientras llegan los datos (esqueleto de carga).
+class SkeletonBox extends StatelessWidget {
+  const SkeletonBox({super.key, this.height = 80, this.width});
+  final double height;
+  final double? width;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<T>(
-        future: future,
-        builder: (context, snap) {
-          if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text('No se pudo leer el servidor Python local.\n${snap.error}',
-                    textAlign: TextAlign.center, style: const TextStyle(color: VColors.critico)),
-              ),
-            );
-          }
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          return builder(context, snap.data as T);
-        },
+  Widget build(BuildContext context) => Container(
+        height: height,
+        width: width,
+        decoration: BoxDecoration(color: VColors.surface2, borderRadius: BorderRadius.circular(16)),
       );
+}
+
+/// Carga asíncrona con estados de espera y error (con "Reintentar" si se pasa [onRetry]).
+class AsyncView<T> extends StatelessWidget {
+  const AsyncView({super.key, required this.future, required this.builder, this.onRetry, this.loading});
+  final Future<T> future;
+  final Widget Function(BuildContext, T) builder;
+  final VoidCallback? onRetry;
+
+  /// Esqueleto propio de la pantalla; si es null, un indicador circular.
+  final Widget? loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return FutureBuilder<T>(
+      future: future,
+      builder: (context, snap) {
+        if (snap.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSpace.xxl),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(l.errorEngine, textAlign: TextAlign.center, style: const TextStyle(color: VColors.critico, fontSize: VType.body)),
+                const SizedBox(height: VSpace.sm),
+                Text('${snap.error}', textAlign: TextAlign.center, style: mono(size: 12, color: VColors.muted)),
+                if (onRetry != null) ...[
+                  const SizedBox(height: VSpace.lg),
+                  OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: Text(l.retry)),
+                ],
+              ]),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return Semantics(
+            label: l.loading,
+            liveRegion: true,
+            child: loading ?? const Center(child: CircularProgressIndicator()),
+          );
+        }
+        return builder(context, snap.data as T);
+      },
+    );
+  }
 }

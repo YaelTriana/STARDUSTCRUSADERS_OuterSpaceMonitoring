@@ -100,4 +100,246 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSwitchTooltip => 'Switch language to Spanish';
+
+  @override
+  String get panelBodyTitle => 'STATUS BY SYSTEM · TAP A ZONE';
+
+  @override
+  String get panelWhyTitle => 'WHY IT CHANGES IN SPACE';
+
+  @override
+  String get panelActionTitle => 'WHAT TO DO NOW';
+
+  @override
+  String summaryAttention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count systems need attention',
+      one: '1 system needs attention',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get summaryAllClear => 'All your systems are in range';
+
+  @override
+  String get sourceChip => 'Source: NASA HRP';
+
+  @override
+  String get sourceNoteTitle => 'About this information';
+
+  @override
+  String get sourceNoteBody =>
+      'The explanations are based on NASA Human Research Program (HRP) publications. This app\'s alert thresholds are design assumptions, not official flight values. TIRELUS does not diagnose: it helps you decide whom to notify.';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get noDataMeasure => 'No data · measure';
+
+  @override
+  String get errorEngine => 'Could not read the local Python server.';
+
+  @override
+  String get loading => 'Loading…';
+
+  @override
+  String taskPending(String time) {
+    return 'PENDING · $time';
+  }
+
+  @override
+  String taskToday(String time) {
+    return 'TODAY · $time';
+  }
+
+  @override
+  String get exerciseLabel => 'EXERCISE';
+
+  @override
+  String exerciseProgress(int hours, int minutes) {
+    return '$hours h $minutes min of ~2 h';
+  }
+
+  @override
+  String get streakLabel => 'LOGGING STREAK';
+
+  @override
+  String get streakDays => 'days';
+
+  @override
+  String get streakBadge => '“Orbital Consistency” badge';
+
+  @override
+  String get measTitle => 'Log your reading';
+
+  @override
+  String measStepCounter(int step, int total, String title) {
+    return 'Step $step of $total · $title';
+  }
+
+  @override
+  String get measStep1Title => 'Get ready';
+
+  @override
+  String get measStep1Detail => '5 min at rest, feet anchored to the bar';
+
+  @override
+  String get measStep2Title => 'Put on the cuff';
+
+  @override
+  String get measStep2Detail => 'Left arm, 2 cm above the elbow';
+
+  @override
+  String get measStep3Title => 'Measure and log';
+
+  @override
+  String get measStep3Detail => 'Read the monitor or the Bio-Monitor garment';
+
+  @override
+  String get measStep4Title => 'Result';
+
+  @override
+  String get measStep4Detail => 'What it means and what to do';
+
+  @override
+  String get measNext => 'Next';
+
+  @override
+  String get measBack => 'Back';
+
+  @override
+  String get measSeeResult => 'See result';
+
+  @override
+  String get measSys => 'Systolic';
+
+  @override
+  String get measDia => 'Diastolic';
+
+  @override
+  String get measHr => 'Heart rate';
+
+  @override
+  String get measSource => 'Data source';
+
+  @override
+  String get measSourceManual => 'Manual';
+
+  @override
+  String get measSourceWearable => 'Wearable (sample)';
+
+  @override
+  String get measSourceUltrasound => 'Ultrasound (sample)';
+
+  @override
+  String get keypadBackspace => 'Delete';
+
+  @override
+  String get keypadNextField => 'Next field';
+
+  @override
+  String get measFillRequired => 'Enter the systolic and diastolic values.';
+
+  @override
+  String get measSysLtDia => 'Systolic must be higher than diastolic.';
+
+  @override
+  String measConfirmTitle(String value) {
+    return 'Are you sure it is $value?';
+  }
+
+  @override
+  String get measConfirmBody =>
+      'That value is unusual. Check the monitor before saving it.';
+
+  @override
+  String get measConfirmFix => 'Fix it';
+
+  @override
+  String get measConfirmKeep => 'Yes, it is correct';
+
+  @override
+  String get rangeTitle => 'Systolic vs your personal range';
+
+  @override
+  String rangeOver(String delta) {
+    return '+$delta above your baseline';
+  }
+
+  @override
+  String get rangeInside => 'within your baseline';
+
+  @override
+  String rangeBase(String low, String high) {
+    return 'Your pre-flight range $low–$high';
+  }
+
+  @override
+  String get resultNominal => 'Within your range. Keep up your routine.';
+
+  @override
+  String get resultAtencion =>
+      'Repeat the measurement after 5 min at rest. If it stays above your baseline for 3 days, TIRELUS adds it to your medical conference summary.';
+
+  @override
+  String get resultCritico =>
+      'This is well above your baseline. TIRELUS does not diagnose: repeat the measurement at rest and notify your CMO.';
+
+  @override
+  String get resultNoData =>
+      'There is no baseline yet to compare this reading. Save it so TIRELUS has it as a reference.';
+
+  @override
+  String get repeatIn5 => 'Repeat in 5 min';
+
+  @override
+  String repeatCountdown(String time) {
+    return 'Repeat in $time';
+  }
+
+  @override
+  String get repeatCancel => 'Cancel reminder';
+
+  @override
+  String get repeatDue => 'Time to repeat your measurement.';
+
+  @override
+  String get measSave => 'Save measurement';
+
+  @override
+  String get savedOk => 'Measurement saved. Within your range.';
+
+  @override
+  String get savedSummary =>
+      'Measurement saved and added to your medical conference summary.';
+
+  @override
+  String summaryEntry(String sys, String dia, String status) {
+    return 'BP $sys/$dia mmHg · $status vs your baseline';
+  }
+
+  @override
+  String get helpWhatTitle => 'What you are measuring';
+
+  @override
+  String get helpWhatBody =>
+      'The force of blood pushing on your arteries: the top number as the heart beats, the bottom one between beats.';
+
+  @override
+  String get helpWhyTitle => 'Why it matters here';
+
+  @override
+  String get helpWhyBody =>
+      'Without gravity, fluids shift toward the chest and head. The cardiovascular system adapts, and that can change your readings.';
+
+  @override
+  String get helpTipTitle => 'Tip';
+
+  @override
+  String get helpTipBody =>
+      'Measure at the same time of day and without exercise in the previous 30 min, to compare against your baseline.';
 }
