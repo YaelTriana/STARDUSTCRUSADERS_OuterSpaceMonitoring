@@ -40,9 +40,11 @@ Objetivo: entregar un prototipo funcional y la presentación antes del cierre de
 | 1. Base técnica | 1–2 h | Proyecto Flutter, tema, navegación, serious_python instalado | Hecho |
 | 2. Datos y lógica | 3–4 h | Datos de ejemplo, motor de reglas en Python con pytest, API local | Hecho |
 | 3. Pantallas centrales | 6–8 h | Panel, medición, tendencia con alerta | Hecho (mockup) |
-| 4. Integración real | 3–4 h | Empaquetar Python con serious_python y correr en Windows y Android; validar FastAPI embebido (plan B: Flask o `http.server`) | Pendiente |
-| 5. Valor extra y pulido | 2–3 h | Resumen médico exportable, recordatorios, contraste y accesibilidad, prueba de punta a punta | Pendiente |
+| 4. Integración real (P0) | 3–6 h | Empaquetar y probar en Windows y Android (plan B: Flask o `http.server`); exportar el resumen médico | Pendiente |
+| 5. MVP completo (P1) y pulido (P2) | 5–8 h | P1: guardar el resumen entre reinicios, medición y tendencia de SANS, generalizar a más métricas. P2: selector de entorno en pantallas angostas, pruebas de widgets, accesibilidad | Pendiente |
 | 6. Entrega | 3 h | Video demo, presentación, página del proyecto con fuentes citadas | Pendiente |
+
+> El detalle de cada tarea (cómo hacerla y cuánto toma) está en la **Matriz de pendientes** del [`README.md`](../README.md#matriz-de-pendientes). Esa matriz es la fuente única: si cambia una tarea, se actualiza allá.
 
 ## 3. Calendario
 
