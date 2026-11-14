@@ -861,4 +861,12 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get sansDoBody =>
       'Mide siempre en las mismas condiciones y registra el cambio frente a tu base. TIRELUS no diagnostica: si hay señal, avisa a tu CMO y ellos escalan al flight surgeon.';
+
+  @override
+  String get summaryOffline =>
+      'No se pudo guardar en el motor. Quedó solo en esta pantalla y se perderá al cerrar la app.';
+
+  @override
+  String get measEvalFailed =>
+      'No se pudo evaluar con el motor. Revisa la conexión e intenta de nuevo.';
 }

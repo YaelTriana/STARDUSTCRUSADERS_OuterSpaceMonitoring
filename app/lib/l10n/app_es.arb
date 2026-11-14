@@ -606,5 +606,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "summaryOffline": "No se pudo guardar en el motor. Quedó solo en esta pantalla y se perderá al cerrar la app.",
+  "measEvalFailed": "No se pudo evaluar con el motor. Revisa la conexión e intenta de nuevo."
 }

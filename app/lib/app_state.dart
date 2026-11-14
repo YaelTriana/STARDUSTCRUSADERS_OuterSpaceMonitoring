@@ -33,9 +33,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addToSummary(String item) async {
-    medicalSummary = await api.addToSummary(item);
-    notifyListeners();
+  /// Agrega un hallazgo al resumen. Devuelve false si el motor no respondió:
+  /// en ese caso el hallazgo queda solo en memoria para no perderlo de la vista.
+  Future<bool> addToSummary(String item) async {
+    try {
+      medicalSummary = await api.addToSummary(item);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      if (!medicalSummary.contains(item)) medicalSummary = [...medicalSummary, item];
+      notifyListeners();
+      return false;
+    }
   }
 }
 

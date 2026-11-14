@@ -59,8 +59,8 @@ class _SansScreenState extends State<SansScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final status = _status;
     if (status == null) return;
-    await AppScope.of(context).addToSummary(l.sansSummaryEntry(_delta.text, l.status(status).toLowerCase()));
-    messenger.showSnackBar(SnackBar(content: Text(l.sansAdded)));
+    final ok = await AppScope.of(context).addToSummary(l.sansSummaryEntry(_delta.text, l.status(status).toLowerCase()));
+    messenger.showSnackBar(SnackBar(content: Text(ok ? l.sansAdded : l.summaryOffline)));
   }
 
   @override

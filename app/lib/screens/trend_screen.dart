@@ -278,8 +278,8 @@ class _TrendScreenState extends State<TrendScreen> {
       FilledButton(
         onPressed: () async {
           final messenger = ScaffoldMessenger.of(context);
-          await state.addToSummary(l.trendSummaryEntry(label, streak, dir, trend.fmt(trend.series.last), unit));
-          messenger.showSnackBar(SnackBar(content: Text(l.trendAddedSummary)));
+          final ok = await state.addToSummary(l.trendSummaryEntry(label, streak, dir, trend.fmt(trend.series.last), unit));
+          messenger.showSnackBar(SnackBar(content: Text(ok ? l.trendAddedSummary : l.summaryOffline)));
         },
         child: Text(l.trendAddSummary),
       ),

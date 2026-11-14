@@ -858,4 +858,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sansDoBody =>
       'Always measure under the same conditions and log the change against your baseline. TIRELUS does not diagnose: if there is a signal, tell your CMO, who escalates to the flight surgeon.';
+
+  @override
+  String get summaryOffline =>
+      'Could not save to the engine. It is kept on this screen only and will be lost when you close the app.';
+
+  @override
+  String get measEvalFailed =>
+      'Could not evaluate with the engine. Check the connection and try again.';
 }

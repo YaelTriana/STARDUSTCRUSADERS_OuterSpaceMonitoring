@@ -1538,6 +1538,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Mide siempre en las mismas condiciones y registra el cambio frente a tu base. TIRELUS no diagnostica: si hay señal, avisa a tu CMO y ellos escalan al flight surgeon.'**
   String get sansDoBody;
+
+  /// No description provided for @summaryOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar en el motor. Quedó solo en esta pantalla y se perderá al cerrar la app.'**
+  String get summaryOffline;
+
+  /// No description provided for @measEvalFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo evaluar con el motor. Revisa la conexión e intenta de nuevo.'**
+  String get measEvalFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -235,5 +235,7 @@
   "sansWhyTitle": "WHY IT MATTERS HERE",
   "sansWhyBody": "Without gravity, fluids shift toward the head. On long missions this is linked to changes in the eye and in vision.",
   "sansDoTitle": "WHAT TO DO",
-  "sansDoBody": "Always measure under the same conditions and log the change against your baseline. TIRELUS does not diagnose: if there is a signal, tell your CMO, who escalates to the flight surgeon."
+  "sansDoBody": "Always measure under the same conditions and log the change against your baseline. TIRELUS does not diagnose: if there is a signal, tell your CMO, who escalates to the flight surgeon.",
+  "summaryOffline": "Could not save to the engine. It is kept on this screen only and will be lost when you close the app.",
+  "measEvalFailed": "Could not evaluate with the engine. Check the connection and try again."
 }

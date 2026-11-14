@@ -66,6 +66,7 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
 
   VStatus? _status;
   bool _busy = false;
+  bool _evalFailed = false;
   int _evalSeq = 0;
   double _baseLow = 110; // respaldo mientras Python no responde con la base
   double _baseHigh = 126;
@@ -122,6 +123,7 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
       final r = await AppScope.of(context).api.evaluateRaw('systolic', v);
       if (!mounted || seq != _evalSeq) return;
       setState(() {
+        _evalFailed = false;
         _status = statusFromApi(r['status'] as String?);
         final b = r['base'];
         if (b is Map) {
@@ -130,7 +132,12 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
         }
       });
     } catch (_) {
-      if (mounted && seq == _evalSeq) setState(() => _status = VStatus.sinDato);
+      if (mounted && seq == _evalSeq) {
+        setState(() {
+          _status = VStatus.sinDato;
+          _evalFailed = true;
+        });
+      }
     } finally {
       if (mounted && seq == _evalSeq) setState(() => _busy = false);
     }
@@ -224,15 +231,16 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
     final state = AppScope.of(context);
     final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
+    var synced = true;
     if (_status != null && _status != VStatus.nominal) {
-      await state.addToSummary(l.summaryEntry(
+      synced = await state.addToSummary(l.summaryEntry(
         _values[_Field.sys]!,
         _values[_Field.dia]!,
         l.status(_status!).toLowerCase(),
       ));
     }
     messenger.showSnackBar(SnackBar(
-      content: Text(_status == VStatus.nominal ? l.savedOk : l.savedSummary),
+      content: Text(!synced ? l.summaryOffline : (_status == VStatus.nominal ? l.savedOk : l.savedSummary)),
     ));
   }
 
@@ -348,6 +356,10 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
       ]),
       const SizedBox(height: VSpace.lg),
       _RangeMeter(value: _sysValue, low: _baseLow, high: _baseHigh, status: _status ?? VStatus.sinDato),
+      if (_evalFailed) ...[
+        const SizedBox(height: VSpace.sm),
+        Text(l.measEvalFailed, style: const TextStyle(fontSize: VType.label, color: VColors.critico, height: 1.4)),
+      ],
       const SizedBox(height: VSpace.lg),
       Center(
         child: NumericKeypad(
@@ -619,10 +631,11 @@ class _GenericMeasurementState extends State<_GenericMeasurement> {
     final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final flagged = _status == VStatus.atencion || _status == VStatus.critico;
+    var synced = true;
     if (flagged) {
-      await state.addToSummary(l.measGenericSummaryEntry(info.label, _value.text, info.unit, l.status(_status!).toLowerCase()));
+      synced = await state.addToSummary(l.measGenericSummaryEntry(info.label, _value.text, info.unit, l.status(_status!).toLowerCase()));
     }
-    messenger.showSnackBar(SnackBar(content: Text(flagged ? l.measSavedAdded : l.measSavedOk)));
+    messenger.showSnackBar(SnackBar(content: Text(!synced ? l.summaryOffline : (flagged ? l.measSavedAdded : l.measSavedOk))));
   }
 
   Widget _form(BuildContext context, Trend info) {
@@ -689,6 +702,7 @@ class _GenericMeasurementState extends State<_GenericMeasurement> {
         const SizedBox(height: 20),
         AsyncView<Trend>(
           future: _info!,
+          onRetry: () => setState(() => _info = AppScope.of(context).api.trend(widget.metric)),
           builder: (context, info) {
             final aside = _HelpTile(title: l.measRuleOrigin, body: [info.rule, if (info.source.isNotEmpty) info.source].join('\n\n'));
             return LayoutBuilder(builder: (context, c) {
