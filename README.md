@@ -23,8 +23,8 @@ flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true  # UI usando ese se
 | # | Punto | Estado |
 |---|---|---|
 | 1 | Panel con figura corporal y semáforo por sistema | ✅ Listo |
-| 2 | Medición guiada contra la línea base | 🟡 Solo presión arterial |
-| 3 | Tendencia con alerta por desviación sostenida | 🟡 Solo presión sistólica |
+| 2 | Medición guiada contra la línea base | 🟡 Pantallas listas para todas las métricas; faltan datos de FC, sueño, ánimo y SANS |
+| 3 | Tendencia con alerta por desviación sostenida | 🟡 Pantallas listas (alerta hacia arriba o hacia abajo); faltan datos |
 | 4 | Resumen exportable para la conferencia médica | ✅ Se exporta en Markdown (portapapeles) |
 | 5 | Selector ISS / Luna / Marte y modo autónomo | ✅ Listo |
 | — | Extras: consola de base y EVA | ✅ Pantallas hechas |
@@ -39,8 +39,8 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 | ~~P0~~ ✅ | ~~Exportar el resumen médico~~ | Hecho: `GET /summary/export` devuelve Markdown con fecha, día de misión y "Datos de ejemplo" (`tests_py/test_export.py`). Botón "Exportar resumen médico" en la pantalla de tendencia: copia al portapapeles. Compartir con `share_plus` y PDF quedan para después. | — |
 | ~~P1~~ ✅ | ~~Guardar el resumen entre reinicios~~ | Hecho: se guarda en `summary.json`. | — |
 | ~~P1~~ ✅ | ~~Pasar la carpeta de datos desde Flutter~~ | Hecho: `path_provider` manda `TIRELUS_DATA_DIR` con `getApplicationSupportDirectory()` (`lib/python_env.dart`, probado en `test/python_env_test.dart`). Si falla, Python usa su respaldo. | — |
-| **P1** | Medición y tendencia de SANS | La API ya está (`POST /evaluate/sans`, `GET /trend/sans`). Falta: serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py`, la referencia NASA exacta en `SANS_SOURCE` y la pantalla en Flutter reutilizando `measurement_screen` / `trend_chart`. | 1–1.5 h |
-| **P1** | Generalizar medición y tendencia a más sistemas | La API ya está (`/trend/{metric}`, `/evaluate/{metric}`, `/metrics`). Falta: línea base, límite de respaldo y serie de 14 días de FC, sueño y ánimo en `METRICS` de `data.py` (marcados `>>> DATOS:`), y que las pantallas reciban la métrica como parámetro. | 1.5–2 h |
+| **P1** | Medición y tendencia de SANS | Pantalla lista: pestaña "Ojos" (`lib/screens/sans_screen.dart`) evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` y la referencia NASA exacta en `SANS_SOURCE`. | 15 min |
+| **P1** | Generalizar medición y tendencia a más sistemas | Pantallas listas: medición y tendencia tienen selector de métrica y muestran "Sin dato" mientras falten datos. **Falta solo:** línea base, límite de respaldo y serie de 14 días de FC, sueño y ánimo en `METRICS` de `data.py` (marcados `>>> DATOS:`). Aparecen solas en la app. | 20–30 min |
 | ~~P1~~ ✅ | ~~Alertar tendencias a la baja~~ | Hecho: `evaluate_trend` recibe `direction` ("above"/"below") y `absolute_low`; la API usa `alert_when` del catálogo y devuelve `consecutive_below` y `delta_from_low`. Pruebas en `test_rules.py` y `test_p1.py`. | — |
 | ~~P2~~ ✅ | ~~Botón "Marte" cortado en pantallas angostas~~ | Hecho: `lib/widgets/env_selector.dart` usa botones segmentados en pantallas anchas y menú desplegable por debajo de 640 px. Probado a 360 px sin desbordes. | — |
 | ~~P2~~ ✅ | ~~Pruebas de widgets en Flutter~~ | Hecho: `app/test/` con pruebas del semáforo (color + forma + palabra + lector de pantalla), del selector de entorno con un `TirelusApi` falso y de contraste de la paleta. | — |
