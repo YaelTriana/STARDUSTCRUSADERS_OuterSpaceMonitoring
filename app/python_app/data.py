@@ -11,6 +11,92 @@ SYSTOLIC_14 = [118, 120, 117, 121, 119, 122, 124, 126, 125, 128, 130, 129, 131, 
 SYSTOLIC_BASE = Baseline(110, 126)
 SYSTOLIC_ABS_HIGH = 160.0  # límite clínico terrestre de respaldo (supuesto de diseño)
 
+# ---------------------------------------------------------------------------
+# Catálogo de métricas para /trend/{metric} y /evaluate/{metric}.
+#
+# Cada métrica necesita:
+#   label, unit       → texto para la UI
+#   base              → Baseline(low, high) personal prevuelo, o None si aún no hay dato
+#   abs_high/abs_low  → límite clínico terrestre de respaldo (supuesto de diseño) o None
+#   series            → últimos 14 días (D34–D47), la última lectura es hoy
+#   alert_when        → "above" o "below": hacia dónde preocupa la desviación
+#   rule, source      → texto de la regla y de dónde sale el umbral
+#
+# Si series está vacía o base es None, la API responde status "sin_dato".
+# Las series deben seguir "Claude outputs/TIRELUS_matriz_simulacion.xlsx".
+# ---------------------------------------------------------------------------
+
+METRICS: dict[str, dict] = {
+    "systolic": {
+        "label": "Presión sistólica",
+        "unit": "mmHg",
+        "base": SYSTOLIC_BASE,
+        "abs_high": SYSTOLIC_ABS_HIGH,
+        "abs_low": None,
+        "series": SYSTOLIC_14,
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Captura en examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
+    "heart_rate": {
+        "label": "FC en reposo",
+        "unit": "lpm",
+        # >>> DATOS: línea base prevuelo de FC en reposo, p. ej. Baseline(55, 66).
+        "base": None,
+        # >>> DATOS: límite terrestre de respaldo (supuesto de diseño), p. ej. 100.0.
+        "abs_high": None,
+        "abs_low": None,
+        # >>> DATOS: 14 lecturas diarias D34–D47 (matriz: escenarios nominal · atención).
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
+    "sleep_hours": {
+        "label": "Horas de sueño",
+        "unit": "h",
+        # >>> DATOS: línea base prevuelo de sueño, p. ej. Baseline(6.5, 8.5).
+        "base": None,
+        "abs_high": None,
+        # >>> DATOS: mínimo de respaldo (supuesto de diseño), p. ej. 5.0.
+        "abs_low": None,
+        # >>> DATOS: 14 noches D34–D47 (matriz: escenarios nominal · déficit).
+        "series": [],
+        # Ojo: aquí preocupa la baja. evaluate_trend hoy solo cuenta días SOBRE la base,
+        # así que la tendencia de sueño no alertará un déficit hasta extender rules.py.
+        "alert_when": "below",
+        "rule": "Supuesto de diseño: periodo de sueño de 8.5 h; déficit sostenido frente a la base.",
+        "source": "Promedio histórico <6.1 h (Basner et al., PMC4691281). Umbral: supuesto de diseño.",
+    },
+    "mood": {
+        "label": "Ánimo (1–5)",
+        "unit": "pts",
+        # >>> DATOS: rango habitual del tripulante, p. ej. Baseline(3, 5).
+        "base": None,
+        "abs_high": None,
+        # >>> DATOS: mínimo de respaldo (supuesto de diseño), p. ej. 1.0.
+        "abs_low": None,
+        # >>> DATOS: 14 autorreportes D34–D47 (matriz: escenarios estable · baja).
+        "series": [],
+        # Igual que sueño: preocupa la baja (ver nota de evaluate_trend arriba).
+        "alert_when": "below",
+        "rule": "Supuesto de diseño: autorreporte por debajo del rango habitual.",
+        "source": "Autorreporte: supuesto de diseño, sin umbral publicado.",
+    },
+}
+
+# ---------------------------------------------------------------------------
+# SANS: cambio de grosor retiniano (µm) frente a la base, una lectura por ciclo de OCT.
+# Los umbrales (+20 / 55 µm) viven en rules.py porque son cifras publicadas.
+# ---------------------------------------------------------------------------
+
+# >>> DATOS: deltas en µm por OCT, en orden (matriz: escenarios +8 · +22 · +58 µm).
+SANS_SERIES: list[float] = []
+# >>> DATOS: día de misión de cada OCT, misma longitud que SANS_SERIES (p. ej. [30, 90]).
+SANS_DAYS: list[int] = []
+# >>> FUENTE: referencia NASA exacta de los umbrales de SANS (NASA HRP / NTRS) para citarla en la app.
+SANS_SOURCE = "Umbrales publicados de SANS: +20 µm primer signo; 55 µm preocupación clínica. Referencia NASA por confirmar."
+
 ENVIRONMENTS = {
     "iss": {"label": "ISS", "delay": "tiempo real", "autonomous": False},
     "luna": {"label": "Luna", "delay": "4–12 s", "autonomous": True},
