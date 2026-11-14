@@ -4,7 +4,7 @@ App de automonitoreo de salud para astronautas — NASA Space Apps Challenge 202
 
 - **UI:** Flutter en `app/`
 - **Lógica:** Python en `app/python_app/`, embebido con serious_python; sirve una API local en `127.0.0.1:8765`
-- **Pruebas:** `pytest app/tests_py` (20 pruebas, motor de reglas y API) · `cd app; flutter test` (45 pruebas: semáforo, selector de entorno y contraste)
+- **Pruebas:** `pytest app/tests_py` (motor de reglas, API y exportación) · `cd app; flutter test` (45 pruebas: semáforo, selector de entorno y contraste)
 
 > La app no diagnostica. Todos los umbrales, salvo SANS, son supuestos de diseño. Los datos de la demo son sintéticos.
 
@@ -25,7 +25,7 @@ flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true  # UI usando ese se
 | 1 | Panel con figura corporal y semáforo por sistema | ✅ Listo |
 | 2 | Medición guiada contra la línea base | 🟡 Solo presión arterial |
 | 3 | Tendencia con alerta por desviación sostenida | 🟡 Solo presión sistólica |
-| 4 | Resumen exportable para la conferencia médica | 🟠 Se arma la lista, no se exporta |
+| 4 | Resumen exportable para la conferencia médica | ✅ Se exporta en Markdown (portapapeles) |
 | 5 | Selector ISS / Luna / Marte y modo autónomo | ✅ Listo |
 | — | Extras: consola de base y EVA | ✅ Pantallas hechas |
 
@@ -36,7 +36,7 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 | Prioridad | Qué falta | Cómo hacerlo | Esfuerzo |
 |---|---|---|---|
 | **P0** | Probar la app empaquetada en Windows y Android | desde `app/`: `dart run serious_python:main package python_app -p Windows -r -r -r python_app/requirements.txt --cleanup` (y `-p Android`; detalles en la skill `tirelus-serious-python`), luego `flutter build windows` / `flutter build apk`. Verificar que `/health` responda dentro de la app. Falta instalar Visual Studio con "Desarrollo para el escritorio con C++": hoy `flutter build windows` falla sin él (revisar con `flutter doctor`). Si uvicorn falla en Android, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). | 2–4 h |
-| **P0** | Exportar el resumen médico | Endpoint `GET /summary/export` en Python que devuelva texto/Markdown con fecha, día de misión y la etiqueta "Datos de ejemplo". En Flutter, botón "Exportar" en la pantalla de tendencia: copiar al portapapeles y compartir (`share_plus`). PDF solo si sobra tiempo. Prueba pytest del formato. | 1–2 h |
+| ~~P0~~ ✅ | ~~Exportar el resumen médico~~ | Hecho: `GET /summary/export` devuelve Markdown con fecha, día de misión y "Datos de ejemplo" (`tests_py/test_export.py`). Botón "Exportar resumen médico" en la pantalla de tendencia: copia al portapapeles. Compartir con `share_plus` y PDF quedan para después. | — |
 | ~~P1~~ ✅ | ~~Guardar el resumen entre reinicios~~ | Hecho: se guarda en `summary.json`. | — |
 | **P1** | Pasar la carpeta de datos desde Flutter | Agregar `path_provider` y enviar `TIRELUS_DATA_DIR` con `getApplicationSupportDirectory()` en `lib/python_starter_io.dart` (hay un TODO). Mientras tanto el resumen queda en `~/.tirelus`. | 20 min |
 | **P1** | Medición y tendencia de SANS | La API ya está (`POST /evaluate/sans`, `GET /trend/sans`). Falta: serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py`, la referencia NASA exacta en `SANS_SOURCE` y la pantalla en Flutter reutilizando `measurement_screen` / `trend_chart`. | 1–1.5 h |

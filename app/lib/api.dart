@@ -96,6 +96,10 @@ class TirelusApi {
 
   Future<Map<String, dynamic>> eva() => _get('/eva');
 
+  /// Resumen en Markdown para la conferencia médica privada:
+  /// `text`, `filename`, `items`, `mission_day`, `sample_data`.
+  Future<Map<String, dynamic>> exportSummary() => _get('/summary/export');
+
   Future<List<String>> addToSummary(String item) async =>
       [for (final i in (await _post('/summary', {'item': item}))['items'] as List) i as String];
 }

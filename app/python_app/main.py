@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from datetime import date
 from pathlib import Path
 
 # Permite importar rules/data tanto embebido como desde la terminal.
@@ -234,6 +235,45 @@ def add_summary(entry: SummaryItem) -> dict:
         items.append(entry.item)
         _save_summary(items)
     return {"items": items}
+
+
+
+def build_summary_export(items: list[str], mission_day: int, today: date) -> str:
+    """Arma el resumen en Markdown para la conferencia médica privada semanal."""
+    lines = [
+        "# Resumen para la conferencia médica privada",
+        "",
+        f"- Fecha: {today.isoformat()}",
+        f"- Día de misión: {mission_day}",
+        "- Datos de ejemplo (sintéticos, solo para la demo)",
+        "",
+        "## Hallazgos registrados",
+        "",
+    ]
+    lines += [f"- {item}" for item in items] or ["Sin hallazgos registrados."]
+    lines += [
+        "",
+        "---",
+        "TIRELUS no diagnostica: señala desviaciones frente a la línea base personal",
+        "y sugiere a quién escalar (astronauta → CMO → flight surgeon).",
+        "Confidencial: solo para el tripulante, el CMO y el flight surgeon.",
+        "Los umbrales son supuestos de diseño, salvo SANS (+20 µm y 55 µm).",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+@app.get("/summary/export")
+def export_summary() -> dict:
+    items = _load_summary()
+    today = date.today()
+    return {
+        "text": build_summary_export(items, data.MISSION_DAY, today),
+        "filename": f"tirelus_resumen_D{data.MISSION_DAY}_{today.isoformat()}.md",
+        "items": items,
+        "mission_day": data.MISSION_DAY,
+        "sample_data": True,
+    }
 
 
 def run() -> None:
