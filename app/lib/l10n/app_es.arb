@@ -451,5 +451,96 @@
         "type": "String"
       }
     }
+  },
+  "autoRealtimeTitle": "Enlace con Tierra en tiempo real",
+  "autoRealtimeBody": "En la ISS consultas al flight surgeon directamente.\nCambia el entorno a Luna o Marte para ver el modo autónomo.",
+  "autoReminder": "TIRELUS orienta, no diagnostica. Las decisiones médicas las toma tu CMO con el flight surgeon.",
+  "autoPrivacy": "Datos médicos: solo tú, el CMO y el flight surgeon. Nunca en pantallas compartidas.",
+  "autoProtocolOverline": "PROTOCOLO GUIADO · CON EL CMO",
+  "autoProgress": "Paso {done} de {total}",
+  "autoOpenGuide": "Abrir guía",
+  "autoGuideClose": "Entendido",
+  "autoLogContinue": "Registrar y continuar",
+  "autoStepLogged": "Paso registrado. Se agregó al mensaje diferido.",
+  "autoAllDone": "Protocolo completo. Revisa la decisión a bordo y envía el mensaje a Tierra.",
+  "autoNoWait": "Las decisiones no esperan la respuesta de Tierra. TIRELUS guía, registra cada paso y lo envía en diferido.",
+  "autoMessageTitle": "MENSAJE DIFERIDO AL FLIGHT SURGEON",
+  "autoMessageMeta": "Texto comprimido · sin video",
+  "autoDelayLabel": "Retraso {delay}",
+  "autoHoldSend": "Mantén para enviar a Tierra",
+  "autoTimelineTitle": "LÍNEA DE TIEMPO DEL MENSAJE",
+  "autoTlDrafted": "Redactado a bordo",
+  "autoTlQueued": "En cola de envío",
+  "autoTlSent": "Enviado",
+  "autoTlArrival": "Llega a Tierra en {time}",
+  "autoTlArrived": "Llegó a Tierra",
+  "autoTlResponse": "Respuesta posible en {time} o más",
+  "autoTlResponseIn": "Respuesta recibida (ejemplo)",
+  "autoTlResponseBody": "Ejemplo: seguir con la autoprueba diaria y repetir el OCT en 24 h. Cualquier cambio, escala al flight surgeon.",
+  "autoEtaAssumption": "Tiempos de ejemplo (supuesto de diseño): ida {oneWay}; la respuesta no llega antes de la ida y vuelta.",
+  "autoSpeedUp": "Acelerar el tiempo (solo demo)",
+  "autoQueueTitle": "COLA DE COMUNICACIÓN",
+  "autoQueueThisProtocol": "Este protocolo",
+  "autoQueueDraft": "Borrador",
+  "autoQueueSent": "Enviado",
+  "autoQueueReceived": "Recibido",
+  "autoDecisionTitle": "DECISIÓN A BORDO",
+  "autoDecisionIntro": "Opciones del protocolo para comentar con tu CMO. No son un diagnóstico ni una orden.",
+  "autoPros": "A favor",
+  "autoCons": "En contra",
+  "autoOpt1Title": "Seguir monitoreando con autoprueba diaria",
+  "autoOpt1Pros": "No gasta recursos y mantiene la tendencia al día.",
+  "autoOpt1Cons": "Si empeora, puede tardar más en detectarse.",
+  "autoOpt2Title": "Repetir el OCT en 24 horas",
+  "autoOpt2Pros": "Confirma si el grosor retiniano sigue subiendo frente a tu base.",
+  "autoOpt2Cons": "Pide tiempo del CMO y del equipo de imagen.",
+  "autoOpt3Title": "Pedir consulta prioritaria diferida",
+  "autoOpt3Pros": "Queda registrado y el flight surgeon lo ve primero.",
+  "autoOpt3Cons": "La respuesta tarda la ida y vuelta de la comunicación.",
+  "autoMedkitTitle": "BOTIQUÍN · INVENTARIO DE EJEMPLO",
+  "autoMedkitNote": "Datos de ejemplo. El inventario real lo confirma el CMO.",
+  "autoMedkitItem1": "Lágrimas artificiales",
+  "autoMedkitItem1Qty": "12 viales",
+  "autoMedkitItem2": "OCT portátil",
+  "autoMedkitItem2Qty": "1 equipo",
+  "autoMedkitItem3": "Lentes de enfoque ajustable",
+  "autoMedkitItem3Qty": "2 pares",
+  "@autoProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@autoDelayLabel": {
+    "placeholders": {
+      "delay": {
+        "type": "String"
+      }
+    }
+  },
+  "@autoTlArrival": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@autoTlResponse": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@autoEtaAssumption": {
+    "placeholders": {
+      "oneWay": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -579,4 +579,185 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get measRuleOrigin => 'WHERE THE RULE COMES FROM';
+
+  @override
+  String get autoRealtimeTitle => 'Real-time link to Earth';
+
+  @override
+  String get autoRealtimeBody =>
+      'On the ISS you consult the flight surgeon directly.\nSwitch the environment to Moon or Mars to see autonomous mode.';
+
+  @override
+  String get autoReminder =>
+      'TIRELUS guides, it does not diagnose. Medical decisions belong to your CMO with the flight surgeon.';
+
+  @override
+  String get autoPrivacy =>
+      'Medical data: only you, the CMO and the flight surgeon. Never on shared screens.';
+
+  @override
+  String get autoProtocolOverline => 'GUIDED PROTOCOL · WITH THE CMO';
+
+  @override
+  String autoProgress(int done, int total) {
+    return 'Step $done of $total';
+  }
+
+  @override
+  String get autoOpenGuide => 'Open guide';
+
+  @override
+  String get autoGuideClose => 'Got it';
+
+  @override
+  String get autoLogContinue => 'Log and continue';
+
+  @override
+  String get autoStepLogged =>
+      'Step logged. It was added to the delayed message.';
+
+  @override
+  String get autoAllDone =>
+      'Protocol complete. Review the on-board decision and send the message to Earth.';
+
+  @override
+  String get autoNoWait =>
+      'Decisions do not wait for Earth\'s reply. TIRELUS guides, logs each step and sends it with a delay.';
+
+  @override
+  String get autoMessageTitle => 'DELAYED MESSAGE TO THE FLIGHT SURGEON';
+
+  @override
+  String get autoMessageMeta => 'Compressed text · no video';
+
+  @override
+  String autoDelayLabel(String delay) {
+    return 'Delay $delay';
+  }
+
+  @override
+  String get autoHoldSend => 'Hold to send to Earth';
+
+  @override
+  String get autoTimelineTitle => 'MESSAGE TIMELINE';
+
+  @override
+  String get autoTlDrafted => 'Drafted on board';
+
+  @override
+  String get autoTlQueued => 'Queued to send';
+
+  @override
+  String get autoTlSent => 'Sent';
+
+  @override
+  String autoTlArrival(String time) {
+    return 'Reaches Earth in $time';
+  }
+
+  @override
+  String get autoTlArrived => 'Reached Earth';
+
+  @override
+  String autoTlResponse(String time) {
+    return 'Reply possible in $time or more';
+  }
+
+  @override
+  String get autoTlResponseIn => 'Reply received (example)';
+
+  @override
+  String get autoTlResponseBody =>
+      'Example: keep the daily self-test and repeat the OCT in 24 h. Any change, escalate to the flight surgeon.';
+
+  @override
+  String autoEtaAssumption(String oneWay) {
+    return 'Example timings (design assumption): one way $oneWay; a reply cannot arrive before the round trip.';
+  }
+
+  @override
+  String get autoSpeedUp => 'Speed up time (demo only)';
+
+  @override
+  String get autoQueueTitle => 'COMMUNICATION QUEUE';
+
+  @override
+  String get autoQueueThisProtocol => 'This protocol';
+
+  @override
+  String get autoQueueDraft => 'Draft';
+
+  @override
+  String get autoQueueSent => 'Sent';
+
+  @override
+  String get autoQueueReceived => 'Received';
+
+  @override
+  String get autoDecisionTitle => 'ON-BOARD DECISION';
+
+  @override
+  String get autoDecisionIntro =>
+      'Protocol options to discuss with your CMO. They are not a diagnosis or an order.';
+
+  @override
+  String get autoPros => 'Pros';
+
+  @override
+  String get autoCons => 'Cons';
+
+  @override
+  String get autoOpt1Title => 'Keep monitoring with a daily self-test';
+
+  @override
+  String get autoOpt1Pros =>
+      'Uses no resources and keeps the trend up to date.';
+
+  @override
+  String get autoOpt1Cons => 'If it gets worse, it may take longer to notice.';
+
+  @override
+  String get autoOpt2Title => 'Repeat the OCT in 24 hours';
+
+  @override
+  String get autoOpt2Pros =>
+      'Confirms whether retinal thickness keeps rising against your baseline.';
+
+  @override
+  String get autoOpt2Cons => 'Takes CMO and imaging-equipment time.';
+
+  @override
+  String get autoOpt3Title => 'Request a deferred priority consult';
+
+  @override
+  String get autoOpt3Pros =>
+      'It is on record and the flight surgeon sees it first.';
+
+  @override
+  String get autoOpt3Cons => 'The reply takes the communication round trip.';
+
+  @override
+  String get autoMedkitTitle => 'MEDICAL KIT · EXAMPLE INVENTORY';
+
+  @override
+  String get autoMedkitNote =>
+      'Example data. The CMO confirms the real inventory.';
+
+  @override
+  String get autoMedkitItem1 => 'Artificial tears';
+
+  @override
+  String get autoMedkitItem1Qty => '12 vials';
+
+  @override
+  String get autoMedkitItem2 => 'Portable OCT';
+
+  @override
+  String get autoMedkitItem2Qty => '1 unit';
+
+  @override
+  String get autoMedkitItem3 => 'Adjustable-focus glasses';
+
+  @override
+  String get autoMedkitItem3Qty => '2 pairs';
 }

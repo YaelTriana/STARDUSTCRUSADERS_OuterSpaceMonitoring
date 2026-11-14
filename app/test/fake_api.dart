@@ -62,6 +62,21 @@ class FakeApi extends TirelusApi {
       };
 
   @override
+  Future<Map<String, dynamic>> autonomous(MissionEnv env) async => {
+        'title': 'Visión borrosa de cerca',
+        'steps': [
+          {'title': 'Autoprueba', 'detail': 'Detalle uno', 'state': 'done'},
+          {'title': 'OCT con guía', 'detail': 'Detalle dos', 'state': 'current'},
+          {'title': 'Comparar con tu base', 'detail': 'Detalle tres', 'state': 'todo'},
+        ],
+        'message': 'D212 · mensaje de prueba',
+        'queue': [
+          {'title': 'Resumen semanal D210', 'state': 'Recibido'},
+          {'title': 'Este protocolo', 'state': 'Borrador'},
+        ],
+      };
+
+  @override
   Future<VStatus> evaluate(String metric, double value) async {
     evaluated[metric] = value;
     return statusFromApi(evalStatus);

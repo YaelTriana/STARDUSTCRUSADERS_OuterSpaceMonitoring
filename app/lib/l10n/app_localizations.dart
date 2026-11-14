@@ -1058,6 +1058,324 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'DE DÓNDE SALE LA REGLA'**
   String get measRuleOrigin;
+
+  /// No description provided for @autoRealtimeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Enlace con Tierra en tiempo real'**
+  String get autoRealtimeTitle;
+
+  /// No description provided for @autoRealtimeBody.
+  ///
+  /// In es, this message translates to:
+  /// **'En la ISS consultas al flight surgeon directamente.\nCambia el entorno a Luna o Marte para ver el modo autónomo.'**
+  String get autoRealtimeBody;
+
+  /// No description provided for @autoReminder.
+  ///
+  /// In es, this message translates to:
+  /// **'TIRELUS orienta, no diagnostica. Las decisiones médicas las toma tu CMO con el flight surgeon.'**
+  String get autoReminder;
+
+  /// No description provided for @autoPrivacy.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos médicos: solo tú, el CMO y el flight surgeon. Nunca en pantallas compartidas.'**
+  String get autoPrivacy;
+
+  /// No description provided for @autoProtocolOverline.
+  ///
+  /// In es, this message translates to:
+  /// **'PROTOCOLO GUIADO · CON EL CMO'**
+  String get autoProtocolOverline;
+
+  /// No description provided for @autoProgress.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso {done} de {total}'**
+  String autoProgress(int done, int total);
+
+  /// No description provided for @autoOpenGuide.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir guía'**
+  String get autoOpenGuide;
+
+  /// No description provided for @autoGuideClose.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get autoGuideClose;
+
+  /// No description provided for @autoLogContinue.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar y continuar'**
+  String get autoLogContinue;
+
+  /// No description provided for @autoStepLogged.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso registrado. Se agregó al mensaje diferido.'**
+  String get autoStepLogged;
+
+  /// No description provided for @autoAllDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Protocolo completo. Revisa la decisión a bordo y envía el mensaje a Tierra.'**
+  String get autoAllDone;
+
+  /// No description provided for @autoNoWait.
+  ///
+  /// In es, this message translates to:
+  /// **'Las decisiones no esperan la respuesta de Tierra. TIRELUS guía, registra cada paso y lo envía en diferido.'**
+  String get autoNoWait;
+
+  /// No description provided for @autoMessageTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'MENSAJE DIFERIDO AL FLIGHT SURGEON'**
+  String get autoMessageTitle;
+
+  /// No description provided for @autoMessageMeta.
+  ///
+  /// In es, this message translates to:
+  /// **'Texto comprimido · sin video'**
+  String get autoMessageMeta;
+
+  /// No description provided for @autoDelayLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Retraso {delay}'**
+  String autoDelayLabel(String delay);
+
+  /// No description provided for @autoHoldSend.
+  ///
+  /// In es, this message translates to:
+  /// **'Mantén para enviar a Tierra'**
+  String get autoHoldSend;
+
+  /// No description provided for @autoTimelineTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'LÍNEA DE TIEMPO DEL MENSAJE'**
+  String get autoTimelineTitle;
+
+  /// No description provided for @autoTlDrafted.
+  ///
+  /// In es, this message translates to:
+  /// **'Redactado a bordo'**
+  String get autoTlDrafted;
+
+  /// No description provided for @autoTlQueued.
+  ///
+  /// In es, this message translates to:
+  /// **'En cola de envío'**
+  String get autoTlQueued;
+
+  /// No description provided for @autoTlSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviado'**
+  String get autoTlSent;
+
+  /// No description provided for @autoTlArrival.
+  ///
+  /// In es, this message translates to:
+  /// **'Llega a Tierra en {time}'**
+  String autoTlArrival(String time);
+
+  /// No description provided for @autoTlArrived.
+  ///
+  /// In es, this message translates to:
+  /// **'Llegó a Tierra'**
+  String get autoTlArrived;
+
+  /// No description provided for @autoTlResponse.
+  ///
+  /// In es, this message translates to:
+  /// **'Respuesta posible en {time} o más'**
+  String autoTlResponse(String time);
+
+  /// No description provided for @autoTlResponseIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Respuesta recibida (ejemplo)'**
+  String get autoTlResponseIn;
+
+  /// No description provided for @autoTlResponseBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Ejemplo: seguir con la autoprueba diaria y repetir el OCT en 24 h. Cualquier cambio, escala al flight surgeon.'**
+  String get autoTlResponseBody;
+
+  /// No description provided for @autoEtaAssumption.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiempos de ejemplo (supuesto de diseño): ida {oneWay}; la respuesta no llega antes de la ida y vuelta.'**
+  String autoEtaAssumption(String oneWay);
+
+  /// No description provided for @autoSpeedUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Acelerar el tiempo (solo demo)'**
+  String get autoSpeedUp;
+
+  /// No description provided for @autoQueueTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'COLA DE COMUNICACIÓN'**
+  String get autoQueueTitle;
+
+  /// No description provided for @autoQueueThisProtocol.
+  ///
+  /// In es, this message translates to:
+  /// **'Este protocolo'**
+  String get autoQueueThisProtocol;
+
+  /// No description provided for @autoQueueDraft.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrador'**
+  String get autoQueueDraft;
+
+  /// No description provided for @autoQueueSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviado'**
+  String get autoQueueSent;
+
+  /// No description provided for @autoQueueReceived.
+  ///
+  /// In es, this message translates to:
+  /// **'Recibido'**
+  String get autoQueueReceived;
+
+  /// No description provided for @autoDecisionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'DECISIÓN A BORDO'**
+  String get autoDecisionTitle;
+
+  /// No description provided for @autoDecisionIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Opciones del protocolo para comentar con tu CMO. No son un diagnóstico ni una orden.'**
+  String get autoDecisionIntro;
+
+  /// No description provided for @autoPros.
+  ///
+  /// In es, this message translates to:
+  /// **'A favor'**
+  String get autoPros;
+
+  /// No description provided for @autoCons.
+  ///
+  /// In es, this message translates to:
+  /// **'En contra'**
+  String get autoCons;
+
+  /// No description provided for @autoOpt1Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguir monitoreando con autoprueba diaria'**
+  String get autoOpt1Title;
+
+  /// No description provided for @autoOpt1Pros.
+  ///
+  /// In es, this message translates to:
+  /// **'No gasta recursos y mantiene la tendencia al día.'**
+  String get autoOpt1Pros;
+
+  /// No description provided for @autoOpt1Cons.
+  ///
+  /// In es, this message translates to:
+  /// **'Si empeora, puede tardar más en detectarse.'**
+  String get autoOpt1Cons;
+
+  /// No description provided for @autoOpt2Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Repetir el OCT en 24 horas'**
+  String get autoOpt2Title;
+
+  /// No description provided for @autoOpt2Pros.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirma si el grosor retiniano sigue subiendo frente a tu base.'**
+  String get autoOpt2Pros;
+
+  /// No description provided for @autoOpt2Cons.
+  ///
+  /// In es, this message translates to:
+  /// **'Pide tiempo del CMO y del equipo de imagen.'**
+  String get autoOpt2Cons;
+
+  /// No description provided for @autoOpt3Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Pedir consulta prioritaria diferida'**
+  String get autoOpt3Title;
+
+  /// No description provided for @autoOpt3Pros.
+  ///
+  /// In es, this message translates to:
+  /// **'Queda registrado y el flight surgeon lo ve primero.'**
+  String get autoOpt3Pros;
+
+  /// No description provided for @autoOpt3Cons.
+  ///
+  /// In es, this message translates to:
+  /// **'La respuesta tarda la ida y vuelta de la comunicación.'**
+  String get autoOpt3Cons;
+
+  /// No description provided for @autoMedkitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'BOTIQUÍN · INVENTARIO DE EJEMPLO'**
+  String get autoMedkitTitle;
+
+  /// No description provided for @autoMedkitNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos de ejemplo. El inventario real lo confirma el CMO.'**
+  String get autoMedkitNote;
+
+  /// No description provided for @autoMedkitItem1.
+  ///
+  /// In es, this message translates to:
+  /// **'Lágrimas artificiales'**
+  String get autoMedkitItem1;
+
+  /// No description provided for @autoMedkitItem1Qty.
+  ///
+  /// In es, this message translates to:
+  /// **'12 viales'**
+  String get autoMedkitItem1Qty;
+
+  /// No description provided for @autoMedkitItem2.
+  ///
+  /// In es, this message translates to:
+  /// **'OCT portátil'**
+  String get autoMedkitItem2;
+
+  /// No description provided for @autoMedkitItem2Qty.
+  ///
+  /// In es, this message translates to:
+  /// **'1 equipo'**
+  String get autoMedkitItem2Qty;
+
+  /// No description provided for @autoMedkitItem3.
+  ///
+  /// In es, this message translates to:
+  /// **'Lentes de enfoque ajustable'**
+  String get autoMedkitItem3;
+
+  /// No description provided for @autoMedkitItem3Qty.
+  ///
+  /// In es, this message translates to:
+  /// **'2 pares'**
+  String get autoMedkitItem3Qty;
 }
 
 class _AppLocalizationsDelegate
