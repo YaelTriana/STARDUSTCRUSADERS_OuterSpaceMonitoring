@@ -62,8 +62,7 @@ METRICS: dict[str, dict] = {
         "abs_low": None,
         # >>> DATOS: 14 noches D34–D47 (matriz: escenarios nominal · déficit).
         "series": [],
-        # Ojo: aquí preocupa la baja. evaluate_trend hoy solo cuenta días SOBRE la base,
-        # así que la tendencia de sueño no alertará un déficit hasta extender rules.py.
+        # Aquí preocupa la baja: evaluate_trend recibe direction="below".
         "alert_when": "below",
         "rule": "Supuesto de diseño: periodo de sueño de 8.5 h; déficit sostenido frente a la base.",
         "source": "Promedio histórico <6.1 h (Basner et al., PMC4691281). Umbral: supuesto de diseño.",
@@ -78,7 +77,7 @@ METRICS: dict[str, dict] = {
         "abs_low": None,
         # >>> DATOS: 14 autorreportes D34–D47 (matriz: escenarios estable · baja).
         "series": [],
-        # Igual que sueño: preocupa la baja (ver nota de evaluate_trend arriba).
+        # Igual que sueño: preocupa la baja.
         "alert_when": "below",
         "rule": "Supuesto de diseño: autorreporte por debajo del rango habitual.",
         "source": "Autorreporte: supuesto de diseño, sin umbral publicado.",
