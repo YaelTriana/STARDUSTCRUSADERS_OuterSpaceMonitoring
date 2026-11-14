@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app_state.dart';
 import '../data/models.dart';
@@ -96,6 +97,24 @@ class _TrendScreenState extends State<TrendScreen> {
             onPressed: () => ScaffoldMessenger.of(context)
                 .showSnackBar(const SnackBar(content: Text('Aviso enviado al CMO de la tripulación.'))),
             child: const Text('Avisar al CMO ahora'),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                final export = await state.api.exportSummary();
+                await Clipboard.setData(ClipboardData(text: export['text'] as String));
+                messenger.showSnackBar(SnackBar(
+                  content: Text('Resumen copiado al portapapeles (${export['filename']}). '
+                      'Solo para ti, el CMO y el flight surgeon.'),
+                ));
+              } catch (_) {
+                messenger.showSnackBar(const SnackBar(content: Text('No se pudo exportar el resumen. Intenta de nuevo.')));
+              }
+            },
+            icon: const Icon(Icons.ios_share),
+            label: const Text('Exportar resumen médico'),
           ),
           const SizedBox(height: 12),
           Text(trend.rule, style: const TextStyle(fontSize: 12, color: VColors.muted, height: 1.5)),
