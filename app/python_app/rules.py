@@ -44,6 +44,8 @@ class TrendResult:
     consecutive_above: int
     days_out_of_range: int
     delta_from_high: float
+    consecutive_below: int = 0
+    delta_from_low: float = 0.0
 
 
 def evaluate_reading(
@@ -61,33 +63,57 @@ def evaluate_reading(
     return Status.NOMINAL if base.contains(value) else Status.ATENCION
 
 
+def _streak(series: list[float], outside) -> int:
+    """Días seguidos, contando desde hoy hacia atrás, que cumplen `outside`."""
+    count = 0
+    for value in reversed(series):
+        if not outside(value):
+            break
+        count += 1
+    return count
+
+
 def evaluate_trend(
     series: list[float],
     base: Baseline,
     absolute_high: float | None = None,
+    absolute_low: float | None = None,
+    direction: str = "above",
 ) -> TrendResult:
-    """Serie diaria (la última lectura es hoy)."""
+    """Serie diaria (la última lectura es hoy).
+
+    direction indica hacia dónde preocupa la desviación sostenida:
+    "above" (presión, FC) o "below" (sueño, ánimo). Los límites absolutos
+    de respaldo marcan "crítico" en cualquier dirección.
+    """
+    if direction not in ("above", "below"):
+        raise ValueError(f"direction debe ser 'above' o 'below', no {direction!r}")
     if not series:
         return TrendResult(Status.SIN_DATO, 0, 0, 0.0)
 
-    consecutive = 0
-    for value in reversed(series):
-        if value > base.high:
-            consecutive += 1
-        else:
-            break
-
+    above = _streak(series, lambda v: v > base.high)
+    below = _streak(series, lambda v: v < base.low)
     out_of_range = sum(1 for v in series if not base.contains(v))
     last = series[-1]
+    sustained = above if direction == "above" else below
 
-    if absolute_high is not None and last >= absolute_high:
+    if (absolute_high is not None and last >= absolute_high) or (
+        absolute_low is not None and last <= absolute_low
+    ):
         status = Status.CRITICO
-    elif consecutive >= SUSTAINED_DAYS:
+    elif sustained >= SUSTAINED_DAYS:
         status = Status.ATENCION
     else:
         status = Status.NOMINAL
 
-    return TrendResult(status, consecutive, out_of_range, last - base.high)
+    return TrendResult(
+        status,
+        above,
+        out_of_range,
+        last - base.high,
+        consecutive_below=below,
+        delta_from_low=round(last - base.low, 4),
+    )
 
 
 def evaluate_sans(delta_microns: float) -> Status:

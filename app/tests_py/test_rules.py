@@ -64,3 +64,48 @@ class TestEvaluateSans:
 
     def test_55_um_es_critico(self):
         assert evaluate_sans(55) is Status.CRITICO
+
+
+SUENO = Baseline(6.5, 8.5)
+
+
+class TestTendenciaALaBaja:
+    """Sueño y ánimo preocupan cuando BAJAN (alert_when="below")."""
+
+    def test_tres_noches_bajo_la_base_es_atencion(self):
+        r = evaluate_trend([7.5, 6.2, 6.0, 5.8], SUENO, direction="below")
+        assert r.consecutive_below == 3
+        assert r.status is Status.ATENCION
+
+    def test_dos_noches_bajo_la_base_sigue_nominal(self):
+        r = evaluate_trend([7.5, 7.0, 6.2, 6.0], SUENO, direction="below")
+        assert r.consecutive_below == 2
+        assert r.status is Status.NOMINAL
+
+    def test_una_noche_en_rango_rompe_la_racha(self):
+        r = evaluate_trend([6.0, 6.1, 7.0, 6.2], SUENO, direction="below")
+        assert r.consecutive_below == 1
+        assert r.status is Status.NOMINAL
+
+    def test_subir_no_alerta_si_preocupa_la_baja(self):
+        r = evaluate_trend([9.0, 9.2, 9.5, 9.1], SUENO, direction="below")
+        assert r.consecutive_above == 4
+        assert r.status is Status.NOMINAL
+
+    def test_bajar_no_alerta_si_preocupa_la_subida(self):
+        r = evaluate_trend([100, 101, 102, 103], BASE)  # direction="above" por defecto
+        assert r.consecutive_below == 4
+        assert r.status is Status.NOMINAL
+
+    def test_hoy_bajo_el_limite_absoluto_es_critico(self):
+        assert evaluate_trend([7.0, 4.5], SUENO, absolute_low=5.0, direction="below").status is Status.CRITICO
+
+    def test_reporta_la_distancia_al_limite_inferior(self):
+        r = evaluate_trend([7.0, 6.0], SUENO, direction="below")
+        assert r.delta_from_low == -0.5
+
+    def test_direccion_invalida_falla_claro(self):
+        import pytest
+
+        with pytest.raises(ValueError):
+            evaluate_trend([7.0], SUENO, direction="lateral")

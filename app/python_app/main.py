@@ -174,10 +174,12 @@ def trend(metric: str) -> dict:
     if not series or base is None:
         # Aún no hay datos de ejemplo para esta métrica (ver data.METRICS).
         return {**common, "series": [], "first_day": data.MISSION_DAY, "base": _base_json(m),
-                "status": Status.SIN_DATO.value, "consecutive_above": 0, "days_out_of_range": 0,
-                "delta_from_high": 0, "avg7": 0}
+                "status": Status.SIN_DATO.value, "consecutive_above": 0, "consecutive_below": 0, "days_out_of_range": 0,
+                "delta_from_high": 0, "delta_from_low": 0, "avg7": 0}
 
-    result = evaluate_trend(series, base, absolute_high=m["abs_high"])
+    result = evaluate_trend(
+        series, base, absolute_high=m["abs_high"], absolute_low=m["abs_low"], direction=m["alert_when"]
+    )
     last7 = series[-7:]
     return {
         **common,
@@ -186,8 +188,10 @@ def trend(metric: str) -> dict:
         "base": _base_json(m),
         "status": result.status.value,
         "consecutive_above": result.consecutive_above,
+        "consecutive_below": result.consecutive_below,
         "days_out_of_range": result.days_out_of_range,
         "delta_from_high": result.delta_from_high,
+        "delta_from_low": result.delta_from_low,
         "avg7": round(sum(last7) / len(last7)),
     }
 

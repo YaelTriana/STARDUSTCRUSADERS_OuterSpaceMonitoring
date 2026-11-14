@@ -100,3 +100,28 @@ class TestSans:
     def test_tendencia_sans_sin_serie_es_sin_dato(self, monkeypatch):
         monkeypatch.setattr(data, "SANS_SERIES", [])
         assert client.get("/trend/sans").json()["status"] == "sin_dato"
+
+
+# --- 4. Tendencias a la baja (sueño y ánimo) ----------------------------------
+
+
+class TestTendenciaALaBajaEnLaApi:
+    def test_sueno_bajo_la_base_alerta(self, monkeypatch):
+        from rules import Baseline
+
+        monkeypatch.setitem(
+            data.METRICS,
+            "sleep_hours",
+            {**data.METRICS["sleep_hours"], "base": Baseline(6.5, 8.5), "abs_low": 5.0,
+             "series": [7.8, 7.5, 7.0, 6.2, 6.0, 5.8]},
+        )
+        body = client.get("/trend/sleep_hours").json()
+        assert body["alert_when"] == "below"
+        assert body["status"] == "atencion"
+        assert body["consecutive_below"] == 3
+        assert body["delta_from_low"] == pytest.approx(-0.7)
+
+    def test_sistolica_sigue_alertando_hacia_arriba(self):
+        body = client.get("/trend/systolic").json()
+        assert body["status"] == "atencion"
+        assert body["consecutive_below"] == 0
