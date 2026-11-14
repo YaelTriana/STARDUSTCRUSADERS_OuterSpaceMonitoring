@@ -1,4 +1,10 @@
+import sys
+from pathlib import Path
+
 import pytest
+
+# Las pruebas importan rules, data, db y catalog directamente desde python_app.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python_app"))
 
 
 @pytest.fixture(autouse=True)
