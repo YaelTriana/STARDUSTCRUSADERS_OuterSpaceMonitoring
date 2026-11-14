@@ -15,6 +15,9 @@ venv/
 app/build/
 app/.dart_tool/
 
+# Datasets locales (retinal pesa 117 MB, GitHub rechaza > 100 MB)
+datosdb/
+
 # Sistema
 .DS_Store
 Thumbs.db

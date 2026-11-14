@@ -18,6 +18,7 @@ class TrendChart extends StatelessWidget {
     required this.semanticsLabel,
     required this.baseLabel,
     this.selected,
+    this.decimals = 0,
     this.onSelect,
   });
 
@@ -27,6 +28,7 @@ class TrendChart extends StatelessWidget {
   final double baseHigh;
   final String semanticsLabel;
   final String baseLabel;
+  final int decimals;
   final int? selected;
   final ValueChanged<int>? onSelect;
 
@@ -42,7 +44,7 @@ class TrendChart extends StatelessWidget {
             child: SizedBox(
               height: 300,
               child: CustomPaint(
-                painter: _TrendPainter(series, firstDay, baseLow, baseHigh, baseLabel, selected),
+                painter: _TrendPainter(series, firstDay, baseLow, baseHigh, baseLabel, selected, decimals),
                 size: Size.infinite,
               ),
             ),
@@ -52,12 +54,13 @@ class TrendChart extends StatelessWidget {
 }
 
 class _TrendPainter extends CustomPainter {
-  _TrendPainter(this.series, this.firstDay, this.baseLow, this.baseHigh, this.baseLabel, this.selected);
+  _TrendPainter(this.series, this.firstDay, this.baseLow, this.baseHigh, this.baseLabel, this.selected, this.decimals);
   final List<double> series;
   final int firstDay;
   final double baseLow;
   final double baseHigh;
   final String baseLabel;
+  final int decimals;
   final int? selected;
 
   static const _left = 40.0;
@@ -103,7 +106,7 @@ class _TrendPainter extends CustomPainter {
     final grid = Paint()..color = VColors.border;
     for (final v in [minY, (minY + maxY) / 2, maxY]) {
       canvas.drawLine(Offset(_left, y(v)), Offset(size.width, y(v)), grid);
-      _label(canvas, v.toStringAsFixed(0), Offset(0, y(v) - 8));
+      _label(canvas, v.toStringAsFixed(decimals), Offset(0, y(v) - 8));
     }
 
     // Guía del punto elegido.

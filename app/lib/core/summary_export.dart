@@ -21,13 +21,13 @@ String buildSummaryText(
     b
       ..writeln(l.exportMetricLine(
         metricLabel,
-        trend.series.last.toStringAsFixed(0),
+        trend.fmt(trend.series.last),
         unit,
-        trend.baseLow.toStringAsFixed(0),
-        trend.baseHigh.toStringAsFixed(0),
+        trend.fmt(trend.baseLow),
+        trend.fmt(trend.baseHigh),
         '${trend.avg7}',
       ))
-      ..writeln(l.exportDaysLine(trend.daysOutOfRange, trend.series.length, trend.consecutiveAbove))
+      ..writeln(l.exportDaysLine(trend.daysOutOfRange, trend.series.length, trend.sustainedStreak))
       ..writeln();
   }
   b.writeln(l.exportItemsHeader);

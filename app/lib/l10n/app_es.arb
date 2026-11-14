@@ -238,7 +238,6 @@
       }
     }
   },
-  "trendStreakAbove": "Racha sobre tu base",
   "trendStreakValue": "{days} días",
   "@trendStreakValue": {
     "placeholders": {
@@ -257,11 +256,14 @@
       }
     }
   },
-  "trendAlertBody": "Llevas {days} días seguidos sobre tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.",
+  "trendAlertBody": "Llevas {days} días seguidos {direction} tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.",
   "@trendAlertBody": {
     "placeholders": {
       "days": {
         "type": "int"
+      },
+      "direction": {
+        "type": "String"
       }
     }
   },
@@ -271,7 +273,7 @@
   "trendPlanBody": "1. Mide dos veces al día (mañana y noche) durante 3 días.\n2. Registra sal en la dieta, sueño y estrés del día.\n3. Comparte el resumen en tu conferencia médica privada.",
   "trendAddSummary": "Agregar al resumen médico",
   "trendAddedSummary": "Agregado al resumen médico.",
-  "trendSummaryEntry": "{metric}: {days} días sobre la base (hoy {value} {unit})",
+  "trendSummaryEntry": "{metric}: {days} días {direction} la base (hoy {value} {unit})",
   "@trendSummaryEntry": {
     "placeholders": {
       "metric": {
@@ -279,6 +281,9 @@
       },
       "days": {
         "type": "int"
+      },
+      "direction": {
+        "type": "String"
       },
       "value": {
         "type": "String"
@@ -393,6 +398,56 @@
   "@trendExportedFile": {
     "placeholders": {
       "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "trendStreakLabel": "Racha {direction} tu base",
+  "dirAbove": "sobre",
+  "dirBelow": "bajo",
+  "trendPlanSleep": "1. Revisa luz, ruido y temperatura de tu estación de descanso.\n2. Respeta tu periodo de sueño programado durante 3 noches.\n3. Comparte el resumen en tu conferencia médica privada.",
+  "trendPlanDefault": "1. Repite la medición a la misma hora durante 3 días.\n2. Anota lo que pudo influir (sueño, carga de trabajo, ejercicio).\n3. Comparte el resumen en tu conferencia médica privada.",
+  "navEyes": "Ojos",
+  "@trendStreakLabel": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeUnder": "{delta} bajo tu base",
+  "measGenericSummaryEntry": "{metric}: {value} {unit} · {status} frente a tu base",
+  "measSavedOk": "Medición guardada.",
+  "measSavedAdded": "Medición guardada y agregada al resumen de tu conferencia médica.",
+  "measNoBase": "Aún no hay línea base prevuelo para esta métrica, así que no hay contra qué comparar.",
+  "measGenericRangeTitle": "{metric} frente a tu rango personal",
+  "measRuleOrigin": "DE DÓNDE SALE LA REGLA",
+  "@rangeUnder": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "@measGenericSummaryEntry": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@measGenericRangeTitle": {
+    "placeholders": {
+      "metric": {
         "type": "String"
       }
     }

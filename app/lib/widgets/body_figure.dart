@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../core/touch.dart';
 import '../data/models.dart';
-import '../l10n/app_localizations.dart';
 import '../l10n/labels.dart';
 import '../theme.dart';
 import 'common.dart';
@@ -90,7 +89,7 @@ class _ZoneButton extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
         button: true,
         selected: selected,
-        label: '${system.name}, ${AppLocalizations.of(context).status(system.status)}',
+        label: '${system.name}, ${context.l10n.status(system.status)}',
         child: Material(
           color: selected ? VColors.surface : VColors.surface2,
           shape: StadiumBorder(

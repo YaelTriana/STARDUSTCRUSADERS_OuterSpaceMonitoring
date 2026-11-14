@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
-import '../l10n/app_localizations.dart';
 import '../l10n/labels.dart';
 import '../theme.dart';
 
@@ -72,7 +71,7 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return Semantics(
         label: l.statusSemantics(l.status(status)),
         child: Container(
@@ -118,7 +117,7 @@ class SampleTag extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: VColors.borderStrong),
         ),
-        child: Text(AppLocalizations.of(context).sampleData,
+        child: Text(context.l10n.sampleData,
             style: const TextStyle(color: VColors.muted, fontSize: 12)),
       );
 }
@@ -212,7 +211,7 @@ class AsyncView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return FutureBuilder<T>(
       future: future,
       builder: (context, snap) {

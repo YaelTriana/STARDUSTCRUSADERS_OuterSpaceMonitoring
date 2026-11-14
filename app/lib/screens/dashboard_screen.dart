@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../core/touch.dart';
 import '../data/models.dart';
-import '../l10n/app_localizations.dart';
 import '../l10n/labels.dart';
 import '../theme.dart';
 import '../widgets/body_figure.dart';
@@ -34,7 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return AsyncView<Dashboard>(
       future: _future!,
       onRetry: _retry,
@@ -104,7 +103,7 @@ class _SummaryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     // Críticos primero, luego atención.
     final attention = [
       for (final s in dashboard.systems)
@@ -171,7 +170,7 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return Wrap(spacing: VSpace.lg, runSpacing: VSpace.sm, children: [
       for (final s in VStatus.values)
         Row(mainAxisSize: MainAxisSize.min, children: [
@@ -189,7 +188,7 @@ class _SystemDetail extends StatelessWidget {
   final VoidCallback onMeasure;
 
   void _showSource(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -204,7 +203,7 @@ class _SystemDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return SectionCard(
       padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -273,7 +272,7 @@ class _TaskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     final pending = dashboard.tasks.isEmpty ? null : dashboard.tasks.first;
     final other = dashboard.tasks.length > 1 ? dashboard.tasks[1] : null;
     final ratio = (dashboard.exerciseDone / dashboard.exerciseGoal).clamp(0.0, 1.0);

@@ -21,7 +21,7 @@ class EnvSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < compactBreakpoint;
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return compact ? _menu(l) : _segmented(l);
   }
 

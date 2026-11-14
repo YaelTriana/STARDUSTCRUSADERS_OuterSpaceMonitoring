@@ -12,6 +12,7 @@ import 'screens/base_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/eva_screens.dart';
 import 'screens/measurement_screen.dart';
+import 'screens/sans_screen.dart';
 import 'screens/trend_screen.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -68,7 +69,7 @@ class _BootScreenState extends State<BootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return FutureBuilder<void>(
         future: _boot,
         builder: (context, snap) {
@@ -114,6 +115,7 @@ final _dests = <_Dest>[
   _Dest((l) => l.navPanel, Icons.monitor_heart_outlined),
   _Dest((l) => l.navMeasurement, Icons.straighten),
   _Dest((l) => l.navTrend, Icons.show_chart),
+  _Dest((l) => l.navEyes, Icons.remove_red_eye_outlined),
   _Dest((l) => l.navAutonomous, Icons.satellite_alt_outlined),
   _Dest((l) => l.navBase, Icons.home_work_outlined),
   _Dest((l) => l.navVisor, Icons.visibility_outlined),
@@ -134,9 +136,10 @@ class _ShellState extends State<Shell> {
         0 => DashboardScreen(onGoTo: (i) => setState(() => _index = i)),
         1 => const MeasurementScreen(),
         2 => TrendScreen(onGoTo: (i) => setState(() => _index = i)),
-        3 => const AutonomousScreen(),
-        4 => const BaseScreen(),
-        5 => const VisorScreen(),
+        3 => const SansScreen(),
+        4 => const AutonomousScreen(),
+        5 => const BaseScreen(),
+        6 => const VisorScreen(),
         _ => const HandheldScreen(),
       };
 
@@ -150,7 +153,7 @@ class _ShellState extends State<Shell> {
             ListTile(
               minTileHeight: Touch.primary,
               leading: Icon(_dests[i].icon),
-              title: Text(_dests[i].label(AppLocalizations.of(context))),
+              title: Text(_dests[i].label(context.l10n)),
               selected: i == _index,
               onTap: () {
                 setState(() => _index = i);
@@ -164,7 +167,7 @@ class _ShellState extends State<Shell> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     final width = MediaQuery.sizeOf(context).width;
     final wide = width >= 760;
     final topBar = _TopBar(compact: width < 900);
@@ -178,7 +181,8 @@ class _ShellState extends State<Shell> {
     if (wide) {
       return Scaffold(
         appBar: topBar,
-        body: Row(children: [
+        // stretch: las pantallas cortas empiezan arriba en vez de quedar centradas.
+        body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           NavigationRail(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
@@ -224,7 +228,7 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return AppBar(
       backgroundColor: VColors.space,
       surfaceTintColor: Colors.transparent,

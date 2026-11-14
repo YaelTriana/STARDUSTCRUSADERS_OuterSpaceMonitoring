@@ -734,12 +734,6 @@ abstract class AppLocalizations {
   /// **'{out} de {total}'**
   String trendOutDaysValue(int out, int total);
 
-  /// No description provided for @trendStreakAbove.
-  ///
-  /// In es, this message translates to:
-  /// **'Racha sobre tu base'**
-  String get trendStreakAbove;
-
   /// No description provided for @trendStreakValue.
   ///
   /// In es, this message translates to:
@@ -767,8 +761,8 @@ abstract class AppLocalizations {
   /// No description provided for @trendAlertBody.
   ///
   /// In es, this message translates to:
-  /// **'Llevas {days} días seguidos sobre tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.'**
-  String trendAlertBody(int days);
+  /// **'Llevas {days} días seguidos {direction} tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.'**
+  String trendAlertBody(int days, String direction);
 
   /// No description provided for @trendNoData.
   ///
@@ -809,8 +803,14 @@ abstract class AppLocalizations {
   /// No description provided for @trendSummaryEntry.
   ///
   /// In es, this message translates to:
-  /// **'{metric}: {days} días sobre la base (hoy {value} {unit})'**
-  String trendSummaryEntry(String metric, int days, String value, String unit);
+  /// **'{metric}: {days} días {direction} la base (hoy {value} {unit})'**
+  String trendSummaryEntry(
+    String metric,
+    int days,
+    String direction,
+    String value,
+    String unit,
+  );
 
   /// No description provided for @trendHoldCmo.
   ///
@@ -975,6 +975,89 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Resumen copiado al portapapeles ({filename}). Solo para ti, el CMO y el flight surgeon.'**
   String trendExportedFile(String filename);
+
+  /// No description provided for @trendStreakLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha {direction} tu base'**
+  String trendStreakLabel(String direction);
+
+  /// No description provided for @dirAbove.
+  ///
+  /// In es, this message translates to:
+  /// **'sobre'**
+  String get dirAbove;
+
+  /// No description provided for @dirBelow.
+  ///
+  /// In es, this message translates to:
+  /// **'bajo'**
+  String get dirBelow;
+
+  /// No description provided for @trendPlanSleep.
+  ///
+  /// In es, this message translates to:
+  /// **'1. Revisa luz, ruido y temperatura de tu estación de descanso.\n2. Respeta tu periodo de sueño programado durante 3 noches.\n3. Comparte el resumen en tu conferencia médica privada.'**
+  String get trendPlanSleep;
+
+  /// No description provided for @trendPlanDefault.
+  ///
+  /// In es, this message translates to:
+  /// **'1. Repite la medición a la misma hora durante 3 días.\n2. Anota lo que pudo influir (sueño, carga de trabajo, ejercicio).\n3. Comparte el resumen en tu conferencia médica privada.'**
+  String get trendPlanDefault;
+
+  /// No description provided for @navEyes.
+  ///
+  /// In es, this message translates to:
+  /// **'Ojos'**
+  String get navEyes;
+
+  /// No description provided for @rangeUnder.
+  ///
+  /// In es, this message translates to:
+  /// **'{delta} bajo tu base'**
+  String rangeUnder(String delta);
+
+  /// No description provided for @measGenericSummaryEntry.
+  ///
+  /// In es, this message translates to:
+  /// **'{metric}: {value} {unit} · {status} frente a tu base'**
+  String measGenericSummaryEntry(
+    String metric,
+    String value,
+    String unit,
+    String status,
+  );
+
+  /// No description provided for @measSavedOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Medición guardada.'**
+  String get measSavedOk;
+
+  /// No description provided for @measSavedAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Medición guardada y agregada al resumen de tu conferencia médica.'**
+  String get measSavedAdded;
+
+  /// No description provided for @measNoBase.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay línea base prevuelo para esta métrica, así que no hay contra qué comparar.'**
+  String get measNoBase;
+
+  /// No description provided for @measGenericRangeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{metric} frente a tu rango personal'**
+  String measGenericRangeTitle(String metric);
+
+  /// No description provided for @measRuleOrigin.
+  ///
+  /// In es, this message translates to:
+  /// **'DE DÓNDE SALE LA REGLA'**
+  String get measRuleOrigin;
 }
 
 class _AppLocalizationsDelegate

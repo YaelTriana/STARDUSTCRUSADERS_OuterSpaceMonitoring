@@ -373,9 +373,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get trendStreakAbove => 'Racha sobre tu base';
-
-  @override
   String trendStreakValue(int days) {
     return '$days días';
   }
@@ -393,8 +390,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String trendAlertBody(int days) {
-    return 'Llevas $days días seguidos sobre tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.';
+  String trendAlertBody(int days, String direction) {
+    return 'Llevas $days días seguidos $direction tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.';
   }
 
   @override
@@ -417,8 +414,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get trendAddedSummary => 'Agregado al resumen médico.';
 
   @override
-  String trendSummaryEntry(String metric, int days, String value, String unit) {
-    return '$metric: $days días sobre la base (hoy $value $unit)';
+  String trendSummaryEntry(
+    String metric,
+    int days,
+    String direction,
+    String value,
+    String unit,
+  ) {
+    return '$metric: $days días $direction la base (hoy $value $unit)';
   }
 
   @override
@@ -522,4 +525,60 @@ class AppLocalizationsEs extends AppLocalizations {
   String trendExportedFile(String filename) {
     return 'Resumen copiado al portapapeles ($filename). Solo para ti, el CMO y el flight surgeon.';
   }
+
+  @override
+  String trendStreakLabel(String direction) {
+    return 'Racha $direction tu base';
+  }
+
+  @override
+  String get dirAbove => 'sobre';
+
+  @override
+  String get dirBelow => 'bajo';
+
+  @override
+  String get trendPlanSleep =>
+      '1. Revisa luz, ruido y temperatura de tu estación de descanso.\n2. Respeta tu periodo de sueño programado durante 3 noches.\n3. Comparte el resumen en tu conferencia médica privada.';
+
+  @override
+  String get trendPlanDefault =>
+      '1. Repite la medición a la misma hora durante 3 días.\n2. Anota lo que pudo influir (sueño, carga de trabajo, ejercicio).\n3. Comparte el resumen en tu conferencia médica privada.';
+
+  @override
+  String get navEyes => 'Ojos';
+
+  @override
+  String rangeUnder(String delta) {
+    return '$delta bajo tu base';
+  }
+
+  @override
+  String measGenericSummaryEntry(
+    String metric,
+    String value,
+    String unit,
+    String status,
+  ) {
+    return '$metric: $value $unit · $status frente a tu base';
+  }
+
+  @override
+  String get measSavedOk => 'Medición guardada.';
+
+  @override
+  String get measSavedAdded =>
+      'Medición guardada y agregada al resumen de tu conferencia médica.';
+
+  @override
+  String get measNoBase =>
+      'Aún no hay línea base prevuelo para esta métrica, así que no hay contra qué comparar.';
+
+  @override
+  String measGenericRangeTitle(String metric) {
+    return '$metric frente a tu rango personal';
+  }
+
+  @override
+  String get measRuleOrigin => 'DE DÓNDE SALE LA REGLA';
 }

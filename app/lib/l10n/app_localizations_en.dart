@@ -372,9 +372,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get trendStreakAbove => 'Streak above baseline';
-
-  @override
   String trendStreakValue(int days) {
     return '$days days';
   }
@@ -391,8 +388,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String trendAlertBody(int days) {
-    return 'You have been above your pre-flight range for $days days in a row. This is not an emergency, but your flight surgeon should take a look.';
+  String trendAlertBody(int days, String direction) {
+    return 'You have been $direction your pre-flight range for $days days in a row. This is not an emergency, but your flight surgeon should take a look.';
   }
 
   @override
@@ -415,8 +412,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trendAddedSummary => 'Added to the medical summary.';
 
   @override
-  String trendSummaryEntry(String metric, int days, String value, String unit) {
-    return '$metric: $days days above baseline (today $value $unit)';
+  String trendSummaryEntry(
+    String metric,
+    int days,
+    String direction,
+    String value,
+    String unit,
+  ) {
+    return '$metric: $days days $direction baseline (today $value $unit)';
   }
 
   @override
@@ -520,4 +523,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String trendExportedFile(String filename) {
     return 'Summary copied to the clipboard ($filename). Only for you, the CMO and the flight surgeon.';
   }
+
+  @override
+  String trendStreakLabel(String direction) {
+    return 'Streak $direction baseline';
+  }
+
+  @override
+  String get dirAbove => 'above';
+
+  @override
+  String get dirBelow => 'below';
+
+  @override
+  String get trendPlanSleep =>
+      '1. Check the light, noise and temperature of your rest station.\n2. Keep to your scheduled sleep period for 3 nights.\n3. Share the summary at your private medical conference.';
+
+  @override
+  String get trendPlanDefault =>
+      '1. Repeat the measurement at the same time for 3 days.\n2. Note what may have influenced it (sleep, workload, exercise).\n3. Share the summary at your private medical conference.';
+
+  @override
+  String get navEyes => 'Eyes';
+
+  @override
+  String rangeUnder(String delta) {
+    return '$delta below your baseline';
+  }
+
+  @override
+  String measGenericSummaryEntry(
+    String metric,
+    String value,
+    String unit,
+    String status,
+  ) {
+    return '$metric: $value $unit · $status vs your baseline';
+  }
+
+  @override
+  String get measSavedOk => 'Measurement saved.';
+
+  @override
+  String get measSavedAdded =>
+      'Measurement saved and added to your medical conference summary.';
+
+  @override
+  String get measNoBase =>
+      'There is no pre-flight baseline for this metric yet, so there is nothing to compare against.';
+
+  @override
+  String measGenericRangeTitle(String metric) {
+    return '$metric vs your personal range';
+  }
+
+  @override
+  String get measRuleOrigin => 'WHERE THE RULE COMES FROM';
 }

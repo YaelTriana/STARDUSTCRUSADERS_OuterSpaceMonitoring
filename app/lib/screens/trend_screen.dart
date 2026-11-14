@@ -5,7 +5,6 @@ import '../app_state.dart';
 import '../core/summary_export.dart';
 import '../core/touch.dart';
 import '../data/models.dart';
-import '../l10n/app_localizations.dart';
 import '../l10n/labels.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -16,7 +15,10 @@ import '../widgets/trend_chart.dart';
 ///
 /// Objetivo: ver la dirección del cambio y decidir si escalar.
 class TrendScreen extends StatefulWidget {
-  const TrendScreen({super.key, this.onGoTo});
+  const TrendScreen({super.key, this.onGoTo, this.initialMetric = 'systolic'});
+
+  /// Métrica con la que abre (por defecto presión sistólica).
+  final String initialMetric;
 
   /// Para ir a Medición desde el estado "sin dato".
   final ValueChanged<int>? onGoTo;
@@ -28,7 +30,7 @@ class TrendScreen extends StatefulWidget {
 class _TrendScreenState extends State<TrendScreen> {
   Future<List<Map<String, dynamic>>>? _metrics;
   final Map<String, Future<Trend>> _trends = {};
-  String _metric = 'systolic';
+  late String _metric = widget.initialMetric;
   int _days = 14; // la API entrega 14 días; 7 muestra los últimos 7
   bool _table = false;
   int? _selected; // índice dentro de la ventana visible; null = último punto
@@ -67,7 +69,7 @@ class _TrendScreenState extends State<TrendScreen> {
                 future: _trendFor(info['id'] as String),
                 onRetry: _reload,
                 loading: const Column(children: [SkeletonBox(height: 360)]),
-                builder: (context, trend) => trend.series.isEmpty
+                builder: (context, trend) => !trend.hasData
                     ? _empty(context)
                     : _content(context, trend, info, wide),
               ),
@@ -79,7 +81,7 @@ class _TrendScreenState extends State<TrendScreen> {
   }
 
   Widget _controls(BuildContext context, List<Map<String, dynamic>> metrics) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     const style = ButtonStyle(
       minimumSize: WidgetStatePropertyAll(Size(Touch.min, Touch.min)),
       tapTargetSize: MaterialTapTargetSize.padded,
@@ -87,6 +89,7 @@ class _TrendScreenState extends State<TrendScreen> {
     return Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, crossAxisAlignment: WrapCrossAlignment.center, children: [
       for (final m in metrics)
         ChoiceChip(
+          key: Key('metric-${m['id']}'),
           label: Text('${m['label']}', style: const TextStyle(fontSize: VType.body)),
           selected: _metric == m['id'],
           onSelected: (_) => setState(() {
@@ -121,7 +124,7 @@ class _TrendScreenState extends State<TrendScreen> {
   }
 
   Widget _empty(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     return SectionCard(
       padding: const EdgeInsets.all(28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -139,9 +142,9 @@ class _TrendScreenState extends State<TrendScreen> {
   }
 
   Widget _content(BuildContext context, Trend trend, Map<String, dynamic> info, bool wide) {
-    final l = AppLocalizations.of(context);
-    final unit = '${info['unit']}';
-    final label = '${info['label']}';
+    final l = context.l10n;
+    final unit = trend.unit.isNotEmpty ? trend.unit : '${info['unit']}';
+    final label = trend.label.isNotEmpty ? trend.label : '${info['label']}';
     final t = Theme.of(context).textTheme;
 
     final n = _days.clamp(1, trend.series.length);
@@ -151,6 +154,7 @@ class _TrendScreenState extends State<TrendScreen> {
     final idx = (_selected ?? series.length - 1).clamp(0, series.length - 1);
     final value = series[idx];
     final out = _isOut(value, trend);
+    final dir = l.direction(trend.alertsWhenBelow);
 
     final detail = SectionCard(
       padding: const EdgeInsets.symmetric(horizontal: VSpace.sm, vertical: VSpace.sm),
@@ -163,12 +167,18 @@ class _TrendScreenState extends State<TrendScreen> {
         ),
         Expanded(
           child: Column(children: [
-            Text(l.trendPointDetail(firstDay + idx, value.toStringAsFixed(0), unit), style: mono(size: 22)),
+            Text(l.trendPointDetail(firstDay + idx, trend.fmt(value), unit), style: mono(size: 22)),
             const SizedBox(height: 4),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               StatusShape(out ? VStatus.atencion : VStatus.nominal, size: 12),
               const SizedBox(width: 6),
-              Text(out ? l.trendOutOfRange : l.trendInRange, style: const TextStyle(fontSize: VType.body)),
+              Flexible(
+                child: Text(
+                  out ? l.trendOutOfRange : l.trendInRange,
+                  style: const TextStyle(fontSize: VType.body),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ]),
           ]),
         ),
@@ -188,7 +198,7 @@ class _TrendScreenState extends State<TrendScreen> {
           Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, spacing: 16, children: [
             Text(label, style: t.headlineSmall),
             Text.rich(TextSpan(children: [
-              TextSpan(text: trend.series.last.toStringAsFixed(0), style: mono(size: 34)),
+              TextSpan(text: trend.fmt(trend.series.last), style: mono(size: 34)),
               TextSpan(text: ' $unit', style: mono(size: 14, color: VColors.muted)),
             ])),
           ]),
@@ -203,9 +213,10 @@ class _TrendScreenState extends State<TrendScreen> {
               baseHigh: trend.baseHigh,
               selected: idx,
               onSelect: (i) => setState(() => _selected = i),
-              baseLabel: l.rangeBase(trend.baseLow.toStringAsFixed(0), trend.baseHigh.toStringAsFixed(0)),
-              semanticsLabel: l.trendChartSemantics(label, series.length, series.first.toStringAsFixed(0),
-                  series.last.toStringAsFixed(0), trend.baseLow.toStringAsFixed(0), trend.baseHigh.toStringAsFixed(0)),
+              decimals: trend.decimals,
+              baseLabel: l.rangeBase(trend.fmt(trend.baseLow), trend.fmt(trend.baseHigh)),
+              semanticsLabel: l.trendChartSemantics(label, series.length, trend.fmt(series.first),
+                  trend.fmt(series.last), trend.fmt(trend.baseLow), trend.fmt(trend.baseHigh)),
             ),
         ]),
       ),
@@ -213,7 +224,7 @@ class _TrendScreenState extends State<TrendScreen> {
       detail,
       const SizedBox(height: 16),
       Wrap(spacing: 14, runSpacing: 14, children: [
-        SizedBox(width: 220, child: MetricTile(label: l.trendAvg7, value: '${trend.avg7}', valueSize: 26)),
+        SizedBox(width: 220, child: MetricTile(label: l.trendAvg7, value: '${trend.avg7}', unit: unit, valueSize: 26)),
         SizedBox(
           width: 220,
           child: MetricTile(
@@ -225,7 +236,7 @@ class _TrendScreenState extends State<TrendScreen> {
         ),
         SizedBox(
           width: 220,
-          child: MetricTile(label: l.trendStreakAbove, value: l.trendStreakValue(trend.consecutiveAbove), valueSize: 26),
+          child: MetricTile(label: l.trendStreakLabel(dir), value: l.trendStreakValue(trend.sustainedStreak), valueSize: 26),
         ),
       ]),
     ]);
@@ -242,15 +253,17 @@ class _TrendScreenState extends State<TrendScreen> {
   }
 
   Widget _aside(BuildContext context, Trend trend, String label, String unit) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     final state = AppScope.of(context);
+    final dir = l.direction(trend.alertsWhenBelow);
+    final streak = trend.sustainedStreak;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (trend.status == VStatus.nominal)
         AlertBanner(title: l.trendNoAlertTitle, body: l.trendNoAlertBody, status: VStatus.nominal)
       else
         AlertBanner(
           title: l.trendAlertTitle(l.status(trend.status)),
-          body: l.trendAlertBody(trend.consecutiveAbove),
+          body: l.trendAlertBody(streak, dir),
           status: trend.status,
         ),
       const SizedBox(height: 16),
@@ -258,14 +271,14 @@ class _TrendScreenState extends State<TrendScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(l.trendPlanTitle, style: overline()),
           const SizedBox(height: 10),
-          Text(l.trendPlanBody, style: const TextStyle(fontSize: VType.body, height: 1.6)),
+          Text(trend.metric == 'systolic' ? l.trendPlanBody : (trend.metric == 'sleep_hours' ? l.trendPlanSleep : l.trendPlanDefault), style: const TextStyle(fontSize: VType.body, height: 1.6)),
         ]),
       ),
       const SizedBox(height: 16),
       FilledButton(
         onPressed: () async {
           final messenger = ScaffoldMessenger.of(context);
-          await state.addToSummary(l.trendSummaryEntry(label, trend.consecutiveAbove, trend.series.last.toStringAsFixed(0), unit));
+          await state.addToSummary(l.trendSummaryEntry(label, streak, dir, trend.fmt(trend.series.last), unit));
           messenger.showSnackBar(SnackBar(content: Text(l.trendAddedSummary)));
         },
         child: Text(l.trendAddSummary),
@@ -310,7 +323,7 @@ class _TrendScreenState extends State<TrendScreen> {
   /// La fuente principal es `GET /summary/export` (Python). Si el motor no responde,
   /// el texto se arma aquí con lo que ya hay en pantalla, para que Exportar siempre funcione.
   Future<void> _export(Trend trend, String label, String unit) async {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final state = AppScope.of(context);
     String text;
@@ -328,7 +341,7 @@ class _TrendScreenState extends State<TrendScreen> {
 
   /// Aviso al CMO con ventana para deshacer: se "envía" al cerrarse el aviso sin pulsar Deshacer.
   void _notifyCmo() {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
     final controller = messenger.showSnackBar(SnackBar(
       duration: Touch.undoWindow,
@@ -357,7 +370,7 @@ class _DataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
+    final l = context.l10n;
     TextStyle head() => overline(color: VColors.muted);
     return Column(children: [
       Padding(
@@ -374,7 +387,7 @@ class _DataTable extends StatelessWidget {
           decoration: const BoxDecoration(border: Border(top: BorderSide(color: VColors.border))),
           child: Row(children: [
             Expanded(child: Text('D${firstDay + i}', style: mono(size: 14, color: VColors.muted))),
-            Expanded(child: Text(series[i].toStringAsFixed(0), style: mono(size: 18))),
+            Expanded(child: Text(trend.fmt(series[i]), style: mono(size: 18))),
             Expanded(
               flex: 2,
               child: Row(children: [
@@ -392,4 +405,42 @@ class _DataTable extends StatelessWidget {
         ),
     ]);
   }
+}
+
+/// Fila de chips con las métricas del catálogo de Python. La usan Medición y Tendencia.
+class MetricSelector extends StatefulWidget {
+  const MetricSelector({super.key, required this.selected, required this.onSelected});
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  State<MetricSelector> createState() => _MetricSelectorState();
+}
+
+class _MetricSelectorState extends State<MetricSelector> {
+  Future<List<Map<String, dynamic>>>? _future;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _future ??= AppScope.of(context).api.metrics();
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>>(
+        future: _future,
+        builder: (context, snap) {
+          final metrics = snap.data ?? const [];
+          if (metrics.isEmpty) return const SizedBox.shrink();
+          return Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, children: [
+            for (final m in metrics)
+              ChoiceChip(
+                key: Key('metric-${m['id']}'),
+                label: Text(m['label'] as String, style: const TextStyle(fontSize: VType.body)),
+                selected: m['id'] == widget.selected,
+                onSelected: (_) => widget.onSelected(m['id'] as String),
+              ),
+          ]);
+        },
+      );
 }
