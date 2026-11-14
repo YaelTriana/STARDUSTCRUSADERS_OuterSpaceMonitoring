@@ -290,7 +290,7 @@ class _TaskRow extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(l.taskPending('${pending['time']}'), style: mono(size: 12, color: VColors.onStatus)),
+                  Text(l.taskPending('${pending['time']}'), style: mono(size: 13, color: VColors.onStatus)),
                   const SizedBox(height: 4),
                   Text('${pending['title']}',
                       style: const TextStyle(color: VColors.onStatus, fontWeight: FontWeight.w600, fontSize: VType.body)),

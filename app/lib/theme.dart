@@ -50,7 +50,7 @@ TextStyle mono({double size = 14, Color color = VColors.text, FontWeight? weight
 
 /// Etiqueta de sección en mayúsculas (estilo HDS).
 TextStyle overline({Color color = VColors.signalSoft}) =>
-    GoogleFonts.dmMono(fontSize: 12, letterSpacing: 1.2, color: color);
+    GoogleFonts.dmMono(fontSize: 13, letterSpacing: 1.2, color: color);
 
 ThemeData tirelusTheme() {
   final base = ThemeData(brightness: Brightness.dark, useMaterial3: true);

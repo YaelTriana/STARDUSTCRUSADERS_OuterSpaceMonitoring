@@ -118,7 +118,7 @@ class SampleTag extends StatelessWidget {
           border: Border.all(color: VColors.borderStrong),
         ),
         child: Text(context.l10n.sampleData,
-            style: const TextStyle(color: VColors.muted, fontSize: 12)),
+            style: const TextStyle(color: VColors.muted, fontSize: VType.label)),
       );
 }
 
