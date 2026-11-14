@@ -1,15 +1,20 @@
-# Proyecto: VITALIS · NASA Space Apps Challenge 2026
+# Proyecto: TIRELUS · NASA Space Apps Challenge 2026
 
 ## Contexto
 - Equipo del Instituto Tecnológico de Tijuana en el hackathon NASA Space Apps (14–15 nov 2026).
 - Reto: software de automonitoreo de salud para astronautas que recoge indicadores y ayuda a evaluarlos y actuar.
-- Nombre provisional de la app: VITALIS.
+- Nombre de la app: **TIRELUS** (antes VITALIS; si encuentras el nombre viejo, cámbialo).
 - Idioma de trabajo: español (México). Términos técnicos en inglés solo cuando sean estándar (flight surgeon, EVA, SANS, CMO).
 
-## Stack
-- Front-end: Flutter (Dart). Back-end y lógica: Python (FastAPI).
-- La base de datos se decide después: no la propongas ni la diseñes salvo que se pida.
-- Cliente Dart generado desde el `/openapi.json` de FastAPI.
+## Arquitectura
+- **UI:** Flutter (Dart) en `app/`.
+- **Lógica:** Python en `app/python_app/`, embebido en la app con **serious_python** (v6.x, Flet). La lógica se escribe una sola vez en Python: **no la portes a Dart**.
+- **Comunicación:** el Python embebido sirve una API HTTP local en `127.0.0.1` (puerto vía variable `TIRELUS_PORT`); Flutter la consume. Dart no llama funciones de Python directamente.
+- **Servidor:** FastAPI + `uvicorn` sin extras. Si falla en Android, cambiar a Flask o `http.server`.
+- **Dependencias Python en el dispositivo:** puro Python o binarios publicados en https://pypi.flet.dev (numpy, pandas, scipy, scikit-learn, pydantic-core). statsmodels no está disponible. El motor de reglas va en Python estándar.
+- **Plataformas de demo:** Windows y Android. Web (Pyodide) no puede abrir el servidor local.
+- **Base de datos:** se decide después. No la propongas ni la diseñes salvo que se pida.
+- Detalles de empaquetado y reglas: skill `.claude/skills/tirelus-serious-python/`.
 - Skills del proyecto en `.claude/skills/` (origen y licencias en `.claude/SKILLS-SOURCES.md`). No agregues skills que se traslapen con las existentes.
 
 ## Alcance mínimo (MVP)
