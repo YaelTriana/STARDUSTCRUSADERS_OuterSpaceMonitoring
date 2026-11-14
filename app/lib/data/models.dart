@@ -123,6 +123,14 @@ class Trend {
     required this.deltaFromHigh,
     required this.avg7,
     required this.rule,
+    this.metric = 'systolic',
+    this.label = 'Presión sistólica',
+    this.unit = 'mmHg',
+    this.alertsWhenBelow = false,
+    this.consecutiveBelow = 0,
+    this.deltaFromLow = 0,
+    this.source = '',
+    this.hasBase = true,
   });
 
   factory Trend.fromJson(Map<String, dynamic> j) => Trend(
@@ -131,22 +139,53 @@ class Trend {
         // base es null cuando la métrica aún no tiene datos de ejemplo (status sin_dato).
         baseLow: ((j['base'] as Map?)?['low'] as num?)?.toDouble() ?? 0,
         baseHigh: ((j['base'] as Map?)?['high'] as num?)?.toDouble() ?? 0,
+        hasBase: j['base'] != null,
         status: statusFromApi(j['status'] as String?),
         consecutiveAbove: j['consecutive_above'] as int,
+        consecutiveBelow: (j['consecutive_below'] as int?) ?? 0,
         daysOutOfRange: j['days_out_of_range'] as int,
         deltaFromHigh: (j['delta_from_high'] as num).toDouble(),
+        deltaFromLow: ((j['delta_from_low'] as num?) ?? 0).toDouble(),
         avg7: (j['avg7'] as num).toInt(),
         rule: j['rule'] as String,
+        metric: (j['metric'] as String?) ?? 'systolic',
+        label: (j['label'] as String?) ?? 'Presión sistólica',
+        unit: (j['unit'] as String?) ?? 'mmHg',
+        alertsWhenBelow: j['alert_when'] == 'below',
+        source: (j['source'] as String?) ?? '',
       );
 
   final List<double> series;
   final int firstDay;
   final double baseLow;
   final double baseHigh;
+  final bool hasBase;
   final VStatus status;
   final int consecutiveAbove;
+  final int consecutiveBelow;
   final int daysOutOfRange;
   final double deltaFromHigh;
+  final double deltaFromLow;
   final int avg7;
   final String rule;
+  final String metric;
+  final String label;
+  final String unit;
+  final String source;
+
+  /// true si preocupa que la métrica baje (sueño, ánimo).
+  final bool alertsWhenBelow;
+
+  /// Días seguidos fuera de la base en la dirección que preocupa.
+  int get sustainedStreak => alertsWhenBelow ? consecutiveBelow : consecutiveAbove;
+
+  /// "sobre" o "bajo", según la dirección que preocupa.
+  String get directionWord => alertsWhenBelow ? 'bajo' : 'sobre';
+
+  bool get hasData => series.isNotEmpty && hasBase;
+
+  /// Decimales para mostrar cifras: horas y puntos con 1, el resto entero.
+  int get decimals => series.any((v) => v != v.roundToDouble()) ? 1 : 0;
+
+  String fmt(double v) => v.toStringAsFixed(decimals);
 }

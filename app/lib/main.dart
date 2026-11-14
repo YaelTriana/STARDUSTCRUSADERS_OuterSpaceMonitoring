@@ -8,6 +8,7 @@ import 'screens/base_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/eva_screens.dart';
 import 'screens/measurement_screen.dart';
+import 'screens/sans_screen.dart';
 import 'screens/trend_screen.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -96,6 +97,7 @@ const _dests = [
   _Dest('Panel', Icons.monitor_heart_outlined),
   _Dest('Medición', Icons.straighten),
   _Dest('Tendencia', Icons.show_chart),
+  _Dest('Ojos', Icons.remove_red_eye_outlined),
   _Dest('Autónomo', Icons.satellite_alt_outlined),
   _Dest('Base', Icons.home_work_outlined),
   _Dest('Visor', Icons.visibility_outlined),
@@ -116,9 +118,10 @@ class _ShellState extends State<Shell> {
         0 => DashboardScreen(onGoTo: (i) => setState(() => _index = i)),
         1 => const MeasurementScreen(),
         2 => const TrendScreen(),
-        3 => const AutonomousScreen(),
-        4 => const BaseScreen(),
-        5 => const VisorScreen(),
+        3 => const SansScreen(),
+        4 => const AutonomousScreen(),
+        5 => const BaseScreen(),
+        6 => const VisorScreen(),
         _ => const HandheldScreen(),
       };
 
@@ -152,7 +155,8 @@ class _ShellState extends State<Shell> {
                   ),
               ]),
             ),
-      body: Row(children: [
+      // stretch: las pantallas cortas empiezan arriba en vez de quedar centradas.
+      body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (wide) ...[rail, const VerticalDivider(width: 1)],
         Expanded(child: KeyedSubtree(key: ValueKey(_index), child: _screen())),
       ]),
