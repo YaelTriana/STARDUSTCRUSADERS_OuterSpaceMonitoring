@@ -35,15 +35,20 @@ class TirelusApi {
 
   final String baseUrl;
 
+  /// Idioma que se le pide a Python ('es' o 'en'). Lo cambia AppState.
+  String lang = 'es';
+
+  String _withLang(String path) => '$path${path.contains('?') ? '&' : '?'}lang=$lang';
+
   Future<Map<String, dynamic>> _get(String path) async {
-    final res = await http.get(Uri.parse('$baseUrl$path')).timeout(const Duration(seconds: 5));
+    final res = await http.get(Uri.parse('$baseUrl${_withLang(path)}')).timeout(const Duration(seconds: 5));
     if (res.statusCode != 200) throw Exception('GET $path → ${res.statusCode}');
     return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
     final res = await http
-        .post(Uri.parse('$baseUrl$path'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body))
+        .post(Uri.parse('$baseUrl${_withLang(path)}'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body))
         .timeout(const Duration(seconds: 5));
     if (res.statusCode != 200) throw Exception('POST $path → ${res.statusCode}');
     return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;

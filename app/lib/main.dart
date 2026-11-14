@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'api.dart';
 import 'app_state.dart';
+import 'core/touch.dart';
 import 'data/models.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/labels.dart';
 import 'screens/autonomous_screen.dart';
 import 'screens/base_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -24,11 +28,22 @@ class TirelusApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppScope(
         state: state,
-        child: MaterialApp(
-          title: 'TIRELUS',
-          debugShowCheckedModeBanner: false,
-          theme: tirelusTheme(),
-          home: const BootScreen(),
+        child: ListenableBuilder(
+          listenable: state,
+          builder: (context, _) => MaterialApp(
+            title: 'TIRELUS',
+            debugShowCheckedModeBanner: false,
+            theme: tirelusTheme(),
+            locale: state.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const BootScreen(),
+          ),
         ),
       );
 }
@@ -51,7 +66,9 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<void>(
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return FutureBuilder<void>(
         future: _boot,
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.done && !snap.hasError) return const Shell();
@@ -65,17 +82,17 @@ class _BootScreenState extends State<BootScreen> {
                   Text('TIRELUS', style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 16),
                   if (snap.hasError) ...[
-                    Text('No se pudo iniciar el motor en Python.\n${snap.error}',
+                    Text('${l.bootError}\n${snap.error}',
                         textAlign: TextAlign.center, style: const TextStyle(color: VColors.critico)),
                     const SizedBox(height: 16),
                     OutlinedButton(
                       onPressed: () => setState(() => _boot = PythonRuntime.start(AppScope.of(context).api)),
-                      child: const Text('Reintentar'),
+                      child: Text(l.retry),
                     ),
                   ] else ...[
                     const CircularProgressIndicator(),
                     const SizedBox(height: 12),
-                    const Text('Iniciando el motor en Python…', style: TextStyle(color: VColors.muted)),
+                    Text(l.bootStarting, style: const TextStyle(color: VColors.muted)),
                   ],
                 ]),
               ),
@@ -83,22 +100,23 @@ class _BootScreenState extends State<BootScreen> {
           );
         },
       );
+  }
 }
 
 class _Dest {
   const _Dest(this.label, this.icon);
-  final String label;
+  final String Function(AppLocalizations) label;
   final IconData icon;
 }
 
-const _dests = [
-  _Dest('Panel', Icons.monitor_heart_outlined),
-  _Dest('Medición', Icons.straighten),
-  _Dest('Tendencia', Icons.show_chart),
-  _Dest('Autónomo', Icons.satellite_alt_outlined),
-  _Dest('Base', Icons.home_work_outlined),
-  _Dest('Visor', Icons.visibility_outlined),
-  _Dest('De mano', Icons.smartphone),
+final _dests = <_Dest>[
+  _Dest((l) => l.navPanel, Icons.monitor_heart_outlined),
+  _Dest((l) => l.navMeasurement, Icons.straighten),
+  _Dest((l) => l.navTrend, Icons.show_chart),
+  _Dest((l) => l.navAutonomous, Icons.satellite_alt_outlined),
+  _Dest((l) => l.navBase, Icons.home_work_outlined),
+  _Dest((l) => l.navVisor, Icons.visibility_outlined),
+  _Dest((l) => l.navHandheld, Icons.smartphone),
 ];
 
 class Shell extends StatefulWidget {
@@ -121,88 +139,159 @@ class _ShellState extends State<Shell> {
         _ => const HandheldScreen(),
       };
 
+  void _showMore() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: VColors.surface,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          for (var i = 4; i < _dests.length; i++)
+            ListTile(
+              minTileHeight: Touch.primary,
+              leading: Icon(_dests[i].icon),
+              title: Text(_dests[i].label(AppLocalizations.of(context))),
+              selected: i == _index,
+              onTap: () {
+                setState(() => _index = i);
+                Navigator.pop(ctx);
+              },
+            ),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 760;
-    final rail = NavigationRail(
-      selectedIndex: _index,
-      onDestinationSelected: (i) => setState(() => _index = i),
-      labelType: NavigationRailLabelType.all,
-      destinations: [
-        for (final d in _dests) NavigationRailDestination(icon: Icon(d.icon), label: Text(d.label)),
-      ],
+    final l = AppLocalizations.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= 760;
+    final topBar = _TopBar(compact: width < 900);
+    final body = KeyedSubtree(
+      // El idioma entra en la llave para que cada pantalla vuelva a pedir sus datos a Python.
+      key: ValueKey('$_index-${AppScope.of(context).locale.languageCode}'),
+      child: _screen(),
     );
+
+    // Tablet horizontal / escritorio: riel lateral.
+    if (wide) {
+      return Scaffold(
+        appBar: topBar,
+        body: Row(children: [
+          NavigationRail(
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            labelType: NavigationRailLabelType.all,
+            destinations: [
+              for (final d in _dests) NavigationRailDestination(icon: Icon(d.icon), label: Text(d.label(l))),
+            ],
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(child: body),
+        ]),
+      );
+    }
+
+    // Vertical y móvil: barra inferior con 4 destinos + "Más".
+    const main = 4;
     return Scaffold(
-      appBar: const _TopBar(),
-      drawer: wide
-          ? null
-          : Drawer(
-              backgroundColor: VColors.space,
-              child: ListView(children: [
-                for (var i = 0; i < _dests.length; i++)
-                  ListTile(
-                    leading: Icon(_dests[i].icon),
-                    title: Text(_dests[i].label),
-                    selected: i == _index,
-                    onTap: () {
-                      setState(() => _index = i);
-                      Navigator.pop(context);
-                    },
-                  ),
-              ]),
-            ),
-      body: Row(children: [
-        if (wide) ...[rail, const VerticalDivider(width: 1)],
-        Expanded(child: KeyedSubtree(key: ValueKey(_index), child: _screen())),
-      ]),
+      appBar: topBar,
+      body: body,
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: VColors.space,
+        indicatorColor: VColors.surface2,
+        selectedIndex: _index < main ? _index : main,
+        onDestinationSelected: (i) => i == main ? _showMore() : setState(() => _index = i),
+        destinations: [
+          for (var i = 0; i < main; i++) NavigationDestination(icon: Icon(_dests[i].icon), label: _dests[i].label(l)),
+          NavigationDestination(icon: const Icon(Icons.more_horiz), label: l.navMore),
+        ],
+      ),
     );
   }
 }
 
 class _TopBar extends StatelessWidget implements PreferredSizeWidget {
-  const _TopBar();
+  const _TopBar({required this.compact});
+
+  /// En compacto, el estado del enlace baja a una segunda fila (siempre visible).
+  final bool compact;
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => Size.fromHeight(compact ? 64 + 32 : 64);
 
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final compact = MediaQuery.sizeOf(context).width < 900;
+    final l = AppLocalizations.of(context);
+    final narrow = MediaQuery.sizeOf(context).width < 520;
     return AppBar(
       backgroundColor: VColors.space,
       surfaceTintColor: Colors.transparent,
       toolbarHeight: 64,
       shape: const Border(bottom: BorderSide(color: VColors.border)),
       titleSpacing: 16,
+      bottom: compact
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(32),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(children: [
+                    StatusShape(state.env.autonomous ? VStatus.critico : VStatus.nominal, size: 10),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                          state.env.autonomous ? l.linkAutonomous(l.envDelay(state.env)) : l.linkRealtime,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: VColors.muted, fontSize: VType.label)),
+                    ),
+                    const SizedBox(width: 12),
+                    const SampleTag(),
+                  ]),
+                ),
+              ),
+            )
+          : null,
       title: Row(children: [
         const TirelusMark(size: 30),
         const SizedBox(width: 12),
-        Text('TIRELUS', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        if (!narrow)
+          Text('TIRELUS', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
         if (!compact) ...[
           const SizedBox(width: 16),
-          Text('DÍA DE MISIÓN 047 · ${state.env.label.toUpperCase()}', style: mono(size: 13, color: VColors.muted)),
+          Text(l.missionDayLabel('047', l.envLabel(state.env).toUpperCase()), style: mono(size: 13, color: VColors.muted)),
         ],
       ]),
       actions: [
         SegmentedButton<MissionEnv>(
           showSelectedIcon: false,
           style: SegmentedButton.styleFrom(
-            visualDensity: VisualDensity.compact,
+            minimumSize: Touch.minSize,
             padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
           segments: [
             for (final e in MissionEnv.values)
-              ButtonSegment(value: e, label: Text(e.label, maxLines: 1, softWrap: false, overflow: TextOverflow.visible)),
+              ButtonSegment(value: e, label: Text(l.envLabel(e), maxLines: 1, softWrap: false, overflow: TextOverflow.visible)),
           ],
           selected: {state.env},
           onSelectionChanged: (s) => state.setEnv(s.first),
+        ),
+        const SizedBox(width: 8),
+        Tooltip(
+          message: l.languageSwitchTooltip,
+          child: TextButton(
+            style: TextButton.styleFrom(minimumSize: Touch.minSize, foregroundColor: VColors.signalSoft),
+            onPressed: state.toggleLocale,
+            child: Text(state.locale.languageCode == 'es' ? 'EN' : 'ES', style: mono(size: 14, color: VColors.signalSoft)),
+          ),
         ),
         if (!compact) ...[
           const SizedBox(width: 16),
           StatusShape(state.env.autonomous ? VStatus.critico : VStatus.nominal, size: 10),
           const SizedBox(width: 8),
-          Text(state.env.autonomous ? 'Modo autónomo · ${state.env.delay}' : 'Enlace: tiempo real',
+          Text(state.env.autonomous ? l.linkAutonomous(l.envDelay(state.env)) : l.linkRealtime,
               style: const TextStyle(color: VColors.muted, fontSize: 14)),
           const SizedBox(width: 16),
           const SampleTag(),

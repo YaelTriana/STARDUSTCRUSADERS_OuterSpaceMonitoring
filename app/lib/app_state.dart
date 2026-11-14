@@ -11,8 +11,17 @@ class AppState extends ChangeNotifier {
   final TirelusApi api;
 
   MissionEnv env = MissionEnv.iss;
+  Locale locale = const Locale('es');
   String selectedSystem = 'cardio';
   List<String> medicalSummary = [];
+
+  void setLocale(Locale value) {
+    locale = value;
+    api.lang = value.languageCode;
+    notifyListeners();
+  }
+
+  void toggleLocale() => setLocale(locale.languageCode == 'es' ? const Locale('en') : const Locale('es'));
 
   void setEnv(MissionEnv value) {
     env = value;

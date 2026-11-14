@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 
 Color statusColor(VStatus s) => switch (s) {
@@ -69,19 +71,22 @@ class StatusChip extends StatelessWidget {
   final VStatus status;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        label: 'Estado: ${status.label}',
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Semantics(
+        label: l.statusSemantics(l.status(status)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(color: statusColor(status), borderRadius: BorderRadius.circular(999)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             StatusShape(status, color: VColors.onStatus),
             const SizedBox(width: 8),
-            Text(status.label,
+            Text(l.status(status),
                 style: const TextStyle(color: VColors.onStatus, fontWeight: FontWeight.w600, fontSize: 14)),
           ]),
         ),
       );
+  }
 }
 
 class SectionCard extends StatelessWidget {
@@ -113,7 +118,8 @@ class SampleTag extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: VColors.borderStrong),
         ),
-        child: const Text('Datos de ejemplo', style: TextStyle(color: VColors.muted, fontSize: 12)),
+        child: Text(AppLocalizations.of(context).sampleData,
+            style: const TextStyle(color: VColors.muted, fontSize: 12)),
       );
 }
 
@@ -142,7 +148,7 @@ class AlertBanner extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
             const SizedBox(height: 4),
-            Text(body, style: const TextStyle(fontSize: 15, height: 1.5)),
+            Text(body, style: const TextStyle(fontSize: VType.body, height: 1.5)),
           ]),
         ),
         if (action != null) ...[const SizedBox(width: 12), action!],
@@ -166,7 +172,7 @@ class MetricTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(color: VColors.surface2, borderRadius: BorderRadius.circular(12)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: VColors.muted)),
+          Text(label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
           const SizedBox(height: 6),
           Text.rich(TextSpan(children: [
             TextSpan(text: value, style: mono(size: valueSize, color: valueColor ?? VColors.text)),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'core/touch.dart';
+
 /// Paleta de TIRELUS (ver propuesta visual). Tema oscuro de cabina.
 class VColors {
   static const space = Color(0xFF060B18);
@@ -17,6 +19,27 @@ class VColors {
   static const critico = Color(0xFFFF6B5E);
   static const onStatus = Color(0xFF06121F);
   static const warnBg = Color(0xFF2A2310);
+}
+
+/// Escala de espaciado (dp). Usar estas constantes en vez de números sueltos.
+class VSpace {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
+}
+
+/// Escala tipográfica (sp). Cuerpo ≥ 16; las etiquetas pequeñas no llevan
+/// información crítica.
+class VType {
+  static const double label = 13;
+  static const double body = 16;
+  static const double bodyLarge = 18;
+  static const double title = 20;
+  static const double figure = 28;
+  static const double evaMin = 28; // visor de casco: texto ≥ 28 sp
 }
 
 /// Cifras y etiquetas técnicas en DM Mono.
@@ -37,6 +60,7 @@ ThemeData tirelusTheme() {
       GoogleFonts.inter(fontSize: size, fontWeight: w, color: VColors.text, letterSpacing: -0.4);
 
   return base.copyWith(
+    materialTapTargetSize: MaterialTapTargetSize.padded,
     scaffoldBackgroundColor: VColors.space,
     colorScheme: const ColorScheme.dark(
       primary: VColors.signal,
@@ -68,17 +92,17 @@ ThemeData tirelusTheme() {
       style: FilledButton.styleFrom(
         backgroundColor: VColors.signal,
         foregroundColor: VColors.onStatus,
-        minimumSize: const Size(44, 52),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        minimumSize: Touch.primarySize,
+        padding: const EdgeInsets.symmetric(horizontal: VSpace.xl, vertical: VSpace.lg),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.publicSans(fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: GoogleFonts.publicSans(fontSize: VType.body, fontWeight: FontWeight.w600),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: VColors.text,
-        minimumSize: const Size(44, 52),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        minimumSize: const Size(Touch.min, 52),
+        padding: const EdgeInsets.symmetric(horizontal: VSpace.xl, vertical: VSpace.lg),
         side: const BorderSide(color: VColors.borderStrong),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: GoogleFonts.publicSans(fontSize: 16),
