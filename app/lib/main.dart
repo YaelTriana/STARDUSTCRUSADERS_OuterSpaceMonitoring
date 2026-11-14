@@ -187,7 +187,14 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         SegmentedButton<MissionEnv>(
           showSelectedIcon: false,
-          segments: [for (final e in MissionEnv.values) ButtonSegment(value: e, label: Text(e.label))],
+          style: SegmentedButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+          segments: [
+            for (final e in MissionEnv.values)
+              ButtonSegment(value: e, label: Text(e.label, maxLines: 1, softWrap: false, overflow: TextOverflow.visible)),
+          ],
           selected: {state.env},
           onSelectionChanged: (s) => state.setEnv(s.first),
         ),
