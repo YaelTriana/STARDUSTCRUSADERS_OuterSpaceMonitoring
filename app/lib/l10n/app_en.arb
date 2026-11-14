@@ -27,5 +27,6 @@
   "delayRealtime": "real time",
   "delayMoon": "4–12 s",
   "delayMars": "up to 20 min",
+  "envSelectorLabel": "Mission environment",
   "languageSwitchTooltip": "Switch language to Spanish"
 }

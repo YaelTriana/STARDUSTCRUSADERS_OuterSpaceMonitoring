@@ -30,5 +30,6 @@
   "delayRealtime": "tiempo real",
   "delayMoon": "4–12 s",
   "delayMars": "hasta 20 min",
+  "envSelectorLabel": "Entorno de misión",
   "languageSwitchTooltip": "Cambiar idioma a inglés"
 }

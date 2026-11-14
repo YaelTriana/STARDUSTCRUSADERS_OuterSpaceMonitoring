@@ -72,10 +72,28 @@ class TirelusApi {
 
   Future<Dashboard> dashboard() async => Dashboard.fromJson(await _get('/dashboard'));
 
-  Future<Trend> systolicTrend() async => Trend.fromJson(await _get('/trend/systolic'));
+  /// Catálogo de métricas (`id`, `label`, `unit`, `has_data`).
+  Future<List<Map<String, dynamic>>> metrics() async =>
+      [for (final m in (await _get('/metrics'))['metrics'] as List) m as Map<String, dynamic>];
 
-  Future<VStatus> evaluateSystolic(double value) async =>
-      statusFromApi((await _post('/evaluate/systolic', {'value': value}))['status'] as String?);
+  /// Tendencia de cualquier métrica del catálogo: systolic, heart_rate, sleep_hours, mood.
+  Future<Trend> trend(String metric) async => Trend.fromJson(await _get('/trend/$metric'));
+
+  Future<VStatus> evaluate(String metric, double value) async =>
+      statusFromApi((await _post('/evaluate/$metric', {'value': value}))['status'] as String?);
+
+  // Atajos que ya usan las pantallas actuales.
+  Future<Trend> systolicTrend() => trend('systolic');
+
+  Future<VStatus> evaluateSystolic(double value) => evaluate('systolic', value);
+
+  /// SANS: [deltaMicrons] = cambio de grosor retiniano en µm frente a la base.
+  /// Umbrales publicados: +20 µm atención, 55 µm crítico (los aplica Python).
+  Future<VStatus> evaluateSans(double deltaMicrons) async =>
+      statusFromApi((await _post('/evaluate/sans', {'value': deltaMicrons}))['status'] as String?);
+
+  /// Serie de OCT: `series` (µm), `days`, `status`, `thresholds`, `source`.
+  Future<Map<String, dynamic>> sansTrend() => _get('/trend/sans');
 
   Future<Map<String, dynamic>> autonomous(MissionEnv env) => _get('/autonomous?env=${env.name}');
 

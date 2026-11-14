@@ -15,6 +15,7 @@ import 'screens/measurement_screen.dart';
 import 'screens/trend_screen.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
+import 'widgets/env_selector.dart';
 
 void main() {
   final api = TirelusApi();
@@ -224,7 +225,6 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final l = AppLocalizations.of(context);
-    final narrow = MediaQuery.sizeOf(context).width < 520;
     return AppBar(
       backgroundColor: VColors.space,
       surfaceTintColor: Colors.transparent,
@@ -257,27 +257,19 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(children: [
         const TirelusMark(size: 30),
         const SizedBox(width: 12),
-        if (!narrow)
-          Text('TIRELUS', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        Flexible(
+          child: Text('TIRELUS',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        ),
         if (!compact) ...[
           const SizedBox(width: 16),
           Text(l.missionDayLabel('047', l.envLabel(state.env).toUpperCase()), style: mono(size: 13, color: VColors.muted)),
         ],
       ]),
       actions: [
-        SegmentedButton<MissionEnv>(
-          showSelectedIcon: false,
-          style: SegmentedButton.styleFrom(
-            minimumSize: Touch.minSize,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-          ),
-          segments: [
-            for (final e in MissionEnv.values)
-              ButtonSegment(value: e, label: Text(l.envLabel(e), maxLines: 1, softWrap: false, overflow: TextOverflow.visible)),
-          ],
-          selected: {state.env},
-          onSelectionChanged: (s) => state.setEnv(s.first),
-        ),
+        Center(child: EnvSelector(value: state.env, onChanged: state.setEnv)),
         const SizedBox(width: 8),
         Tooltip(
           message: l.languageSwitchTooltip,

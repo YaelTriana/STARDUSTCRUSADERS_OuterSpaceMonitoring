@@ -128,13 +128,14 @@ class Trend {
   factory Trend.fromJson(Map<String, dynamic> j) => Trend(
         series: [for (final v in j['series'] as List) (v as num).toDouble()],
         firstDay: j['first_day'] as int,
-        baseLow: (j['base']['low'] as num).toDouble(),
-        baseHigh: (j['base']['high'] as num).toDouble(),
+        // base es null cuando la métrica aún no tiene datos de ejemplo (status sin_dato).
+        baseLow: ((j['base'] as Map?)?['low'] as num?)?.toDouble() ?? 0,
+        baseHigh: ((j['base'] as Map?)?['high'] as num?)?.toDouble() ?? 0,
         status: statusFromApi(j['status'] as String?),
         consecutiveAbove: j['consecutive_above'] as int,
         daysOutOfRange: j['days_out_of_range'] as int,
         deltaFromHigh: (j['delta_from_high'] as num).toDouble(),
-        avg7: j['avg7'] as int,
+        avg7: (j['avg7'] as num).toInt(),
         rule: j['rule'] as String,
       );
 
