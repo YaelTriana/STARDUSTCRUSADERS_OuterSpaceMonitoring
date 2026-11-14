@@ -7,7 +7,9 @@ class VColors {
   static const surface = Color(0xFF0E1830);
   static const surface2 = Color(0xFF15223F);
   static const border = Color(0xFF24345A);
-  static const borderStrong = Color(0xFF3A4E7C);
+  /// Bordes de controles (campos, botones con contorno, pasos pendientes):
+  /// ≥ 3:1 sobre space, surface y surface2 (WCAG 1.4.11).
+  static const borderStrong = Color(0xFF5B6F9E);
   static const signal = Color(0xFF4D8DFF);
   static const signalSoft = Color(0xFF7FB0FF);
   static const text = Color(0xFFE8EEF9);
