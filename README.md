@@ -8,6 +8,8 @@ App de automonitoreo de salud para astronautas — NASA Space Apps Challenge 202
 
 > La app no diagnostica. Todos los umbrales, salvo SANS, son supuestos de diseño. Los datos de la demo son sintéticos.
 
+📋 **Plan de acción del hackathon** (fases, calendario, roles y riesgos): [`planning/PLAN.md`](planning/PLAN.md). Las tareas pendientes viven en la [matriz de abajo](#matriz-de-pendientes).
+
 ## Correr en desarrollo
 
 ```bash
