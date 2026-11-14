@@ -542,5 +542,69 @@
         "type": "String"
       }
     }
+  },
+  "sansTitle": "Ojos y cerebro (SANS)",
+  "sansIntro": "Registra el resultado de tu OCT: cuánto cambió el grosor de la retina frente a tu base prevuelo.",
+  "sansFieldLabel": "Cambio de grosor (µm)",
+  "sansFieldHint": "p. ej. 8",
+  "sansPublished": "Única métrica con umbrales publicados por NASA. En las demás, los umbrales son supuestos de diseño.",
+  "sansBarSemantics": "Umbrales: más 20 micras primer signo, 55 micras preocupación clínica",
+  "sansBarValue": "; tu valor: {value} micras",
+  "sansMarkNone": "0 µm",
+  "sansMarkAttention": "+20 µm · primer signo",
+  "sansMarkCritical": "55 µm · preocupación clínica",
+  "sansYourValue": "Tu valor: +{value} µm · {status}",
+  "sansAlertCriticalTitle": "Crítico: avisa hoy a tu CMO",
+  "sansAlertCriticalBody": "El cambio llega al nivel de preocupación clínica. Avisa a tu CMO y a tu flight surgeon.",
+  "sansAlertAttentionTitle": "Atención: primer signo de SANS",
+  "sansAlertAttentionBody": "Conviene repetir la OCT en el próximo ciclo y comentarlo en tu conferencia médica privada.",
+  "sansAddSummary": "Agregar al resumen médico",
+  "sansAdded": "Agregado al resumen médico.",
+  "sansSummaryEntry": "SANS: grosor retiniano +{value} µm frente a la base · {status}",
+  "sansHistoryTitle": "HISTORIAL DE OCT",
+  "sansHistoryEmpty": "Aún no hay OCT de ejemplo. Cuando haya lecturas, aquí verás cada ciclo.",
+  "sansHistoryRow": "D{day} · +{value} µm",
+  "sansWhatTitle": "QUÉ ESTÁS MIDIENDO",
+  "sansWhatBody": "La OCT mide el grosor de la retina alrededor del nervio óptico. Si se engruesa, puede ser una señal temprana de SANS.",
+  "sansWhyTitle": "POR QUÉ IMPORTA AQUÍ",
+  "sansWhyBody": "Sin gravedad, los líquidos se desplazan hacia la cabeza. En misiones largas eso se asocia con cambios en el ojo y en la visión.",
+  "sansDoTitle": "QUÉ HACER",
+  "sansDoBody": "Mide siempre en las mismas condiciones y registra el cambio frente a tu base. TIRELUS no diagnostica: si hay señal, avisa a tu CMO y ellos escalan al flight surgeon.",
+  "@sansBarValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@sansYourValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@sansSummaryEntry": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@sansHistoryRow": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
   }
 }

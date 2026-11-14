@@ -51,7 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ]),
         );
         final detail = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _SystemDetail(system: current, onMeasure: () => widget.onGoTo(1)),
+          _SystemDetail(system: current, onMeasure: () => widget.onGoTo(current.id == 'ojos' ? 3 : 1)),
           const SizedBox(height: 20),
           _TaskRow(dashboard: d, onMeasure: () => widget.onGoTo(1)),
         ]);

@@ -1376,6 +1376,168 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'2 pares'**
   String get autoMedkitItem3Qty;
+
+  /// No description provided for @sansTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ojos y cerebro (SANS)'**
+  String get sansTitle;
+
+  /// No description provided for @sansIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Registra el resultado de tu OCT: cuánto cambió el grosor de la retina frente a tu base prevuelo.'**
+  String get sansIntro;
+
+  /// No description provided for @sansFieldLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambio de grosor (µm)'**
+  String get sansFieldLabel;
+
+  /// No description provided for @sansFieldHint.
+  ///
+  /// In es, this message translates to:
+  /// **'p. ej. 8'**
+  String get sansFieldHint;
+
+  /// No description provided for @sansPublished.
+  ///
+  /// In es, this message translates to:
+  /// **'Única métrica con umbrales publicados por NASA. En las demás, los umbrales son supuestos de diseño.'**
+  String get sansPublished;
+
+  /// No description provided for @sansBarSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Umbrales: más 20 micras primer signo, 55 micras preocupación clínica'**
+  String get sansBarSemantics;
+
+  /// No description provided for @sansBarValue.
+  ///
+  /// In es, this message translates to:
+  /// **'; tu valor: {value} micras'**
+  String sansBarValue(String value);
+
+  /// No description provided for @sansMarkNone.
+  ///
+  /// In es, this message translates to:
+  /// **'0 µm'**
+  String get sansMarkNone;
+
+  /// No description provided for @sansMarkAttention.
+  ///
+  /// In es, this message translates to:
+  /// **'+20 µm · primer signo'**
+  String get sansMarkAttention;
+
+  /// No description provided for @sansMarkCritical.
+  ///
+  /// In es, this message translates to:
+  /// **'55 µm · preocupación clínica'**
+  String get sansMarkCritical;
+
+  /// No description provided for @sansYourValue.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu valor: +{value} µm · {status}'**
+  String sansYourValue(String value, String status);
+
+  /// No description provided for @sansAlertCriticalTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crítico: avisa hoy a tu CMO'**
+  String get sansAlertCriticalTitle;
+
+  /// No description provided for @sansAlertCriticalBody.
+  ///
+  /// In es, this message translates to:
+  /// **'El cambio llega al nivel de preocupación clínica. Avisa a tu CMO y a tu flight surgeon.'**
+  String get sansAlertCriticalBody;
+
+  /// No description provided for @sansAlertAttentionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Atención: primer signo de SANS'**
+  String get sansAlertAttentionTitle;
+
+  /// No description provided for @sansAlertAttentionBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Conviene repetir la OCT en el próximo ciclo y comentarlo en tu conferencia médica privada.'**
+  String get sansAlertAttentionBody;
+
+  /// No description provided for @sansAddSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar al resumen médico'**
+  String get sansAddSummary;
+
+  /// No description provided for @sansAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregado al resumen médico.'**
+  String get sansAdded;
+
+  /// No description provided for @sansSummaryEntry.
+  ///
+  /// In es, this message translates to:
+  /// **'SANS: grosor retiniano +{value} µm frente a la base · {status}'**
+  String sansSummaryEntry(String value, String status);
+
+  /// No description provided for @sansHistoryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'HISTORIAL DE OCT'**
+  String get sansHistoryTitle;
+
+  /// No description provided for @sansHistoryEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay OCT de ejemplo. Cuando haya lecturas, aquí verás cada ciclo.'**
+  String get sansHistoryEmpty;
+
+  /// No description provided for @sansHistoryRow.
+  ///
+  /// In es, this message translates to:
+  /// **'D{day} · +{value} µm'**
+  String sansHistoryRow(String day, String value);
+
+  /// No description provided for @sansWhatTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'QUÉ ESTÁS MIDIENDO'**
+  String get sansWhatTitle;
+
+  /// No description provided for @sansWhatBody.
+  ///
+  /// In es, this message translates to:
+  /// **'La OCT mide el grosor de la retina alrededor del nervio óptico. Si se engruesa, puede ser una señal temprana de SANS.'**
+  String get sansWhatBody;
+
+  /// No description provided for @sansWhyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'POR QUÉ IMPORTA AQUÍ'**
+  String get sansWhyTitle;
+
+  /// No description provided for @sansWhyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gravedad, los líquidos se desplazan hacia la cabeza. En misiones largas eso se asocia con cambios en el ojo y en la visión.'**
+  String get sansWhyBody;
+
+  /// No description provided for @sansDoTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'QUÉ HACER'**
+  String get sansDoTitle;
+
+  /// No description provided for @sansDoBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Mide siempre en las mismas condiciones y registra el cambio frente a tu base. TIRELUS no diagnostica: si hay señal, avisa a tu CMO y ellos escalan al flight surgeon.'**
+  String get sansDoBody;
 }
 
 class _AppLocalizationsDelegate

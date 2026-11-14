@@ -763,4 +763,102 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get autoMedkitItem3Qty => '2 pares';
+
+  @override
+  String get sansTitle => 'Ojos y cerebro (SANS)';
+
+  @override
+  String get sansIntro =>
+      'Registra el resultado de tu OCT: cuánto cambió el grosor de la retina frente a tu base prevuelo.';
+
+  @override
+  String get sansFieldLabel => 'Cambio de grosor (µm)';
+
+  @override
+  String get sansFieldHint => 'p. ej. 8';
+
+  @override
+  String get sansPublished =>
+      'Única métrica con umbrales publicados por NASA. En las demás, los umbrales son supuestos de diseño.';
+
+  @override
+  String get sansBarSemantics =>
+      'Umbrales: más 20 micras primer signo, 55 micras preocupación clínica';
+
+  @override
+  String sansBarValue(String value) {
+    return '; tu valor: $value micras';
+  }
+
+  @override
+  String get sansMarkNone => '0 µm';
+
+  @override
+  String get sansMarkAttention => '+20 µm · primer signo';
+
+  @override
+  String get sansMarkCritical => '55 µm · preocupación clínica';
+
+  @override
+  String sansYourValue(String value, String status) {
+    return 'Tu valor: +$value µm · $status';
+  }
+
+  @override
+  String get sansAlertCriticalTitle => 'Crítico: avisa hoy a tu CMO';
+
+  @override
+  String get sansAlertCriticalBody =>
+      'El cambio llega al nivel de preocupación clínica. Avisa a tu CMO y a tu flight surgeon.';
+
+  @override
+  String get sansAlertAttentionTitle => 'Atención: primer signo de SANS';
+
+  @override
+  String get sansAlertAttentionBody =>
+      'Conviene repetir la OCT en el próximo ciclo y comentarlo en tu conferencia médica privada.';
+
+  @override
+  String get sansAddSummary => 'Agregar al resumen médico';
+
+  @override
+  String get sansAdded => 'Agregado al resumen médico.';
+
+  @override
+  String sansSummaryEntry(String value, String status) {
+    return 'SANS: grosor retiniano +$value µm frente a la base · $status';
+  }
+
+  @override
+  String get sansHistoryTitle => 'HISTORIAL DE OCT';
+
+  @override
+  String get sansHistoryEmpty =>
+      'Aún no hay OCT de ejemplo. Cuando haya lecturas, aquí verás cada ciclo.';
+
+  @override
+  String sansHistoryRow(String day, String value) {
+    return 'D$day · +$value µm';
+  }
+
+  @override
+  String get sansWhatTitle => 'QUÉ ESTÁS MIDIENDO';
+
+  @override
+  String get sansWhatBody =>
+      'La OCT mide el grosor de la retina alrededor del nervio óptico. Si se engruesa, puede ser una señal temprana de SANS.';
+
+  @override
+  String get sansWhyTitle => 'POR QUÉ IMPORTA AQUÍ';
+
+  @override
+  String get sansWhyBody =>
+      'Sin gravedad, los líquidos se desplazan hacia la cabeza. En misiones largas eso se asocia con cambios en el ojo y en la visión.';
+
+  @override
+  String get sansDoTitle => 'QUÉ HACER';
+
+  @override
+  String get sansDoBody =>
+      'Mide siempre en las mismas condiciones y registra el cambio frente a tu base. TIRELUS no diagnostica: si hay señal, avisa a tu CMO y ellos escalan al flight surgeon.';
 }

@@ -760,4 +760,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoMedkitItem3Qty => '2 pairs';
+
+  @override
+  String get sansTitle => 'Eyes and brain (SANS)';
+
+  @override
+  String get sansIntro =>
+      'Log your OCT result: how much your retinal thickness changed from your pre-flight baseline.';
+
+  @override
+  String get sansFieldLabel => 'Thickness change (µm)';
+
+  @override
+  String get sansFieldHint => 'e.g. 8';
+
+  @override
+  String get sansPublished =>
+      'The only metric with thresholds published by NASA. For all others, thresholds are design assumptions.';
+
+  @override
+  String get sansBarSemantics =>
+      'Thresholds: plus 20 microns first sign, 55 microns clinical concern';
+
+  @override
+  String sansBarValue(String value) {
+    return '; your value: $value microns';
+  }
+
+  @override
+  String get sansMarkNone => '0 µm';
+
+  @override
+  String get sansMarkAttention => '+20 µm · first sign';
+
+  @override
+  String get sansMarkCritical => '55 µm · clinical concern';
+
+  @override
+  String sansYourValue(String value, String status) {
+    return 'Your value: +$value µm · $status';
+  }
+
+  @override
+  String get sansAlertCriticalTitle => 'Critical: tell your CMO today';
+
+  @override
+  String get sansAlertCriticalBody =>
+      'The change reaches the level of clinical concern. Tell your CMO and your flight surgeon.';
+
+  @override
+  String get sansAlertAttentionTitle => 'Attention: first sign of SANS';
+
+  @override
+  String get sansAlertAttentionBody =>
+      'Consider repeating the OCT next cycle and discussing it at your private medical conference.';
+
+  @override
+  String get sansAddSummary => 'Add to medical summary';
+
+  @override
+  String get sansAdded => 'Added to the medical summary.';
+
+  @override
+  String sansSummaryEntry(String value, String status) {
+    return 'SANS: retinal thickness +$value µm vs baseline · $status';
+  }
+
+  @override
+  String get sansHistoryTitle => 'OCT HISTORY';
+
+  @override
+  String get sansHistoryEmpty =>
+      'No example OCT yet. Once there are readings, you will see each cycle here.';
+
+  @override
+  String sansHistoryRow(String day, String value) {
+    return 'D$day · +$value µm';
+  }
+
+  @override
+  String get sansWhatTitle => 'WHAT YOU ARE MEASURING';
+
+  @override
+  String get sansWhatBody =>
+      'OCT measures the thickness of the retina around the optic nerve. If it thickens, it can be an early sign of SANS.';
+
+  @override
+  String get sansWhyTitle => 'WHY IT MATTERS HERE';
+
+  @override
+  String get sansWhyBody =>
+      'Without gravity, fluids shift toward the head. On long missions this is linked to changes in the eye and in vision.';
+
+  @override
+  String get sansDoTitle => 'WHAT TO DO';
+
+  @override
+  String get sansDoBody =>
+      'Always measure under the same conditions and log the change against your baseline. TIRELUS does not diagnose: if there is a signal, tell your CMO, who escalates to the flight surgeon.';
 }
