@@ -91,8 +91,10 @@ switch ($Comando) {
     }
     'verificar' { Verificar-Api }
     'datos' {
-        if (-not (Test-Path datosdb)) { Fallar 'No existe .\datosdb (los datasets no estan en el repo; pidelos al equipo).' }
-        docker compose cp ./datosdb db:/carga/datosdb
+        $origen = if (Test-Path "db\datosdb") { "db\datosdb" } elseif (Test-Path "datosdb") { "datosdb" } else { $null }
+        if (-not $origen) { Fallar 'No existe .\db\datosdb ni .\datosdb con los datasets.' }
+        docker compose cp $origen db:/carga/datosdb
+        docker compose cp $origen db:/carga/db/datosdb
         if ($LASTEXITCODE -ne 0) { Fallar 'No se pudo copiar datosdb al contenedor (levanta la base primero).' }
         docker compose exec -w /carga db psql -U $usuario -d $base -f load_datos.sql
     }

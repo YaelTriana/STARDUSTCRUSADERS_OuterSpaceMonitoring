@@ -3,18 +3,17 @@
 -- Re-ejecutable: usa ids fijos y ON CONFLICT DO NOTHING.
 --
 -- Solo trae lo que ya existe en app/python_app/data.py (presion sistolica D34-D47 y su linea base
--- 110-126 mmHg). Los datos de FC, sueno, animo y SANS (los ">>> DATOS:" de data.py) se agregan
--- aqui cuando la persona de contenido cientifico los entregue. Nada de esto es dato clinico real.
+-- 110-126 mmHg). Compatible con la version poblada integral (004_populate.sql).
 
 BEGIN;
 
-INSERT INTO astronauts (id, name, role)
-VALUES ('00000000-0000-4000-8000-000000000001', 'Tripulante A (Datos de ejemplo)', 'astronauta')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO astronauts (id, patient_id, name, role)
+VALUES ('00000000-0000-4000-8000-000000000001', 'SC-00001', 'Tripulante A (SC-00001)', 'astronauta')
+ON CONFLICT (id) DO UPDATE SET patient_id = EXCLUDED.patient_id;
 
 INSERT INTO baselines (astronaut_id, indicator_id, body_state, low, high)
 VALUES ('00000000-0000-4000-8000-000000000001', 'systolic', 'reposo', 110, 126)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (astronaut_id, indicator_id, body_state) DO NOTHING;
 
 -- 14 lecturas diarias de presion sistolica (mmHg). status queda NULL: lo escribe el motor de reglas.
 INSERT INTO measurements (client_id, astronaut_id, indicator_id, body_state, value, measured_at,

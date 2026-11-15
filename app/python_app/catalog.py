@@ -78,14 +78,32 @@ class Catalog:
         return Snapshot(metrics, self._base.sans_series, self._base.sans_days, "db")
 
 
+DEFAULT_TTL = 30.0  # segundos entre relecturas de la base
+
+
+def ttl_from_env(env: Mapping[str, str]) -> float:
+    """Cada cuánto se relee la base (TIRELUS_DB_TTL, en segundos).
+
+    Corto para la demo (se ve cambiar), largo a bordo (menos tráfico). Un valor
+    inválido no desactiva la base: se usa el de por defecto.
+    """
+    try:
+        ttl = float(env.get("TIRELUS_DB_TTL") or DEFAULT_TTL)
+    except ValueError:
+        return DEFAULT_TTL
+    return ttl if ttl > 0 else DEFAULT_TTL
+
+
 def build_catalog(
     env: Mapping[str, str] | None = None,
     connect_fn: Callable[[db.DbConfig], Any] | None = None,
-    ttl: float = 30.0,
+    ttl: float | None = None,
+    clock: Callable[[], float] = time.monotonic,
 ) -> Catalog:
     """Arma el catálogo según las variables de entorno TIRELUS_DB_*."""
     env = os.environ if env is None else env
     connect_fn = connect_fn or db.connect
+    ttl = ttl_from_env(env) if ttl is None else ttl
     try:
         cfg = db.config_from_env(env)
     except ValueError:
@@ -101,4 +119,10 @@ def build_catalog(
             finally:
                 conn.close()
 
-    return Catalog(data.METRICS, {"series": data.SANS_SERIES, "days": data.SANS_DAYS}, loader=loader, ttl=ttl)
+    return Catalog(
+        data.METRICS,
+        {"series": data.SANS_SERIES, "days": data.SANS_DAYS},
+        loader=loader,
+        ttl=ttl,
+        clock=clock,
+    )

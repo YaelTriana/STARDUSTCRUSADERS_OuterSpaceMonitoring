@@ -27,9 +27,15 @@ FakeApi _api({String evalStatus = 'nominal'}) => FakeApi(evalStatus: evalStatus,
     });
 
 void main() {
-  testWidgets('presión arterial conserva su formulario completo', (tester) async {
+  testWidgets('presión arterial abre el asistente de pasos con el teclado táctil', (tester) async {
     await _pump(tester, _api());
-    expect(find.text('Diastólica (mmHg)'), findsOneWidget);
+    expect(find.textContaining('Paso 1 de 4'), findsOneWidget);
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    expect(find.text('Diastólica'), findsWidgets);
+    expect(find.byKey(const ValueKey('key-5')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

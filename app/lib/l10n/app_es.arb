@@ -1,0 +1,612 @@
+{
+  "@@locale": "es",
+  "appTitle": "TIRELUS",
+  "navPanel": "Panel",
+  "navMeasurement": "Medición",
+  "navTrend": "Tendencia",
+  "navAutonomous": "Autónomo",
+  "navBase": "Base",
+  "navVisor": "Visor",
+  "navHandheld": "De mano",
+  "navMore": "Más",
+  "missionDayLabel": "DÍA DE MISIÓN {day} · {env}",
+  "@missionDayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "env": {
+        "type": "String"
+      }
+    }
+  },
+  "linkRealtime": "Enlace: tiempo real",
+  "linkAutonomous": "Modo autónomo · {delay}",
+  "@linkAutonomous": {
+    "placeholders": {
+      "delay": {
+        "type": "String"
+      }
+    }
+  },
+  "sampleData": "Datos de ejemplo",
+  "bootStarting": "Iniciando el motor en Python…",
+  "bootError": "No se pudo iniciar el motor en Python.",
+  "retry": "Reintentar",
+  "statusNominal": "Nominal",
+  "statusAttention": "Atención",
+  "statusCritical": "Crítico",
+  "statusNoData": "Sin dato",
+  "statusSemantics": "Estado: {status}",
+  "@statusSemantics": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "envIss": "ISS",
+  "envMoon": "Luna",
+  "envMars": "Marte",
+  "delayRealtime": "tiempo real",
+  "delayMoon": "4–12 s",
+  "delayMars": "hasta 20 min",
+  "envSelectorLabel": "Entorno de misión",
+  "languageSwitchTooltip": "Cambiar idioma a inglés",
+  "panelBodyTitle": "ESTADO POR SISTEMA · TOCA UNA ZONA",
+  "panelWhyTitle": "POR QUÉ CAMBIA EN EL ESPACIO",
+  "panelActionTitle": "QUÉ HACER AHORA",
+  "summaryAttention": "{count, plural, =1{1 sistema requiere atención} other{{count} sistemas requieren atención}}",
+  "@summaryAttention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryAllClear": "Todos tus sistemas están en rango",
+  "sourceChip": "Fuente: NASA HRP",
+  "sourceNoteTitle": "Sobre esta información",
+  "sourceNoteBody": "Las explicaciones se basan en publicaciones del Human Research Program (HRP) de NASA. Los umbrales de alerta de esta app son supuestos de diseño, no valores oficiales de vuelo. TIRELUS no diagnostica: te ayuda a decidir a quién avisar.",
+  "close": "Cerrar",
+  "noDataMeasure": "Sin dato · medir",
+  "errorEngine": "No se pudo leer el servidor Python local.",
+  "loading": "Cargando…",
+  "taskPending": "PENDIENTE · {time}",
+  "@taskPending": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "taskToday": "HOY · {time}",
+  "@taskToday": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "exerciseLabel": "EJERCICIO",
+  "exerciseProgress": "{hours} h {minutes} min de ~2 h",
+  "@exerciseProgress": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "streakLabel": "RACHA DE REGISTRO",
+  "streakDays": "días",
+  "streakBadge": "Insignia «Constancia orbital»",
+  "measTitle": "Registra tu lectura",
+  "measStepCounter": "Paso {step} de {total} · {title}",
+  "@measStepCounter": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "measStep1Title": "Prepárate",
+  "measStep1Detail": "5 min en reposo, anclado con los pies en la barra",
+  "measStep2Title": "Coloca el brazalete",
+  "measStep2Detail": "Brazo izquierdo, 2 cm sobre el codo",
+  "measStep3Title": "Mide y registra",
+  "measStep3Detail": "Lee el monitor o la prenda Bio-Monitor",
+  "measStep4Title": "Resultado",
+  "measStep4Detail": "Qué significa y qué hacer",
+  "measNext": "Siguiente",
+  "measBack": "Atrás",
+  "measSeeResult": "Ver resultado",
+  "measSys": "Sistólica",
+  "measDia": "Diastólica",
+  "measHr": "Frecuencia cardiaca",
+  "measSource": "Fuente del dato",
+  "measSourceManual": "Manual",
+  "measSourceWearable": "Wearable (ejemplo)",
+  "measSourceUltrasound": "Ultrasonido (ejemplo)",
+  "keypadBackspace": "Borrar",
+  "keypadNextField": "Siguiente campo",
+  "measFillRequired": "Escribe la sistólica y la diastólica.",
+  "measSysLtDia": "La sistólica debe ser mayor que la diastólica.",
+  "measConfirmTitle": "¿Seguro que es {value}?",
+  "@measConfirmTitle": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "measConfirmBody": "Ese valor es poco común. Revisa el monitor antes de guardarlo.",
+  "measConfirmFix": "Corregir",
+  "measConfirmKeep": "Sí, es correcto",
+  "rangeTitle": "Sistólica frente a tu rango personal",
+  "rangeOver": "+{delta} sobre tu base",
+  "@rangeOver": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeInside": "dentro de tu base",
+  "rangeBase": "Tu rango prevuelo {low}–{high}",
+  "@rangeBase": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      }
+    }
+  },
+  "resultNominal": "Dentro de tu rango. Sigue con tu rutina.",
+  "resultAtencion": "Repite la medición tras 5 min en reposo. Si sigue sobre tu base 3 días, TIRELUS la agrega al resumen de tu conferencia médica.",
+  "resultCritico": "Está muy por encima de tu base. TIRELUS no diagnostica: repite la medición en reposo y avisa a tu CMO.",
+  "resultNoData": "Aún no hay base para comparar esta lectura. Guárdala para que TIRELUS la tenga como referencia.",
+  "repeatIn5": "Repetir en 5 min",
+  "repeatCountdown": "Repetir en {time}",
+  "@repeatCountdown": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatCancel": "Cancelar recordatorio",
+  "repeatDue": "Es hora de repetir tu medición.",
+  "measSave": "Guardar medición",
+  "savedOk": "Medición guardada. Dentro de tu rango.",
+  "savedSummary": "Medición guardada y agregada al resumen de tu conferencia médica.",
+  "summaryEntry": "PA {sys}/{dia} mmHg · {status} frente a tu base",
+  "@summaryEntry": {
+    "placeholders": {
+      "sys": {
+        "type": "String"
+      },
+      "dia": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "helpWhatTitle": "Qué estás midiendo",
+  "helpWhatBody": "La fuerza con la que la sangre empuja las arterias: el número alto al latir el corazón, el bajo entre latidos.",
+  "helpWhyTitle": "Por qué importa aquí",
+  "helpWhyBody": "Sin gravedad, los líquidos suben hacia el pecho y la cabeza. El sistema cardiovascular se adapta y eso puede cambiar tus lecturas.",
+  "helpTipTitle": "Consejo",
+  "helpTipBody": "Mide a la misma hora y sin haber hecho ejercicio en los 30 min previos, para comparar contra tu base.",
+  "trendViewChart": "Gráfica",
+  "trendViewTable": "Tabla",
+  "trendRange7": "7 días",
+  "trendRange14": "14 días",
+  "trendToday": "{value} {unit} hoy",
+  "@trendToday": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "trendAvg7": "Promedio 7 días",
+  "trendOutDays": "Días fuera de rango",
+  "trendOutDaysValue": "{out} de {total}",
+  "@trendOutDaysValue": {
+    "placeholders": {
+      "out": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "trendStreakValue": "{days} días",
+  "@trendStreakValue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "trendNoAlertTitle": "Sin alertas",
+  "trendNoAlertBody": "Tus lecturas recientes están dentro de tu rango.",
+  "trendAlertTitle": "{status}: tendencia sostenida",
+  "@trendAlertTitle": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "trendAlertBody": "Llevas {days} días seguidos {direction} tu rango prevuelo. No es una emergencia, pero conviene que tu flight surgeon lo vea.",
+  "@trendAlertBody": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "direction": {
+        "type": "String"
+      }
+    }
+  },
+  "trendNoData": "Aún no hay datos de ejemplo para esta métrica.",
+  "trendMeasure": "Medir",
+  "trendPlanTitle": "PLAN SUGERIDO",
+  "trendPlanBody": "1. Mide dos veces al día (mañana y noche) durante 3 días.\n2. Registra sal en la dieta, sueño y estrés del día.\n3. Comparte el resumen en tu conferencia médica privada.",
+  "trendAddSummary": "Agregar al resumen médico",
+  "trendAddedSummary": "Agregado al resumen médico.",
+  "trendSummaryEntry": "{metric}: {days} días {direction} la base (hoy {value} {unit})",
+  "@trendSummaryEntry": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      },
+      "direction": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "trendHoldCmo": "Mantén presionado para avisar al CMO",
+  "trendCmoQueued": "Aviso al CMO en camino. Puedes deshacerlo.",
+  "trendCmoUndo": "Deshacer",
+  "trendCmoSent": "Aviso enviado al CMO de la tripulación.",
+  "trendCmoCancelled": "Aviso cancelado.",
+  "trendExport": "Exportar resumen",
+  "trendExported": "Resumen copiado al portapapeles",
+  "trendSummaryBoxTitle": "RESUMEN PARA LA CONFERENCIA MÉDICA",
+  "trendPointDetail": "Día {day} · {value} {unit}",
+  "@trendPointDetail": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "trendInRange": "Dentro de tu rango",
+  "trendOutOfRange": "Fuera de tu rango",
+  "trendPrev": "Punto anterior",
+  "trendNext": "Punto siguiente",
+  "trendChartSemantics": "{label} de los últimos {n} días: de {first} a {last}; rango prevuelo {low} a {high}",
+  "@trendChartSemantics": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      },
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      }
+    }
+  },
+  "trendTableDay": "Día",
+  "trendTableValue": "Valor",
+  "trendTableState": "Estado",
+  "exportHeader": "RESUMEN PARA LA CONFERENCIA MÉDICA · TIRELUS",
+  "exportDay": "Día de misión {day}",
+  "@exportDay": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "exportSampleNote": "Datos de ejemplo. Los umbrales son supuestos de diseño; TIRELUS no diagnostica.",
+  "exportMetricLine": "{metric}: hoy {value} {unit}; rango prevuelo {low}–{high}; promedio 7 días {avg}",
+  "@exportMetricLine": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      },
+      "avg": {
+        "type": "String"
+      }
+    }
+  },
+  "exportDaysLine": "{out} de {total} días fuera de rango; {streak} días seguidos sobre la base.",
+  "@exportDaysLine": {
+    "placeholders": {
+      "out": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "streak": {
+        "type": "int"
+      }
+    }
+  },
+  "exportItemsHeader": "Registros para comentar:",
+  "exportNoItems": "Sin registros pendientes.",
+  "trendExportedFile": "Resumen copiado al portapapeles ({filename}). Solo para ti, el CMO y el flight surgeon.",
+  "@trendExportedFile": {
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "trendStreakLabel": "Racha {direction} tu base",
+  "dirAbove": "sobre",
+  "dirBelow": "bajo",
+  "trendPlanSleep": "1. Revisa luz, ruido y temperatura de tu estación de descanso.\n2. Respeta tu periodo de sueño programado durante 3 noches.\n3. Comparte el resumen en tu conferencia médica privada.",
+  "trendPlanDefault": "1. Repite la medición a la misma hora durante 3 días.\n2. Anota lo que pudo influir (sueño, carga de trabajo, ejercicio).\n3. Comparte el resumen en tu conferencia médica privada.",
+  "navEyes": "Ojos",
+  "@trendStreakLabel": {
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeUnder": "{delta} bajo tu base",
+  "measGenericSummaryEntry": "{metric}: {value} {unit} · {status} frente a tu base",
+  "measSavedOk": "Medición guardada.",
+  "measSavedAdded": "Medición guardada y agregada al resumen de tu conferencia médica.",
+  "measNoBase": "Aún no hay línea base prevuelo para esta métrica, así que no hay contra qué comparar.",
+  "measGenericRangeTitle": "{metric} frente a tu rango personal",
+  "measRuleOrigin": "DE DÓNDE SALE LA REGLA",
+  "@rangeUnder": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "@measGenericSummaryEntry": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@measGenericRangeTitle": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "autoRealtimeTitle": "Enlace con Tierra en tiempo real",
+  "autoRealtimeBody": "En la ISS consultas al flight surgeon directamente.\nCambia el entorno a Luna o Marte para ver el modo autónomo.",
+  "autoReminder": "TIRELUS orienta, no diagnostica. Las decisiones médicas las toma tu CMO con el flight surgeon.",
+  "autoPrivacy": "Datos médicos: solo tú, el CMO y el flight surgeon. Nunca en pantallas compartidas.",
+  "autoProtocolOverline": "PROTOCOLO GUIADO · CON EL CMO",
+  "autoProgress": "Paso {done} de {total}",
+  "autoOpenGuide": "Abrir guía",
+  "autoGuideClose": "Entendido",
+  "autoLogContinue": "Registrar y continuar",
+  "autoStepLogged": "Paso registrado. Se agregó al mensaje diferido.",
+  "autoAllDone": "Protocolo completo. Revisa la decisión a bordo y envía el mensaje a Tierra.",
+  "autoNoWait": "Las decisiones no esperan la respuesta de Tierra. TIRELUS guía, registra cada paso y lo envía en diferido.",
+  "autoMessageTitle": "MENSAJE DIFERIDO AL FLIGHT SURGEON",
+  "autoMessageMeta": "Texto comprimido · sin video",
+  "autoDelayLabel": "Retraso {delay}",
+  "autoHoldSend": "Mantén para enviar a Tierra",
+  "autoTimelineTitle": "LÍNEA DE TIEMPO DEL MENSAJE",
+  "autoTlDrafted": "Redactado a bordo",
+  "autoTlQueued": "En cola de envío",
+  "autoTlSent": "Enviado",
+  "autoTlArrival": "Llega a Tierra en {time}",
+  "autoTlArrived": "Llegó a Tierra",
+  "autoTlResponse": "Respuesta posible en {time} o más",
+  "autoTlResponseIn": "Respuesta recibida (ejemplo)",
+  "autoTlResponseBody": "Ejemplo: seguir con la autoprueba diaria y repetir el OCT en 24 h. Cualquier cambio, escala al flight surgeon.",
+  "autoEtaAssumption": "Tiempos de ejemplo (supuesto de diseño): ida {oneWay}; la respuesta no llega antes de la ida y vuelta.",
+  "autoSpeedUp": "Acelerar el tiempo (solo demo)",
+  "autoQueueTitle": "COLA DE COMUNICACIÓN",
+  "autoQueueThisProtocol": "Este protocolo",
+  "autoQueueDraft": "Borrador",
+  "autoQueueSent": "Enviado",
+  "autoQueueReceived": "Recibido",
+  "autoDecisionTitle": "DECISIÓN A BORDO",
+  "autoDecisionIntro": "Opciones del protocolo para comentar con tu CMO. No son un diagnóstico ni una orden.",
+  "autoPros": "A favor",
+  "autoCons": "En contra",
+  "autoOpt1Title": "Seguir monitoreando con autoprueba diaria",
+  "autoOpt1Pros": "No gasta recursos y mantiene la tendencia al día.",
+  "autoOpt1Cons": "Si empeora, puede tardar más en detectarse.",
+  "autoOpt2Title": "Repetir el OCT en 24 horas",
+  "autoOpt2Pros": "Confirma si el grosor retiniano sigue subiendo frente a tu base.",
+  "autoOpt2Cons": "Pide tiempo del CMO y del equipo de imagen.",
+  "autoOpt3Title": "Pedir consulta prioritaria diferida",
+  "autoOpt3Pros": "Queda registrado y el flight surgeon lo ve primero.",
+  "autoOpt3Cons": "La respuesta tarda la ida y vuelta de la comunicación.",
+  "autoMedkitTitle": "BOTIQUÍN · INVENTARIO DE EJEMPLO",
+  "autoMedkitNote": "Datos de ejemplo. El inventario real lo confirma el CMO.",
+  "autoMedkitItem1": "Lágrimas artificiales",
+  "autoMedkitItem1Qty": "12 viales",
+  "autoMedkitItem2": "OCT portátil",
+  "autoMedkitItem2Qty": "1 equipo",
+  "autoMedkitItem3": "Lentes de enfoque ajustable",
+  "autoMedkitItem3Qty": "2 pares",
+  "@autoProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@autoDelayLabel": {
+    "placeholders": {
+      "delay": {
+        "type": "String"
+      }
+    }
+  },
+  "@autoTlArrival": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@autoTlResponse": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@autoEtaAssumption": {
+    "placeholders": {
+      "oneWay": {
+        "type": "String"
+      }
+    }
+  },
+  "sansTitle": "Ojos y cerebro (SANS)",
+  "sansIntro": "Registra el resultado de tu OCT: cuánto cambió el grosor de la retina frente a tu base prevuelo.",
+  "sansFieldLabel": "Cambio de grosor (µm)",
+  "sansFieldHint": "p. ej. 8",
+  "sansPublished": "Única métrica con umbrales publicados por NASA. En las demás, los umbrales son supuestos de diseño.",
+  "sansBarSemantics": "Umbrales: más 20 micras primer signo, 55 micras preocupación clínica",
+  "sansBarValue": "; tu valor: {value} micras",
+  "sansMarkNone": "0 µm",
+  "sansMarkAttention": "+20 µm · primer signo",
+  "sansMarkCritical": "55 µm · preocupación clínica",
+  "sansYourValue": "Tu valor: +{value} µm · {status}",
+  "sansAlertCriticalTitle": "Crítico: avisa hoy a tu CMO",
+  "sansAlertCriticalBody": "El cambio llega al nivel de preocupación clínica. Avisa a tu CMO y a tu flight surgeon.",
+  "sansAlertAttentionTitle": "Atención: primer signo de SANS",
+  "sansAlertAttentionBody": "Conviene repetir la OCT en el próximo ciclo y comentarlo en tu conferencia médica privada.",
+  "sansAddSummary": "Agregar al resumen médico",
+  "sansAdded": "Agregado al resumen médico.",
+  "sansSummaryEntry": "SANS: grosor retiniano +{value} µm frente a la base · {status}",
+  "sansHistoryTitle": "HISTORIAL DE OCT",
+  "sansHistoryEmpty": "Aún no hay OCT de ejemplo. Cuando haya lecturas, aquí verás cada ciclo.",
+  "sansHistoryRow": "D{day} · +{value} µm",
+  "sansWhatTitle": "QUÉ ESTÁS MIDIENDO",
+  "sansWhatBody": "La OCT mide el grosor de la retina alrededor del nervio óptico. Si se engruesa, puede ser una señal temprana de SANS.",
+  "sansWhyTitle": "POR QUÉ IMPORTA AQUÍ",
+  "sansWhyBody": "Sin gravedad, los líquidos se desplazan hacia la cabeza. En misiones largas eso se asocia con cambios en el ojo y en la visión.",
+  "sansDoTitle": "QUÉ HACER",
+  "sansDoBody": "Mide siempre en las mismas condiciones y registra el cambio frente a tu base. TIRELUS no diagnostica: si hay señal, avisa a tu CMO y ellos escalan al flight surgeon.",
+  "@sansBarValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@sansYourValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@sansSummaryEntry": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@sansHistoryRow": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "summaryOffline": "No se pudo guardar en el motor. Quedó solo en esta pantalla y se perderá al cerrar la app.",
+  "measEvalFailed": "No se pudo evaluar con el motor. Revisa la conexión e intenta de nuevo."
+}

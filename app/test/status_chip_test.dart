@@ -4,7 +4,10 @@ import 'package:tirelus/data/models.dart';
 import 'package:tirelus/theme.dart';
 import 'package:tirelus/widgets/common.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: Center(child: child)));
+import 'test_helpers.dart';
+
+Widget _wrap(Widget child, {Locale locale = const Locale('es')}) =>
+    localizedApp(locale: locale, home: Scaffold(body: Center(child: child)));
 
 void main() {
   group('Semáforo: color + forma + palabra', () {
@@ -31,6 +34,14 @@ void main() {
       expect(find.bySemanticsLabel(RegExp('Estado: Crítico')), findsOneWidget);
       handle.dispose();
     });
+  });
+
+  testWidgets('en inglés el semáforo y el lector de pantalla hablan inglés', (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(_wrap(const StatusChip(VStatus.critico), locale: const Locale('en')));
+    expect(find.text('Critical'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Status: Critical')), findsOneWidget);
+    handle.dispose();
   });
 
   test('cada estado tiene un color distinto', () {

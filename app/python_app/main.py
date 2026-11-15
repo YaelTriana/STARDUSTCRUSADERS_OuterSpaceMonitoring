@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 import data  # noqa: E402
+import panel  # noqa: E402
 from catalog import build_catalog  # noqa: E402
 from rules import (  # noqa: E402
     SANS_ATTENTION_UM,
@@ -98,11 +99,29 @@ def health() -> dict:
     return body
 
 
+# Los cinco sistemas del panel se calculan desde el catálogo y el motor de reglas.
+# Cada bloque lo declara en "computed" para no confundir lo medido con texto fijo.
+PANEL_CALCULADO = ("cardio", "ojos", "hueso", "mente", "inmune")
+
+
 @app.get("/dashboard")
 def dashboard() -> dict:
+    snapshot = catalog.snapshot()
+    systems = [
+        panel.build_system(
+            s["id"],
+            snapshot.metrics,
+            s,
+            # La serie de OCT solo le toca a ojos: ahí vive SANS.
+            sans=snapshot.sans_series if s["id"] == panel.SANS_SISTEMA else None,
+        )
+        if s["id"] in PANEL_CALCULADO
+        else {**s, "computed": False}
+        for s in data.SYSTEMS
+    ]
     return {
         "mission_day": data.MISSION_DAY,
-        "systems": data.SYSTEMS,
+        "systems": systems,
         "tasks": data.TASKS,
         "exercise": data.EXERCISE,
         "streak_days": data.STREAK_DAYS,

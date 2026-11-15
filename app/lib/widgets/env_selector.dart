@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 
 /// Selector de entorno de misión (ISS / Luna / Marte).
@@ -19,10 +21,11 @@ class EnvSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < compactBreakpoint;
-    return compact ? _menu() : _segmented();
+    final l = context.l10n;
+    return compact ? _menu(l) : _segmented(l);
   }
 
-  Widget _segmented() => SegmentedButton<MissionEnv>(
+  Widget _segmented(AppLocalizations l) => SegmentedButton<MissionEnv>(
         showSelectedIcon: false,
         style: const ButtonStyle(
           minimumSize: WidgetStatePropertyAll(Size(64, 44)),
@@ -30,15 +33,15 @@ class EnvSelector extends StatelessWidget {
         ),
         segments: [
           for (final e in MissionEnv.values)
-            ButtonSegment(value: e, label: Text(e.label, maxLines: 1, softWrap: false)),
+            ButtonSegment(value: e, label: Text(l.envLabel(e), maxLines: 1, softWrap: false)),
         ],
         selected: {value},
         onSelectionChanged: (s) => onChanged(s.first),
       );
 
-  Widget _menu() => PopupMenuButton<MissionEnv>(
+  Widget _menu(AppLocalizations l) => PopupMenuButton<MissionEnv>(
         key: const Key('env-menu'),
-        tooltip: 'Entorno de misión',
+        tooltip: l.envSelectorLabel,
         initialValue: value,
         onSelected: onChanged,
         itemBuilder: (_) => [
@@ -51,13 +54,13 @@ class EnvSelector extends StatelessWidget {
                     size: 18, color: e == value ? VColors.signal : VColors.muted),
                 const SizedBox(width: 10),
                 Flexible(
-                  child: Text('${e.label} · ${e.delay}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text('${l.envLabel(e)} · ${l.envDelay(e)}', maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ]),
             ),
         ],
         child: Semantics(
-          label: 'Entorno de misión: ${value.label}',
+          label: '${l.envSelectorLabel}: ${l.envLabel(value)}',
           button: true,
           excludeSemantics: true,
           child: Container(
@@ -68,7 +71,7 @@ class EnvSelector extends StatelessWidget {
               border: Border.all(color: VColors.borderStrong),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(value.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(l.envLabel(value), style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(width: 4),
               const Icon(Icons.arrow_drop_down, color: VColors.muted),
             ]),
