@@ -15,6 +15,7 @@ from typing import Any, Callable, Mapping
 
 import data
 import db
+import sim
 from rules import within_valid_range
 
 
@@ -23,7 +24,7 @@ class Snapshot:
     metrics: dict
     sans_series: list
     sans_days: list
-    source: str  # "db" o "ejemplo"
+    source: str  # "db", "simulacion" o "ejemplo"
 
 
 class Catalog:
@@ -34,9 +35,11 @@ class Catalog:
         loader: Callable[[], dict] | None = None,
         ttl: float = 30.0,
         clock: Callable[[], float] = time.monotonic,
+        source: str = "db",
     ) -> None:
         self._base = Snapshot(base_metrics, list(base_sans["series"]), list(base_sans["days"]), "ejemplo")
         self._loader = loader
+        self._source = source  # de dónde vienen los datos cuando el loader responde
         self._ttl = ttl
         self._clock = clock
         self._lock = threading.Lock()
@@ -74,11 +77,14 @@ class Catalog:
                     metrics[key]["series"] = [v for v in fields["series"] if within_valid_range(v, valid)]
         if sans["series"]:
             pairs = [(v, d) for v, d in zip(sans["series"], sans["days"]) if within_valid_range(v, data.SANS_VALID_RANGE)]
-            return Snapshot(metrics, [v for v, _ in pairs], [d for _, d in pairs], "db")
-        return Snapshot(metrics, self._base.sans_series, self._base.sans_days, "db")
+            return Snapshot(metrics, [v for v, _ in pairs], [d for _, d in pairs], self._source)
+        return Snapshot(metrics, self._base.sans_series, self._base.sans_days, self._source)
 
 
 DEFAULT_TTL = 30.0  # segundos entre relecturas de la base
+# Con el simulador embebido leer el origen no cuesta red: cachear 30 s dejaría el
+# panel congelado dentro del binario. Un TTL explícito le gana a este.
+TTL_SIMULACION = 1.0
 
 
 def ttl_from_env(env: Mapping[str, str]) -> float:
@@ -100,10 +106,29 @@ def build_catalog(
     ttl: float | None = None,
     clock: Callable[[], float] = time.monotonic,
 ) -> Catalog:
-    """Arma el catálogo según las variables de entorno TIRELUS_DB_*."""
+    """Arma el catálogo según las variables de entorno.
+
+    Tres orígenes posibles, en este orden:
+      1. `TIRELUS_SIM=vivo` → el simulador embebido (sin red; lo que lleva el .exe).
+         Manda sobre la base porque se pidió explícitamente.
+      2. `TIRELUS_DB_HOST` → PostgreSQL.
+      3. nada → los datos de ejemplo de data.py.
+    """
     env = os.environ if env is None else env
     connect_fn = connect_fn or db.connect
     ttl = ttl_from_env(env) if ttl is None else ttl
+
+    simulador = sim.desde_env(env, clock)
+    if simulador is not None:
+        return Catalog(
+            data.METRICS,
+            {"series": data.SANS_SERIES, "days": data.SANS_DAYS},
+            loader=simulador,
+            ttl=ttl if "TIRELUS_DB_TTL" in env else TTL_SIMULACION,
+            clock=clock,
+            source="simulacion",
+        )
+
     try:
         cfg = db.config_from_env(env)
     except ValueError:

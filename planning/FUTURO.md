@@ -73,5 +73,6 @@ Descartado para la demo porque el servidor compartido solo guarda datos sintéti
 ## 5. Otros pendientes de largo plazo
 
 - **Android:** empaquetar con `-p Android`, decidir cómo llega el Python embebido a la base y si hay caché local sin conexión.
-- **Empaquetado con serious_python y Docker:** descartados el 14 nov; los archivos siguen en el repo sin probar.
+- **Empaquetado con serious_python:** retomado el 15 nov para la versión repartible. La simulación embebida ya está hecha y probada; faltan los binarios, que necesitan una máquina Windows (con Visual Studio) y una Mac. Pasos en [`EMPAQUETADO.md`](EMPAQUETADO.md).
+- **Docker:** descartado el 14 nov; los archivos siguen en el repo sin probar.
 - **Capa de juego y escalamiento:** las tablas `alerts`, `tasks`, `badges`, `astronaut_badges` y `point_events` existen y están vacías; la app todavía no las escribe.
