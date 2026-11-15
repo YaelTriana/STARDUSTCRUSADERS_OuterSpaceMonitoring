@@ -39,7 +39,7 @@ def test_con_base_la_sobrepone_sobre_el_catalogo():
     assert (hr["base"].low, hr["base"].high, hr["abs_high"]) == (55, 66, 100.0)
     assert hr["series"] == [60.0, 61.0, 70.0, 71.0, 72.0]
     assert hr["label"] == "FC en reposo"  # texto, regla y fuente siguen siendo del catálogo
-    assert hr["alert_when"] == "above"
+    assert hr["alert_when"] == "both"
     assert (snap.sans_series, snap.sans_days) == ([8.0, 22.0], [30, 90])
 
 

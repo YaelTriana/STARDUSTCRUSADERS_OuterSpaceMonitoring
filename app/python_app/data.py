@@ -21,7 +21,8 @@ SYSTOLIC_ABS_HIGH = 160.0  # límite clínico terrestre de respaldo (supuesto de
 #   base              → Baseline(low, high) personal prevuelo, o None si aún no hay dato
 #   abs_high/abs_low  → límite clínico terrestre de respaldo (supuesto de diseño) o None
 #   series            → últimos 14 días (D34–D47), la última lectura es hoy
-#   alert_when        → "above" o "below": hacia dónde preocupa la desviación
+#   alert_when        → "above", "below" o "both": hacia dónde preocupa la desviación
+#                       (igual que indicators.alert_when en db/schema.sql)
 #   rule, source      → texto de la regla y de dónde sale el umbral
 #
 # Si series está vacía o base es None, la API responde status "sin_dato".
@@ -70,8 +71,8 @@ METRICS: dict[str, dict] = {
         "abs_low": None,
         # >>> DATOS: 14 lecturas diarias D34–D47 (matriz: escenarios nominal · atención).
         "series": [],
-        "alert_when": "above",
-        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "alert_when": "both",  # igual que la base: preocupa si sube o si baja
+        "rule": "Supuesto de diseño: 3 días consecutivos fuera de la base personal, por arriba o por abajo.",
         "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
     "spo2": {
@@ -116,8 +117,8 @@ METRICS: dict[str, dict] = {
         "abs_high": None,
         "abs_low": None,
         "series": [],
-        "alert_when": "above",  # si engrosa puede ser edema del disco óptico (SANS)
-        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "alert_when": "both",  # igual que la base: preocupa si sube o si baja
+        "rule": "Supuesto de diseño: 3 días consecutivos fuera de la base personal, por arriba o por abajo.",
         "source": "OCT a bordo (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
     },
     "near_vision_logmar": {
@@ -144,8 +145,8 @@ METRICS: dict[str, dict] = {
         "abs_high": None,
         "abs_low": None,
         "series": [],
-        "alert_when": "above",
-        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "alert_when": "both",  # igual que la base: preocupa si sube o si baja
+        "rule": "Supuesto de diseño: 3 días consecutivos fuera de la base personal, por arriba o por abajo.",
         "source": "Tonómetro a bordo (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
     },
     "cup_to_disc_ratio": {
@@ -158,8 +159,8 @@ METRICS: dict[str, dict] = {
         "abs_high": None,
         "abs_low": None,
         "series": [],
-        "alert_when": "above",
-        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "alert_when": "both",  # igual que la base: preocupa si sube o si baja
+        "rule": "Supuesto de diseño: 3 días consecutivos fuera de la base personal, por arriba o por abajo.",
         "source": "Imagen del nervio óptico (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
     },
     "body_mass": {
@@ -236,8 +237,8 @@ METRICS: dict[str, dict] = {
         "abs_high": None,
         "abs_low": None,
         "series": [],
-        "alert_when": "above",
-        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "alert_when": "both",  # igual que la base: preocupa si sube o si baja
+        "rule": "Supuesto de diseño: 3 días consecutivos fuera de la base personal, por arriba o por abajo.",
         "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
 }

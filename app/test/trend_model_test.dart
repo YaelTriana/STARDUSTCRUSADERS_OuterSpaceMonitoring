@@ -17,6 +17,15 @@ void main() {
     expect(Trend.fromJson(trendJson(alertWhen: 'below', above: 0, below: 4)).sustainedStreak, 4);
   });
 
+  test('con alerta en ambos sentidos la racha es la del lado que se salió', () {
+    final arriba = Trend.fromJson(trendJson(alertWhen: 'both', above: 3, below: 0));
+    expect(arriba.alertsWhenBelow, isFalse);
+    expect(arriba.sustainedStreak, 3);
+    final abajo = Trend.fromJson(trendJson(alertWhen: 'both', above: 0, below: 4));
+    expect(abajo.alertsWhenBelow, isTrue);
+    expect(abajo.sustainedStreak, 4);
+  });
+
   test('sin serie o sin base no hay datos', () {
     expect(Trend.fromJson(trendJson(series: [], base: null, status: 'sin_dato', above: 0)).hasData, isFalse);
     expect(Trend.fromJson(trendJson()).hasData, isTrue);

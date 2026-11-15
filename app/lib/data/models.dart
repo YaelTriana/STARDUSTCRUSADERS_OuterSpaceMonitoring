@@ -151,7 +151,10 @@ class Trend {
         metric: (j['metric'] as String?) ?? 'systolic',
         label: (j['label'] as String?) ?? 'Presión sistólica',
         unit: (j['unit'] as String?) ?? 'mmHg',
-        alertsWhenBelow: j['alert_when'] == 'below',
+        // 'both' (FC, temperatura): se muestra el lado donde está la racha.
+        alertsWhenBelow: j['alert_when'] == 'below' ||
+            (j['alert_when'] == 'both' &&
+                ((j['consecutive_below'] as int?) ?? 0) > (j['consecutive_above'] as int)),
         source: (j['source'] as String?) ?? '',
       );
 
@@ -173,7 +176,8 @@ class Trend {
   final String unit;
   final String source;
 
-  /// true si preocupa que la métrica baje (sueño, ánimo).
+  /// true si preocupa que la métrica baje (sueño, ánimo), o si alerta en ambos
+  /// sentidos y hoy la racha va por abajo.
   final bool alertsWhenBelow;
 
   /// Días seguidos fuera de la base en la dirección que preocupa.

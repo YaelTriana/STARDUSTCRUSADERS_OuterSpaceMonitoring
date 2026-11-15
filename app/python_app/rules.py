@@ -94,11 +94,13 @@ def evaluate_trend(
     """Serie diaria (la última lectura es hoy).
 
     direction indica hacia dónde preocupa la desviación sostenida:
-    "above" (presión, FC) o "below" (sueño, ánimo). Los límites absolutos
-    de respaldo marcan "crítico" en cualquier dirección.
+    "above" (presión), "below" (sueño, ánimo) o "both" (FC, temperatura:
+    preocupa en cualquiera de los dos sentidos). Con "both" cada racha se
+    cuenta por separado: cruzar de un lado al otro no las suma. Los límites
+    absolutos de respaldo marcan "crítico" en cualquier dirección.
     """
-    if direction not in ("above", "below"):
-        raise ValueError(f"direction debe ser 'above' o 'below', no {direction!r}")
+    if direction not in ("above", "below", "both"):
+        raise ValueError(f"direction debe ser 'above', 'below' o 'both', no {direction!r}")
     if not series:
         return TrendResult(Status.SIN_DATO, 0, 0, 0.0)
 
@@ -106,7 +108,7 @@ def evaluate_trend(
     below = _streak(series, lambda v: v < base.low)
     out_of_range = sum(1 for v in series if not base.contains(v))
     last = series[-1]
-    sustained = above if direction == "above" else below
+    sustained = {"above": above, "below": below, "both": max(above, below)}[direction]
 
     if (absolute_high is not None and last >= absolute_high) or (
         absolute_low is not None and last <= absolute_low

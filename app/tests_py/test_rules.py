@@ -109,3 +109,45 @@ class TestTendenciaALaBaja:
 
         with pytest.raises(ValueError):
             evaluate_trend([7.0], SUENO, direction="lateral")
+
+
+class TestTendenciaEnAmbosSentidos:
+    """FC, temperatura y presión intraocular preocupan si suben O si bajan (alert_when="both")."""
+
+    def test_tres_dias_sobre_la_base_es_atencion(self):
+        r = evaluate_trend([120, 127, 128, 129], BASE, direction="both")
+        assert r.consecutive_above == 3
+        assert r.status is Status.ATENCION
+
+    def test_tres_dias_bajo_la_base_es_atencion(self):
+        r = evaluate_trend([120, 109, 108, 107], BASE, direction="both")
+        assert r.consecutive_below == 3
+        assert r.status is Status.ATENCION
+
+    def test_dos_dias_fuera_sigue_nominal(self):
+        assert evaluate_trend([120, 120, 108, 107], BASE, direction="both").status is Status.NOMINAL
+
+    def test_cruzar_de_un_lado_al_otro_no_suma_la_racha(self):
+        # Dos días arriba y luego uno abajo: ninguna racha llega a tres.
+        r = evaluate_trend([120, 127, 128, 109], BASE, direction="both")
+        assert (r.consecutive_above, r.consecutive_below) == (0, 1)
+        assert r.status is Status.NOMINAL
+
+    def test_limites_absolutos_siguen_siendo_criticos(self):
+        assert evaluate_trend([120, 161], BASE, absolute_high=160.0, direction="both").status is Status.CRITICO
+        assert evaluate_trend([120, 80], BASE, absolute_low=85.0, direction="both").status is Status.CRITICO
+
+
+class TestCatalogoAlineadoConLaBase:
+    """db/schema.sql y db/002_ojos.sql marcan estos indicadores con alert_when = 'both'."""
+
+    def test_los_indicadores_de_ambos_sentidos_coinciden_con_el_esquema(self):
+        import data
+
+        ambos = {k for k, m in data.METRICS.items() if m["alert_when"] == "both"}
+        assert ambos == {"heart_rate", "temperature", "rnfl_thickness", "intraocular_pressure", "cup_to_disc_ratio"}
+
+    def test_todo_alert_when_es_valido(self):
+        import data
+
+        assert {m["alert_when"] for m in data.METRICS.values()} <= {"above", "below", "both"}
