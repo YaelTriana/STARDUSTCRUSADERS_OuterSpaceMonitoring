@@ -8,6 +8,7 @@ solo señala desviaciones.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import Enum
 
@@ -61,6 +62,16 @@ def evaluate_reading(
     ):
         return Status.CRITICO
     return Status.NOMINAL if base.contains(value) else Status.ATENCION
+
+
+def within_valid_range(value: float, valid_range: tuple[float, float]) -> bool:
+    """True si el valor es finito y cae dentro de [min, max] (extremos incluidos).
+
+    El rango es de captura (supuesto de diseño, igual a indicators.valid_min/valid_max):
+    fuera de él es un error de captura, no un estado de salud.
+    """
+    low, high = valid_range
+    return math.isfinite(value) and low <= value <= high
 
 
 def _streak(series: list[float], outside) -> int:
