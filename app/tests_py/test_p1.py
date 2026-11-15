@@ -73,7 +73,9 @@ class TestMetricasGenericas:
     def test_metrica_sin_datos_responde_sin_dato(self, metric, monkeypatch):
         monkeypatch.setitem(data.METRICS, metric, {**data.METRICS[metric], "series": [], "base": None})
         assert client.get(f"/trend/{metric}").json()["status"] == "sin_dato"
-        assert client.post(f"/evaluate/{metric}", json={"value": 1}).json()["status"] == "sin_dato"
+        # Un valor dentro del rango válido de cada métrica (FC 20–230, sueño 0–24, ánimo 1–5).
+        valido = {"heart_rate": 60, "sleep_hours": 7, "mood": 3}[metric]
+        assert client.post(f"/evaluate/{metric}", json={"value": valido}).json()["status"] == "sin_dato"
 
     def test_todas_las_metricas_dicen_que_son_datos_de_ejemplo(self):
         for m in client.get("/metrics").json()["metrics"]:

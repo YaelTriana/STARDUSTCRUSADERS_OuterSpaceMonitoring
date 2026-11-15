@@ -30,6 +30,7 @@ from rules import (  # noqa: E402
     evaluate_reading,
     evaluate_sans,
     evaluate_trend,
+    within_valid_range,
 )
 
 app = FastAPI(title="TIRELUS API local", version="0.1.0")
@@ -147,6 +148,7 @@ def trend_sans() -> dict:
 @app.post("/evaluate/sans")
 def evaluate_sans_reading(reading: Reading) -> dict:
     """reading.value = cambio de grosor retiniano en µm frente a la base."""
+    _check_range(reading.value, data.SANS_VALID_RANGE)
     return {
         "metric": "sans",
         "status": evaluate_sans(reading.value).value,
@@ -154,6 +156,15 @@ def evaluate_sans_reading(reading: Reading) -> dict:
         "thresholds": {"attention_um": SANS_ATTENTION_UM, "critical_um": SANS_CRITICAL_UM},
         "source": data.SANS_SOURCE,
     }
+
+
+def _check_range(value: float, valid_range: tuple[float, float]) -> None:
+    """422 si el valor no es finito o cae fuera del rango de captura."""
+    if not within_valid_range(value, valid_range):
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Valor fuera del rango válido de captura", "valid_range": list(valid_range)},
+        )
 
 
 def _metric(metric: str) -> dict:
@@ -209,6 +220,7 @@ def trend(metric: str) -> dict:
 @app.post("/evaluate/{metric}")
 def evaluate(metric: str, reading: Reading) -> dict:
     m = _metric(metric)
+    _check_range(reading.value, m["valid_range"])
     base = m["base"]
     if base is None:
         return {"metric": metric, "status": Status.SIN_DATO.value, "delta_from_high": 0, "base": None}

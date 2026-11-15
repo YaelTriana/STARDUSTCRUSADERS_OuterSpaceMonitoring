@@ -13,6 +13,7 @@
 - **Servidor:** FastAPI + `uvicorn` sin extras. Si falla en Android, cambiar a Flask o `http.server`.
 - **Dependencias Python en el dispositivo:** puro Python o binarios publicados en https://pypi.flet.dev (numpy, pandas, scipy, scikit-learn, pydantic-core). statsmodels no está disponible. El motor de reglas va en Python estándar.
 - **Plataformas de demo:** Windows. Android se recorta de la demo y se intenta al final, solo si sobra tiempo (decisión del 14 nov). Web (Pyodide) no puede abrir el servidor local.
+- **Empaquetado y Docker (descartados el 14 nov):** la demo corre en modo desarrollo (`python python_app/main.py` + `flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true`). No se empaqueta el Python embebido ni se usa Docker; no los propongas ni los arregles salvo que se pida. Los archivos `docker/`, `docker-compose.yml` y `tirelus.ps1` quedan en el repo sin probar.
 - **Base de datos: PostgreSQL** (esquema en `db/`: `schema.sql`, `002_ojos.sql`, `load_datos.sql`). Decisión de despliegue en dos etapas:
   - **Desarrollo y hackathon:** un servidor externo compartido con PostgreSQL, para que todo el equipo trabaje con los mismos datos. Hoy el servidor y el equipo están en la misma red local (Ethernet por un switch), así que el host es una IP de la red local.
   - **Versión final (concepto):** un PostgreSQL interno levantado en la nave, sin depender de Internet ni del retraso de comunicación con la Tierra.

@@ -10,6 +10,8 @@ cambian las variables de entorno:
     TIRELUS_DB_USER        postgres
     TIRELUS_DB_PASSWORD    (vacía)
     TIRELUS_DB_TIMEOUT     3 (segundos)
+    TIRELUS_DB_SSL         off | require (cifra sin verificar certificado) | verify (cifra y verifica)
+    TIRELUS_DB_SSL_CA      ruta del certificado de la autoridad (solo con verify)
     TIRELUS_ASTRONAUT_ID   uuid del tripulante; si falta se usa el primero de la tabla
 
 Nunca se escriben credenciales en el código ni en el repo. El driver es pg8000
@@ -18,6 +20,7 @@ Nunca se escriben credenciales en el código ni en el repo. El driver es pg8000
 
 from __future__ import annotations
 
+import ssl
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
@@ -36,6 +39,11 @@ class DbConfig:
     password: str = field(default="", repr=False)  # nunca en repr/str ni en logs
     timeout: float = 3.0
     astronaut_id: str | None = None
+    ssl_mode: str = "off"  # off | require (cifra sin verificar) | verify (cifra y verifica certificado y host)
+    ssl_ca: str | None = None  # certificado de la autoridad (solo con verify)
+
+
+SSL_MODES = ("off", "require", "verify")
 
 
 def config_from_env(env: Mapping[str, str]) -> DbConfig | None:
@@ -51,7 +59,12 @@ def config_from_env(env: Mapping[str, str]) -> DbConfig | None:
         timeout = float(env.get("TIRELUS_DB_TIMEOUT") or 3.0)
     except ValueError:
         raise ValueError("TIRELUS_DB_TIMEOUT debe ser un número") from None
+    ssl_mode = (env.get("TIRELUS_DB_SSL") or "off").strip().lower()
+    if ssl_mode not in SSL_MODES:
+        raise ValueError("TIRELUS_DB_SSL debe ser off, require o verify") from None
     return DbConfig(
+        ssl_mode=ssl_mode,
+        ssl_ca=(env.get("TIRELUS_DB_SSL_CA") or "").strip() or None,
         host=host,
         port=port,
         name=env.get("TIRELUS_DB_NAME") or "tirelus",
@@ -62,11 +75,24 @@ def config_from_env(env: Mapping[str, str]) -> DbConfig | None:
     )
 
 
+def ssl_context_for(config: DbConfig) -> ssl.SSLContext | None:
+    """Contexto TLS según TIRELUS_DB_SSL. None = sin cifrado (por defecto)."""
+    if config.ssl_mode == "off":
+        return None
+    if config.ssl_mode == "verify":
+        return ssl.create_default_context(cafile=config.ssl_ca)
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False  # antes de bajar verify_mode, o Python lo rechaza
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
 def connect(config: DbConfig) -> Any:
     """Abre una conexión DB-API con pg8000 (importado aquí para no exigirlo si no se usa)."""
     import pg8000.dbapi
 
     return pg8000.dbapi.connect(
+        ssl_context=ssl_context_for(config),
         user=config.user,
         password=config.password or None,
         host=config.host,

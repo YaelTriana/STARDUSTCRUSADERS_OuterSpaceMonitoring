@@ -29,6 +29,11 @@ class PythonRuntime {
   }
 }
 
+/// Python respondió 422: el valor está fuera del rango de captura.
+class _OutOfRange implements Exception {
+  const _OutOfRange();
+}
+
 /// Cliente de la API local de Python.
 class TirelusApi {
   TirelusApi({this.baseUrl = 'http://127.0.0.1:$tirelusPort'});
@@ -45,8 +50,20 @@ class TirelusApi {
     final res = await http
         .post(Uri.parse('$baseUrl$path'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body))
         .timeout(const Duration(seconds: 5));
+    if (res.statusCode == 422) throw const _OutOfRange();
     if (res.statusCode != 200) throw Exception('POST $path → ${res.statusCode}');
     return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+  }
+
+  /// Evalúa con Python. Un valor fuera del rango de captura (422) no es un estado de
+  /// salud, sino un error de captura o una captura a medias ("1" mientras se escribe
+  /// "120"): se devuelve "sin dato" en vez de lanzar.
+  Future<VStatus> _evaluatePath(String path, double value) async {
+    try {
+      return statusFromApi((await _post(path, {'value': value}))['status'] as String?);
+    } on _OutOfRange {
+      return VStatus.sinDato;
+    }
   }
 
   /// Espera hasta ~30 s a que el servidor Python arranque.
@@ -74,8 +91,7 @@ class TirelusApi {
   /// Tendencia de cualquier métrica del catálogo: systolic, heart_rate, sleep_hours, mood.
   Future<Trend> trend(String metric) async => Trend.fromJson(await _get('/trend/$metric'));
 
-  Future<VStatus> evaluate(String metric, double value) async =>
-      statusFromApi((await _post('/evaluate/$metric', {'value': value}))['status'] as String?);
+  Future<VStatus> evaluate(String metric, double value) => _evaluatePath('/evaluate/$metric', value);
 
   // Atajos que ya usan las pantallas actuales.
   Future<Trend> systolicTrend() => trend('systolic');
@@ -84,8 +100,7 @@ class TirelusApi {
 
   /// SANS: [deltaMicrons] = cambio de grosor retiniano en µm frente a la base.
   /// Umbrales publicados: +20 µm atención, 55 µm crítico (los aplica Python).
-  Future<VStatus> evaluateSans(double deltaMicrons) async =>
-      statusFromApi((await _post('/evaluate/sans', {'value': deltaMicrons}))['status'] as String?);
+  Future<VStatus> evaluateSans(double deltaMicrons) => _evaluatePath('/evaluate/sans', deltaMicrons);
 
   /// Serie de OCT: `series` (µm), `days`, `status`, `thresholds`, `source`.
   Future<Map<String, dynamic>> sansTrend() => _get('/trend/sans');

@@ -30,6 +30,7 @@ METRICS: dict[str, dict] = {
     "systolic": {
         "label": "Presión sistólica",
         "unit": "mmHg",
+        "valid_range": (50, 260),  # límite de captura (supuesto de diseño); igual a db/schema.sql
         "base": SYSTOLIC_BASE,
         "abs_high": SYSTOLIC_ABS_HIGH,
         "abs_low": None,
@@ -41,6 +42,7 @@ METRICS: dict[str, dict] = {
     "heart_rate": {
         "label": "FC en reposo",
         "unit": "lpm",
+        "valid_range": (20, 230),
         # >>> DATOS: línea base prevuelo de FC en reposo, p. ej. Baseline(55, 66).
         "base": None,
         # >>> DATOS: límite terrestre de respaldo (supuesto de diseño), p. ej. 100.0.
@@ -55,6 +57,7 @@ METRICS: dict[str, dict] = {
     "sleep_hours": {
         "label": "Horas de sueño",
         "unit": "h",
+        "valid_range": (0, 24),
         # >>> DATOS: línea base prevuelo de sueño, p. ej. Baseline(6.5, 8.5).
         "base": None,
         "abs_high": None,
@@ -70,6 +73,7 @@ METRICS: dict[str, dict] = {
     "mood": {
         "label": "Ánimo (1–5)",
         "unit": "pts",
+        "valid_range": (1, 5),
         # >>> DATOS: rango habitual del tripulante, p. ej. Baseline(3, 5).
         "base": None,
         "abs_high": None,
@@ -88,6 +92,9 @@ METRICS: dict[str, dict] = {
 # SANS: cambio de grosor retiniano (µm) frente a la base, una lectura por ciclo de OCT.
 # Los umbrales (+20 / 55 µm) viven en rules.py porque son cifras publicadas.
 # ---------------------------------------------------------------------------
+
+# Límite de captura del cambio de grosor (µm); igual a indicators 'retinal_delta' en db/schema.sql.
+SANS_VALID_RANGE = (-100, 300)
 
 # >>> DATOS: deltas en µm por OCT, en orden (matriz: escenarios +8 · +22 · +58 µm).
 SANS_SERIES: list[float] = []

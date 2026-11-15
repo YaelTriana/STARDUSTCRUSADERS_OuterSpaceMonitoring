@@ -15,6 +15,7 @@ from typing import Any, Callable, Mapping
 
 import data
 import db
+from rules import within_valid_range
 
 
 @dataclass(frozen=True)
@@ -67,8 +68,13 @@ class Catalog:
         for key, fields in overlay["metrics"].items():
             if key in metrics:
                 metrics[key].update(fields)
+                # La base no valida rangos: se descartan lecturas fuera del rango de captura.
+                valid = metrics[key].get("valid_range")
+                if valid is not None and "series" in fields:
+                    metrics[key]["series"] = [v for v in fields["series"] if within_valid_range(v, valid)]
         if sans["series"]:
-            return Snapshot(metrics, list(sans["series"]), list(sans["days"]), "db")
+            pairs = [(v, d) for v, d in zip(sans["series"], sans["days"]) if within_valid_range(v, data.SANS_VALID_RANGE)]
+            return Snapshot(metrics, [v for v, _ in pairs], [d for _, d in pairs], "db")
         return Snapshot(metrics, self._base.sans_series, self._base.sans_days, "db")
 
 
