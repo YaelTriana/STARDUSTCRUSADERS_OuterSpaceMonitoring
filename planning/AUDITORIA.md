@@ -3,7 +3,7 @@
 Revisada sobre `main` en `7813df2` (PR #13: validación de rangos y TLS). Reemplaza la primera versión,
 escrita sobre `266879b`, que todavía trataba el empaquetado como P0.
 
-Esta es la **diagnosis**; las tareas viven en la [matriz de pendientes del README](../README.md#matriz-de-pendientes),
+Esta es la **diagnosis**; las tareas viven en la [matriz de pendientes](../pendientes.md),
 que es la fuente única. La auditoría del esquema está en [`db/AUDITORIA.md`](../db/AUDITORIA.md).
 
 ## Verificado en esta máquina

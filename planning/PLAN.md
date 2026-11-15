@@ -2,7 +2,7 @@
 
 Objetivo: entregar un prototipo funcional y la presentación antes del cierre del hackathon (14–15 nov 2026). Confirmen la hora límite exacta en la guía de entrega de su sede.
 
-## Estado actual (14 nov, mediodía)
+## Estado actual (15 nov)
 
 | Entregable | Estado |
 |---|---|
@@ -12,7 +12,11 @@ Objetivo: entregar un prototipo funcional y la presentación antes del cierre de
 | Instrucciones para Claude (`CLAUDE.md`) y 31 skills en `.claude/skills/` | Hecho (PR #1 y #2, en `main`) |
 | Decisión de arquitectura: Flutter + Python embebido con serious_python | Hecho |
 | Mockup: motor de reglas en Python (20 pruebas pasan) + API local + 7 pantallas Flutter | Hecho (PR #3, en `main`) |
-| Empaquetado real con serious_python en Windows/Android | **Pendiente** |
+| Exportar el resumen médico, validación de rangos, capa de PostgreSQL con respaldo | Hecho (en `main`) |
+| Esquema y poblado de la base (`db/004_populate.sql`, 30 tripulantes) | Hecho en `main`; falta confirmar la carga en el servidor |
+| UI de Jenny (ES/EN, navegación adaptable, modo Autónomo guiado) | Hecho (fusionado en `main` el 15 nov) |
+| Empaquetado real con serious_python y Docker | Descartado el 14 nov (la demo corre en modo desarrollo) |
+| Android | Recortado de la demo; se intenta al final |
 | Video demo, presentación y página del proyecto | **Pendiente** |
 
 ## Arquitectura
@@ -20,8 +24,8 @@ Objetivo: entregar un prototipo funcional y la presentación antes del cierre de
 - **UI:** Flutter (Dart) en `app/`.
 - **Lógica:** Python en `app/python_app/`, embebido con serious_python 6.x. No se porta a Dart.
 - **Comunicación:** API HTTP local (FastAPI) en `127.0.0.1:8765`.
-- **Demo:** Windows y Android. La versión web solo sirve para ver la interfaz con el servidor de desarrollo.
-- **Base de datos:** se decide después.
+- **Demo:** Windows en modo desarrollo. Android se intenta al final, solo si sobra tiempo.
+- **Base de datos:** PostgreSQL. Servidor compartido en la red local para el hackathon; interno en la nave como concepto final. Datos sintéticos del repo [`SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring`](https://github.com/MerelyMeredith/SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring).
 
 ## 1. Alcance mínimo (MVP)
 
@@ -40,15 +44,15 @@ Objetivo: entregar un prototipo funcional y la presentación antes del cierre de
 | 1. Base técnica | 1–2 h | Proyecto Flutter, tema, navegación, serious_python instalado | Hecho |
 | 2. Datos y lógica | 3–4 h | Datos de ejemplo, motor de reglas en Python con pytest, API local | Hecho |
 | 3. Pantallas centrales | 6–8 h | Panel, medición, tendencia con alerta | Hecho (mockup) |
-| 4. Integración real (P0) | 3–6 h | Empaquetar y probar en Windows y Android (plan B: Flask o `http.server`); exportar el resumen médico | Pendiente |
-| 5. MVP completo (P1) y pulido (P2) | 5–8 h | P1: guardar el resumen entre reinicios, medición y tendencia de SANS, generalizar a más métricas. P2: selector de entorno en pantallas angostas, pruebas de widgets, accesibilidad | Pendiente |
+| 4. Integración real (P0) | 3–6 h | Exportar el resumen médico; PostgreSQL probado contra el servidor del equipo. Empaquetado descartado | Hecho |
+| 5. MVP completo (P1) y pulido (P2) | 5–8 h | P1: guardar el resumen entre reinicios, medición y tendencia de SANS, generalizar a más métricas. P2: selector de entorno en pantallas angostas, pruebas de widgets, accesibilidad | A medias: faltan datos de respaldo en `data.py`, y confirmar la carga del poblado |
 | 6. Entrega | 3 h | Video demo, presentación, página del proyecto con fuentes citadas | Pendiente |
 
-> El detalle de cada tarea (cómo hacerla y cuánto toma) está en la **Matriz de pendientes** del [`README.md`](../README.md#matriz-de-pendientes). Esa matriz es la fuente única: si cambia una tarea, se actualiza allá.
+> El detalle de cada tarea (cómo hacerla y cuánto toma) está en la **matriz de pendientes**, [`pendientes.md`](../pendientes.md). Esa matriz es la fuente única: si cambia una tarea, se actualiza allá.
 
 ## 3. Calendario
 
-- **Sábado tarde:** fase 4 (empaquetado real). Al cerrar el día, la app debe arrancar en Windows con Python embebido.
+- **Sábado tarde:** fase 4 (exportar resumen y PostgreSQL). El empaquetado se descartó; la demo corre en modo desarrollo.
 - **Domingo temprano:** fase 5 y congelar funciones a mediodía.
 - **Domingo tarde:** fase 6, con 2 h de margen antes del cierre.
 
