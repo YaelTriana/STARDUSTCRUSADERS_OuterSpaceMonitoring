@@ -12,8 +12,14 @@
 - **Comunicación:** el Python embebido sirve una API HTTP local en `127.0.0.1` (puerto vía variable `TIRELUS_PORT`); Flutter la consume. Dart no llama funciones de Python directamente.
 - **Servidor:** FastAPI + `uvicorn` sin extras. Si falla en Android, cambiar a Flask o `http.server`.
 - **Dependencias Python en el dispositivo:** puro Python o binarios publicados en https://pypi.flet.dev (numpy, pandas, scipy, scikit-learn, pydantic-core). statsmodels no está disponible. El motor de reglas va en Python estándar.
-- **Plataformas de demo:** Windows y Android. Web (Pyodide) no puede abrir el servidor local.
-- **Base de datos:** se decide después. No la propongas ni la diseñes salvo que se pida.
+- **Plataformas de demo:** Windows. Android se recorta de la demo y se intenta al final, solo si sobra tiempo (decisión del 14 nov). Web (Pyodide) no puede abrir el servidor local.
+- **Base de datos: PostgreSQL** (esquema en `db/`: `schema.sql`, `002_ojos.sql`, `load_datos.sql`). Decisión de despliegue en dos etapas:
+  - **Desarrollo y hackathon:** un servidor externo compartido con PostgreSQL, para que todo el equipo trabaje con los mismos datos. Hoy el servidor y el equipo están en la misma red local (Ethernet por un switch), así que el host es una IP de la red local.
+  - **Versión final (concepto):** un PostgreSQL interno levantado en la nave, sin depender de Internet ni del retraso de comunicación con la Tierra.
+  - La conexión a PostgreSQL se configura por variables de entorno (host, puerto, base, usuario, contraseña); nunca se escriben en el código ni se suben al repo. El mismo código debe funcionar contra el servidor externo y contra el interno cambiando solo la configuración.
+  - El Python embebido (y el motor de reglas) sigue siendo el único dueño de la lógica; Flutter nunca habla con la base de datos, solo con la API local. Los datos de demo siguen siendo sintéticos y dicen "Datos de ejemplo".
+  - Privacidad: aplica también en la base. Los datos médicos de cada tripulante solo los ven él mismo, el CMO y el flight surgeon; el servidor compartido de desarrollo solo contiene datos sintéticos.
+  - Por definir (después de la demo en Windows): cómo se conecta el Python embebido en Android al servidor (la API local sigue siendo la frontera) y si la app trabaja sin conexión con caché local. No lo diseñes salvo que se pida.
 - Detalles de empaquetado y reglas: skill `.claude/skills/tirelus-serious-python/`.
 - Skills del proyecto en `.claude/skills/` (origen y licencias en `.claude/SKILLS-SOURCES.md`). No agregues skills que se traslapen con las existentes.
 

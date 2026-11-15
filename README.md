@@ -4,7 +4,8 @@ App de automonitoreo de salud para astronautas — NASA Space Apps Challenge 202
 
 - **UI:** Flutter en `app/`
 - **Lógica:** Python en `app/python_app/`, embebido con serious_python; sirve una API local en `127.0.0.1:8765`
-- **Pruebas:** `pytest app/tests_py` (motor de reglas, API y exportación) · `cd app; flutter test` (45 pruebas: semáforo, selector de entorno y contraste)
+- **Base de datos:** PostgreSQL (esquema en `db/`). Servidor externo compartido en desarrollo; PostgreSQL interno en la nave en la versión final (ver [Base de datos](#base-de-datos))
+- **Pruebas:** `pytest app/tests_py` (92 pruebas: motor de reglas, API, exportación, configuración y lectura de PostgreSQL) · `cd app; flutter test` (64 pruebas: semáforo, selector de entorno, contraste, tendencia, medición y SANS)
 
 > La app no diagnostica. Todos los umbrales, salvo SANS, son supuestos de diseño. Los datos de la demo son sintéticos.
 
@@ -18,6 +19,43 @@ python python_app/main.py                                   # servidor Python
 flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true  # UI usando ese servidor
 ```
 
+## Correr con Docker (PostgreSQL + API)
+
+Requiere Docker Desktop abierto. Desde la raíz del repo:
+
+```powershell
+.\tirelus.ps1              # levanta PostgreSQL y la API, y verifica que la API lea de la base
+.\tirelus.ps1 db -Lan      # solo PostgreSQL, visible en la red local (servidor compartido)
+.\tirelus.ps1 verificar    # comprueba /health: data_source debe decir "db"
+.\tirelus.ps1 datos        # (opcional) carga los datasets de referencia desde .\datosdb
+.\tirelus.ps1 down         # detiene (conserva datos) · reset: detiene y borra los datos
+```
+
+Si PowerShell bloquea el script: `powershell -ExecutionPolicy Bypass -File .\tirelus.ps1`.
+
+- La primera vez crea `.env` con una contraseña aleatoria (no se sube al repo; para compartir la base, pásala por un canal privado).
+- `docker-compose.yml` corre `db/schema.sql`, `db/002_ojos.sql` y `db/003_demo.sql` al crear la base. `003_demo.sql` solo trae lo que ya está en `data.py` (sistólica D34–D47 y su línea base) para poder probar `data_source: db`.
+- La API queda en `http://127.0.0.1:8765` y la base en `127.0.0.1:5432`, solo para este equipo. Con `-Lan` la base se abre a la red local; en ese caso abre el puerto 5432 en el firewall solo para red privada.
+- La app Flutter no va en Docker: `cd app; flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true`.
+- Variables nuevas del servidor: `TIRELUS_HOST` (por defecto `127.0.0.1`; la imagen usa `0.0.0.0` y compose publica el puerto solo en localhost).
+
+## Base de datos
+
+PostgreSQL. Los scripts viven en `db/`: `schema.sql` (esquema), `002_ojos.sql` (ojos/SANS) y `load_datos.sql` (carga de datos de ejemplo).
+
+| Etapa | Dónde corre | Para qué |
+|---|---|---|
+| Desarrollo y hackathon | Servidor externo compartido | Que todo el equipo use los mismos datos |
+| Versión final (concepto) | PostgreSQL interno en la nave | Funcionar sin Internet ni retraso de comunicación con la Tierra |
+
+- La conexión se configura con variables de entorno (host, puerto, base, usuario y contraseña). Nunca se suben al repo.
+- El mismo código debe servir para ambos servidores cambiando solo la configuración.
+- Flutter no habla con la base: solo con la API local; la lógica sigue en el Python embebido.
+- El servidor compartido solo guarda datos sintéticos ("Datos de ejemplo"). La privacidad médica aplica también en la base.
+- **Conexión opcional ya escrita** (`app/python_app/db.py` y `catalog.py`, driver `pg8000`): con `TIRELUS_DB_HOST` definido la API lee línea base, límites y series de la base; sin él, o si el servidor no responde, sigue con los datos de `data.py`. `GET /health` dice `data_source` (`db` o `ejemplo`).
+- Variables: `TIRELUS_DB_HOST` (obligatoria), `TIRELUS_DB_PORT` (5432), `TIRELUS_DB_NAME` (tirelus), `TIRELUS_DB_USER` (postgres), `TIRELUS_DB_PASSWORD`, `TIRELUS_DB_TIMEOUT` (3 s) y `TIRELUS_ASTRONAUT_ID` (opcional).
+- **Probado el 14 nov contra el servidor del equipo** (PostgreSQL 18.7, red local 192.168.10.0/24, usuario sin permisos de DDL): `/health` dice `data_source: db` y la sistólica sale de la base. Las credenciales no están en el repo. La base solo trae la sistólica de ejemplo (`db/003_demo.sql`); faltan FC, sueño, ánimo y SANS. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md) y la matriz de pendientes.
+
 ## Estado del MVP
 
 | # | Punto | Estado |
@@ -28,6 +66,8 @@ flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true  # UI usando ese se
 | 4 | Resumen exportable para la conferencia médica | ✅ Se exporta en Markdown (portapapeles) |
 | 5 | Selector ISS / Luna / Marte y modo autónomo | ✅ Listo |
 | — | Extras: consola de base y EVA | ✅ Pantallas hechas |
+| — | Datos compartidos en PostgreSQL | 🟡 Servidor del equipo funcionando y API leyendo de él (probado); falta cargar FC, sueño, ánimo y SANS |
+| — | Entrega (video, presentación, página con fuentes) | 🔴 Sin empezar |
 
 ## Matriz de pendientes
 
@@ -35,7 +75,13 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 
 | Prioridad | Qué falta | Cómo hacerlo | Esfuerzo |
 |---|---|---|---|
-| **P0** | Probar la app empaquetada en Windows y Android | desde `app/`: `dart run serious_python:main package python_app -p Windows -r -r -r python_app/requirements.txt --cleanup` (y `-p Android`; detalles en la skill `tirelus-serious-python`), luego `flutter build windows` / `flutter build apk`. Verificar que `/health` responda dentro de la app. Falta instalar Visual Studio con "Desarrollo para el escritorio con C++": hoy `flutter build windows` falla sin él (revisar con `flutter doctor`). Si uvicorn falla en Android, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). | 2–4 h |
+| **P0** | Probar la app empaquetada en Windows | desde `app/`: `dart run serious_python:main package python_app -p Windows -r -r -r python_app/requirements.txt --cleanup` (detalles en la skill `tirelus-serious-python`), luego `flutter build windows`. Verificar que `/health` responda dentro de la app. Falta instalar Visual Studio con "Desarrollo para el escritorio con C++": hoy `flutter build windows` falla sin él (revisar con `flutter doctor`). | 1–2 h |
+| **P2** | Android (recortado de la demo; se intenta al final si sobra tiempo) | `-p Android` en el mismo comando y `flutter build apk`. Si uvicorn falla, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). Decidir también cómo llega el Python embebido al servidor y si hay caché local. | 2–3 h |
+| ~~P0~~ ✅ | ~~Levantar el servidor externo con PostgreSQL~~ | Hecho: PostgreSQL 18.7 en la red local con un usuario de equipo sin permisos de DDL. Host y contraseña se comparten por un canal privado (no en el repo). Solo datos sintéticos. | — |
+| ~~P0~~ ✅ | ~~Probar la capa de PostgreSQL contra un servidor real~~ | Hecho el 14 nov: las consultas de `db.py` se ejecutaron contra el servidor y `/health` dijo `data_source: db`. **Falta:** instalar `pg8000` en el empaquetado de Windows (`requirements.txt` ya lo lista). | — |
+| **P1** | Completar los datos de la app en la base | `db/003_demo.sql` (ya cargado en el servidor) solo trae la sistólica D34–D47 y su línea base. Faltan FC, sueño, ánimo y SANS (los `>>> DATOS:` de `data.py`), cada uno marcado "Datos de ejemplo". El usuario del equipo puede leer y escribir en `public`, pero no crear ni alterar tablas. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md) (incluye `heart_rate` `both` vs `above`). | 1 h |
+| **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). Hoy es el 14 de nov: el hackathon va de hoy al 15. | 3–4 h |
+| **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | 1 h |
 | ~~P0~~ ✅ | ~~Exportar el resumen médico~~ | Hecho: `GET /summary/export` devuelve Markdown con fecha, día de misión y "Datos de ejemplo" (`tests_py/test_export.py`). Botón "Exportar resumen médico" en la pantalla de tendencia: copia al portapapeles. Compartir con `share_plus` y PDF quedan para después. | — |
 | ~~P1~~ ✅ | ~~Guardar el resumen entre reinicios~~ | Hecho: se guarda en `summary.json`. | — |
 | ~~P1~~ ✅ | ~~Pasar la carpeta de datos desde Flutter~~ | Hecho: `path_provider` manda `TIRELUS_DATA_DIR` con `getApplicationSupportDirectory()` (`lib/python_env.dart`, probado en `test/python_env_test.dart`). Si falla, Python usa su respaldo. | — |

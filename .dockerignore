@@ -1,0 +1,6 @@
+# La imagen solo necesita app/python_app.
+**
+!app/python_app/
+!app/python_app/**
+**/__pycache__
+**/*.pyc

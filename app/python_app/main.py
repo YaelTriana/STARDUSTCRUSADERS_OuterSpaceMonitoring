@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 import data  # noqa: E402
+from catalog import build_catalog  # noqa: E402
 from rules import (  # noqa: E402
     SANS_ATTENTION_UM,
     SANS_CRITICAL_UM,
@@ -32,6 +33,10 @@ from rules import (  # noqa: E402
 )
 
 app = FastAPI(title="TIRELUS API local", version="0.1.0")
+
+# Métricas y SANS: datos de ejemplo (data.py) y, si hay TIRELUS_DB_HOST y responde,
+# base/límites/series de PostgreSQL. Si la base falla se sigue con los de ejemplo.
+catalog = build_catalog()
 
 # Solo para desarrollo con Flutter Web apuntando al servidor local.
 app.add_middleware(
@@ -85,7 +90,11 @@ class SummaryItem(BaseModel):
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "app": "TIRELUS"}
+    snapshot = catalog.snapshot()
+    body = {"ok": True, "app": "TIRELUS", "data_source": snapshot.source}
+    if catalog.last_error:
+        body["db_error"] = catalog.last_error  # solo el tipo del error, nunca datos de conexión
+    return body
 
 
 @app.get("/dashboard")
@@ -111,7 +120,7 @@ def metrics() -> dict:
     return {
         "metrics": [
             {"id": key, "label": m["label"], "unit": m["unit"], "has_data": bool(m["series"]) and m["base"] is not None}
-            for key, m in data.METRICS.items()
+            for key, m in catalog.snapshot().metrics.items()
         ]
     }
 
@@ -119,14 +128,15 @@ def metrics() -> dict:
 # Las rutas de SANS van antes de /{metric} para que FastAPI no las confunda.
 @app.get("/trend/sans")
 def trend_sans() -> dict:
-    series = data.SANS_SERIES
+    snapshot = catalog.snapshot()
+    series = snapshot.sans_series
     last = series[-1] if series else None
     return {
         "metric": "sans",
         "label": "Grosor retiniano (cambio frente a la base)",
         "unit": "µm",
         "series": series,
-        "days": data.SANS_DAYS,
+        "days": snapshot.sans_days,
         "status": evaluate_sans(last).value if last is not None else Status.SIN_DATO.value,
         "thresholds": {"attention_um": SANS_ATTENTION_UM, "critical_um": SANS_CRITICAL_UM},
         "source": data.SANS_SOURCE,
@@ -147,7 +157,7 @@ def evaluate_sans_reading(reading: Reading) -> dict:
 
 
 def _metric(metric: str) -> dict:
-    m = data.METRICS.get(metric)
+    m = catalog.snapshot().metrics.get(metric)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Métrica desconocida: {metric}")
     return m
@@ -280,12 +290,21 @@ def export_summary() -> dict:
     }
 
 
+def bind_host(env) -> str:
+    """Solo 127.0.0.1 por defecto. En Docker se pone TIRELUS_HOST=0.0.0.0 (y el puerto
+    se publica solo en el equipo local desde docker-compose.yml)."""
+    return (env.get("TIRELUS_HOST") or "").strip() or "127.0.0.1"
+
+
+def bind_port(env) -> int:
+    return int(env.get("TIRELUS_PORT") or 8765)
+
+
 def run() -> None:
     import uvicorn
 
-    port = int(os.environ.get("TIRELUS_PORT", "8765"))
     # log_config=None: embebido puede no haber stdout/stderr utilizables.
-    uvicorn.run(app, host="127.0.0.1", port=port, log_config=None, access_log=False)
+    uvicorn.run(app, host=bind_host(os.environ), port=bind_port(os.environ), log_config=None, access_log=False)
 
 
 if __name__ == "__main__":

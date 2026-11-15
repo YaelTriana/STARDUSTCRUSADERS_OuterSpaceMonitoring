@@ -1,0 +1,52 @@
+# TIRELUS: PostgreSQL + API local. Se maneja con ./tirelus.ps1 (crea .env solo la primera vez).
+# La app Flutter de escritorio no va en Docker: se corre aparte contra http://127.0.0.1:8765.
+name: tirelus
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${TIRELUS_DB_NAME:-tirelus}
+      POSTGRES_USER: ${TIRELUS_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${TIRELUS_DB_PASSWORD:?define TIRELUS_DB_PASSWORD en .env (tirelus.ps1 lo crea)}
+    ports:
+      # Solo este equipo por defecto. En el servidor compartido: .\tirelus.ps1 db -Lan
+      - "${TIRELUS_DB_BIND:-127.0.0.1}:${TIRELUS_DB_PUBLISH_PORT:-5432}:5432"
+    volumes:
+      - tirelus_pgdata:/var/lib/postgresql/data
+      # Se ejecutan en orden, solo la primera vez (volumen vacio).
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/002_ojos.sql:/docker-entrypoint-initdb.d/02_ojos.sql:ro
+      - ./db/003_demo.sql:/docker-entrypoint-initdb.d/03_demo.sql:ro
+      # Carga opcional de los datasets de referencia (.\tirelus.ps1 datos); datosdb/ no esta en el repo.
+      - ./db/load_datos.sql:/carga/load_datos.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TIRELUS_DB_HOST: db
+      TIRELUS_DB_PORT: "5432"
+      TIRELUS_DB_NAME: ${TIRELUS_DB_NAME:-tirelus}
+      TIRELUS_DB_USER: ${TIRELUS_DB_USER:-postgres}
+      TIRELUS_DB_PASSWORD: ${TIRELUS_DB_PASSWORD}
+      TIRELUS_ASTRONAUT_ID: 00000000-0000-4000-8000-000000000001   # Tripulante A de db/003_demo.sql
+    ports:
+      - "127.0.0.1:${TIRELUS_API_PORT:-8765}:8765"
+    volumes:
+      - tirelus_data:/data
+
+volumes:
+  tirelus_pgdata:
+  tirelus_data:
