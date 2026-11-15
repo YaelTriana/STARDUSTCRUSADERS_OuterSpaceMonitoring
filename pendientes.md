@@ -22,9 +22,10 @@ Fuente única de los datos sintéticos: el repo [`SyntheticData_STARDUSTCRUSADER
 
 | Prioridad | Qué falta | Detalle | Depende de | Esfuerzo |
 |---|---|---|---|---|
-| **P1** | Cargar el poblado completo en el servidor y verificarlo | 🟡 A medias. `db/004_populate.sql` ya está en `main` (30 903 mediciones, 30 tripulantes, 21 indicadores). Falta confirmar la carga en el servidor, `data_source: db`, pantallas sin "Sin dato" y la marca "Datos de ejemplo". | Dataset de Angel | 30 min |
+| **P1** | Cargar la tripulación sintética en el servidor del equipo | Ya probado contra un PostgreSQL local: `tools/sim_sinteticos.py cargar` mete tripulación, línea base y lecturas. Falta correrlo contra el servidor del equipo para que todos vean los mismos datos. SANS sigue corto por el límite del generador. | Generar los CSV y la contraseña del equipo | 20 min |
 | **P1** | Citar el repo de datos y anotar cómo se generó el dataset | TIRELUS no cita el repo de datos; `data.py` aún nombra `Claude outputs/`. Anotar commit y parámetros (el repo documenta 1800 filas; el poblado usa 3000). | Dataset de Angel | 15 min |
 | **P2** | Umbrales de respaldo que faltan | `body_mass`, `hrv`, `macular_thickness`, `rnfl_thickness`, `cup_to_disc_ratio`, `near_vision_logmar`. Supuestos de diseño; no se inventan (`db/AUDITORIA.md` §5.1). | Criterio de la persona de ciencia | 30 min |
+| **P2** | Examen retiniano periódico en el generador | `generate.py` programa el OCT solo al día 0 y un segundo examen si hay 90 días o más, ignorando `retinal_exam_interval_days_*` del config. Sin eso, la serie de SANS se queda en 1–2 puntos. | Repo del generador | 30 min |
 
 ## Decisiones
 
@@ -38,8 +39,11 @@ Fuente única de los datos sintéticos: el repo [`SyntheticData_STARDUSTCRUSADER
 
 | Prioridad | Qué falta | Detalle | Depende de | Esfuerzo |
 |---|---|---|---|---|
-| **P1** | Generalizar medición y tendencia a FC, sueño y ánimo | Con la base cargada los datos llegan por `db.py`. Falta el respaldo sin base en `METRICS` de `data.py`: línea base, límite de respaldo (supuesto de diseño) y serie de 14 días por métrica, tomados del dataset. | Dataset de Angel | 20–30 min |
+| **P2** | Valores de ejemplo en `data.py` (camino sin base de datos) | Con PostgreSQL cargado las pantallas ya muestran las 6 métricas. Sin base, `data.py` sigue con FC, sueño, ánimo, diastólica y SpO₂ vacíos (`>>> DATOS:`). Se pueden copiar del CSV de un tripulante. | Un CSV del generador | 20 min |
 | **P1** | Medición y tendencia de SANS | Falta la serie en `SANS_SERIES` y `SANS_DAYS` de `data.py` (del dataset, como cambio de RNFL), y la referencia NASA exacta en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
+| **P1** | Guardar lo que captura el astronauta | No hay endpoint de escritura de lecturas: lo que se mide se evalúa y se tira, así que la alerta por desviación sostenida no puede nacer durante la demo. `measurements` ya está diseñada para esto. Ver A2 en `planning/AUDITORIA.md`. | — | 1–2 h |
+| **P1** | Cerrar CORS por defecto | `main.py` monta `allow_origins=["*"]`. Montarlo solo con `TIRELUS_DEV_CORS`. Ver C en la auditoría. | — | 10 min |
+| **P1** | Día de misión real | `/trend/{metric}` usa `MISSION_DAY = 47` fijo y `lib/main.dart` imprime "DÍA DE MISIÓN 047" literal: con datos de la base el día del gráfico no coincide. Ver A6 en la auditoría. | — | 30 min |
 | **P2** | Android (se intenta al final) | `-p Android` en el empaquetado y `flutter build apk`. Si uvicorn falla, cambiar a Flask o `http.server`. Decidir cómo llega el Python embebido al servidor y si hay caché local. | Empaquetado | 2–3 h |
 
 ## Front · Jenny
