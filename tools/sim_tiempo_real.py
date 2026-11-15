@@ -423,21 +423,52 @@ def simular_vivo(segundos: int = 46) -> None:
 # --- modo ciclo: mueve la base en bucle, para mirar la app mientras cambia ----
 
 
+def _base_sistolica() -> tuple[float, float, float]:
+    """Línea base y límite de respaldo de la sistólica, leídos de la base.
+
+    El ciclo tiene que moverse contra la base REAL del tripulante: si está escrita
+    a mano (110–126 de data.py) y la base de datos dice otra cosa, el paso de
+    "atención" no se vería. Si no hay línea base, se usan los valores de data.py.
+    """
+    try:
+        filas = sql(
+            "SELECT b.low, b.high, t.critico_high FROM baselines b"
+            " LEFT JOIN thresholds t ON t.indicator_id = b.indicator_id"
+            "   AND t.body_state = b.body_state AND t.environment IS NULL"
+            " WHERE b.astronaut_id = %s AND b.indicator_id = 'systolic' AND b.body_state = 'reposo'",
+            (ASTRO,),
+        )
+    except Exception:  # noqa: BLE001 - sin base se sigue con los valores de data.py
+        filas = []
+    if not filas:
+        return 110.0, 126.0, 160.0
+    low, high, critico = filas[0]
+    return float(low), float(high), float(critico) if critico is not None else float(high) + 30
+
+
 def _escenas() -> list:
-    """Cuatro escenas que recorren los tres estados del semáforo de cardio."""
+    """Cuatro escenas que recorren los tres estados del semáforo de cardio.
+
+    Los valores se calculan contra la línea base del tripulante que esté en la base.
+    """
+    low, high, critico = _base_sistolica()
+    dentro = [round(low + (high - low) * f, 1) for f in (0.2, 0.5, 0.3, 0.7, 0.4, 0.6, 0.35, 0.55, 0.25, 0.65, 0.45, 0.5, 0.6, 0.4)]
+    arriba = [round(high + d, 1) for d in (3, 6, 9)]
+    critica = round(max(critico + 5, high + 25), 1)
+    print(f"{t()} base de la sistólica: {low}–{high} · respaldo {critico} → dentro {dentro[0]}… · arriba {arriba} · crítica {critica}")
 
     def todo_en_rango(ronda: int) -> None:
-        for i, value in enumerate([118, 120, 119, 121, 118, 122, 120, 119, 123, 121, 120, 124, 122, 121]):
+        for i, value in enumerate(dentro):
             insert_measurement("systolic", value, 50 + i, f"sim-ciclo-{ronda}-sys-ok-{i}", offset_secs=28 - i)
         for i, value in enumerate([58, 59, 57, 60, 61, 59, 62, 64, 63, 61, 60, 62, 59, 61]):
             insert_measurement("heart_rate", value, 50 + i, f"sim-ciclo-{ronda}-hr-ok-{i}", offset_secs=28 - i)
 
     def sistolica_sostenida(ronda: int) -> None:
-        for i, value in enumerate([129, 131, 134]):
+        for i, value in enumerate(arriba):
             insert_measurement("systolic", value, 64 + i, f"sim-ciclo-{ronda}-sys-up-{i}", offset_secs=2 - i)
 
     def sistolica_critica(ronda: int) -> None:
-        insert_measurement("systolic", 165, 67, f"sim-ciclo-{ronda}-sys-crit", offset_secs=0)
+        insert_measurement("systolic", critica, 67, f"sim-ciclo-{ronda}-sys-crit", offset_secs=0)
 
     def fc_arriba(ronda: int) -> None:
         sql(
@@ -450,8 +481,8 @@ def _escenas() -> list:
 
     return [
         ("sistólica y FC dentro de la base", "cardio NOMINAL", todo_en_rango),
-        ("3 lecturas seguidas sobre la base (129, 131, 134)", "cardio ATENCIÓN", sistolica_sostenida),
-        ("una lectura de 165 mmHg (respaldo 160)", "cardio CRÍTICO", sistolica_critica),
+        (f"3 lecturas seguidas sobre la base ({', '.join(str(v) for v in arriba)})", "cardio ATENCIÓN", sistolica_sostenida),
+        (f"una lectura de {critica} mmHg (sobre el respaldo)", "cardio CRÍTICO", sistolica_critica),
         ("FC sube a 78 lpm (base 55–66)", "el azulejo de FC pasa a atención", fc_arriba),
     ]
 
