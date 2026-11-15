@@ -869,4 +869,112 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get measEvalFailed =>
       'No se pudo evaluar con el motor. Revisa la conexión e intenta de nuevo.';
+
+  @override
+  String get baseEnvTitle => 'AMBIENTE DEL HÁBITAT';
+
+  @override
+  String get baseRadiationNote =>
+      'Dosis acumulada de radiación de cada quien: solo en su vista personal.';
+
+  @override
+  String get baseCrewTitle => 'Tripulación';
+
+  @override
+  String get baseNoClinical => 'Sin datos clínicos en pantallas compartidas';
+
+  @override
+  String get baseAgendaTitle => 'AGENDA MÉDICA DE HOY';
+
+  @override
+  String get baseCmoButton => 'Vista CMO · identificarse';
+
+  @override
+  String get baseCmoSnack =>
+      'La vista CMO requiere identificación (no incluida en el mockup).';
+
+  @override
+  String baseHeader(String day) {
+    return 'BASE LUNAR · DÍA $day';
+  }
+
+  @override
+  String baseGravity(String value) {
+    return 'Gravedad $value';
+  }
+
+  @override
+  String baseLink(String value) {
+    return 'Enlace con Tierra $value';
+  }
+
+  @override
+  String get baseSpaceWeather => 'Clima espacial';
+
+  @override
+  String get visorConcept =>
+      'CONCEPTO A FUTURO · PANTALLA EN CASCO TIPO JOINT AR / SUITS';
+
+  @override
+  String get visorO2 => 'O₂ DEL TRAJE';
+
+  @override
+  String get visorEva => 'EVA';
+
+  @override
+  String visorReturn(String min) {
+    return 'regreso al rover en $min min';
+  }
+
+  @override
+  String get visorSay => 'Di «TIRELUS, estado»';
+
+  @override
+  String get visorHr => 'FC';
+
+  @override
+  String get visorBpm => ' lpm ▲';
+
+  @override
+  String get visorTemp => 'TEMP';
+
+  @override
+  String get visorCo2 => 'CO₂ TRAJE';
+
+  @override
+  String get visorEffort => 'ESFUERZO';
+
+  @override
+  String handTitle(String elapsed) {
+    return 'EVA $elapsed · TRIPULANTE B';
+  }
+
+  @override
+  String get handAlertTitle => 'Esfuerzo alto';
+
+  @override
+  String get handAlertBody =>
+      '4 min sobre tu zona. Baja el ritmo o pausa 2 min.';
+
+  @override
+  String get handTemp => 'Temperatura';
+
+  @override
+  String get handCo2 => 'CO₂ del traje';
+
+  @override
+  String get handPause => 'Pausa de 2 min';
+
+  @override
+  String get handPauseSnack => 'Pausa de 2 min iniciada.';
+
+  @override
+  String get handCallCmo => 'Llamar al CMO';
+
+  @override
+  String get handCallSnack => 'Llamando al CMO…';
+
+  @override
+  String get handNote =>
+      'Botones grandes para guantes presurizados. La misma información que el visor, por si el traje no tiene pantalla en el casco.';
 }

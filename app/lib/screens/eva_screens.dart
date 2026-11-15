@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../data/models.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -42,39 +43,39 @@ class _VisorScreenState extends State<VisorScreen> with _EvaData {
                   TextStyle m(double size, [Color color = VColors.text]) => mono(size: size * s, color: color);
                   return Stack(children: [
                     Positioned.fill(child: CustomPaint(painter: _VisorPainter())),
-                    at(24, 20, Text('CONCEPTO A FUTURO · PANTALLA EN CASCO TIPO JOINT AR / SUITS', style: m(12, VColors.muted))),
+                    at(24, 20, Text(context.l10n.visorConcept, style: m(12, VColors.muted))),
                     at(300, 110, Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('O₂ DEL TRAJE', style: m(12, VColors.muted)),
+                      Text(context.l10n.visorO2, style: m(12, VColors.muted)),
                       Text('${e['o2_left']} h', style: m(34)),
                     ])),
                     at(790, 110, w: 200, Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('EVA', style: m(12, VColors.muted)),
+                      Text(context.l10n.visorEva, style: m(12, VColors.muted)),
                       Text('${e['elapsed']}', style: m(34)),
-                      Text('regreso al rover en ${e['return_in_min']} min', style: TextStyle(fontSize: 13 * s, color: VColors.muted)),
+                      Text(context.l10n.visorReturn('${e['return_in_min']}'), style: TextStyle(fontSize: 13 * s, color: VColors.muted)),
                     ])),
-                    at(520, 72, w: 240, Text('Di «TIRELUS, estado»', textAlign: TextAlign.center, style: TextStyle(fontSize: 12 * s, color: VColors.muted))),
+                    at(520, 72, w: 240, Text(context.l10n.visorSay, textAlign: TextAlign.center, style: TextStyle(fontSize: 12 * s, color: VColors.muted))),
                     at(250, 500, Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text.rich(TextSpan(children: [
-                        TextSpan(text: 'FC  ', style: m(12, VColors.muted)),
+                        TextSpan(text: '${context.l10n.visorHr}  ', style: m(12, VColors.muted)),
                         TextSpan(text: '${e['hr']}', style: m(30, VColors.atencion)),
-                        TextSpan(text: ' lpm ▲', style: TextStyle(fontSize: 13 * s, color: VColors.muted)),
+                        TextSpan(text: context.l10n.visorBpm, style: TextStyle(fontSize: 13 * s, color: VColors.muted)),
                       ])),
                       Text.rich(TextSpan(children: [
                         TextSpan(text: 'SpO₂  ', style: m(12, VColors.muted)),
                         TextSpan(text: '${e['spo2']} %', style: m(22)),
                       ])),
                       Text.rich(TextSpan(children: [
-                        TextSpan(text: 'TEMP  ', style: m(12, VColors.muted)),
+                        TextSpan(text: '${context.l10n.visorTemp}  ', style: m(12, VColors.muted)),
                         TextSpan(text: '${e['temp']} °C', style: m(22)),
                       ])),
                     ])),
                     at(830, 500, w: 200, Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                       Text.rich(TextSpan(children: [
-                        TextSpan(text: 'CO₂ TRAJE  ', style: m(12, VColors.muted)),
+                        TextSpan(text: '${context.l10n.visorCo2}  ', style: m(12, VColors.muted)),
                         TextSpan(text: '${e['co2']}', style: m(22)),
                       ])),
                       Text.rich(TextSpan(children: [
-                        TextSpan(text: 'ESFUERZO  ', style: m(12, VColors.muted)),
+                        TextSpan(text: '${context.l10n.visorEffort}  ', style: m(12, VColors.muted)),
                         TextSpan(text: '${e['effort']}', style: m(22, VColors.atencion)),
                       ])),
                     ])),
@@ -181,11 +182,18 @@ class _HandheldScreenState extends State<HandheldScreen> with _EvaData {
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text('EVA ${e['elapsed']} · TRIPULANTE B', style: mono(size: 13, color: VColors.muted)),
+                  Flexible(
+                    child: Text(
+                      context.l10n.handTitle('${e['elapsed']}'),
+                      style: mono(size: 13, color: VColors.muted),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text('O₂ ${e['o2_left']} h', style: mono(size: 13, color: VColors.muted)),
                 ]),
                 const SizedBox(height: 16),
-                const AlertBanner(title: 'Esfuerzo alto', body: '4 min sobre tu zona. Baja el ritmo o pausa 2 min.'),
+                AlertBanner(title: context.l10n.handAlertTitle, body: context.l10n.handAlertBody),
                 const SizedBox(height: 16),
                 GridView.count(
                   crossAxisCount: 2,
@@ -197,25 +205,25 @@ class _HandheldScreenState extends State<HandheldScreen> with _EvaData {
                   children: [
                     MetricTile(label: 'FC', value: '${e['hr']}', unit: 'lpm', valueSize: 38, valueColor: VColors.atencion),
                     MetricTile(label: 'SpO₂', value: '${e['spo2']}', unit: '%', valueSize: 38),
-                    MetricTile(label: 'Temperatura', value: '${e['temp']}', unit: '°C', valueSize: 30),
-                    MetricTile(label: 'CO₂ del traje', value: '${e['co2']}', valueSize: 24, valueColor: VColors.nominal),
+                    MetricTile(label: context.l10n.handTemp, value: '${e['temp']}', unit: '°C', valueSize: 30),
+                    MetricTile(label: context.l10n.handCo2, value: '${e['co2']}', valueSize: 24, valueColor: VColors.nominal),
                   ],
                 ),
                 const SizedBox(height: 20),
                 FilledButton(
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(60)),
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pausa de 2 min iniciada.'))),
-                  child: const Text('Pausa de 2 min', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.handPauseSnack))),
+                  child: Text(context.l10n.handPause, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(60)),
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Llamando al CMO…'))),
-                  child: const Text('Llamar al CMO', style: TextStyle(fontSize: 18)),
+                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.handCallSnack))),
+                  child: Text(context.l10n.handCallCmo, style: TextStyle(fontSize: 18)),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Botones grandes para guantes presurizados. La misma información que el visor, por si el traje no tiene pantalla en el casco.',
+                Text(
+                  context.l10n.handNote,
                   style: TextStyle(fontSize: 13, color: VColors.muted, height: 1.5),
                 ),
               ]),

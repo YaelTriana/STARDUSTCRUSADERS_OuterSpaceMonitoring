@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../data/models.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -25,6 +26,7 @@ class _BaseScreenState extends State<BaseScreen> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final l = context.l10n;
     return AsyncView<Map<String, dynamic>>(
       future: _future!,
       builder: (context, h) {
@@ -35,7 +37,7 @@ class _BaseScreenState extends State<BaseScreen> {
 
         final environment = SectionCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('AMBIENTE DEL HÁBITAT', style: overline()),
+            Text(l.baseEnvTitle, style: overline()),
             const SizedBox(height: 14),
             Wrap(spacing: 12, runSpacing: 12, children: [
               for (final e in env)
@@ -51,15 +53,14 @@ class _BaseScreenState extends State<BaseScreen> {
                 ),
             ]),
             const SizedBox(height: 12),
-            const Text('Dosis acumulada de radiación de cada quien: solo en su vista personal.',
-                style: TextStyle(fontSize: 13, color: VColors.muted)),
+            Text(l.baseRadiationNote, style: const TextStyle(fontSize: 13, color: VColors.muted)),
           ]),
         );
 
         final crewSection = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, spacing: 12, children: [
-            Text('Tripulación', style: t.headlineSmall),
-            const Text('Sin datos clínicos en pantallas compartidas', style: TextStyle(fontSize: 13, color: VColors.muted)),
+            Text(l.baseCrewTitle, style: t.headlineSmall),
+            Text(l.baseNoClinical, style: const TextStyle(fontSize: 13, color: VColors.muted)),
           ]),
           const SizedBox(height: 14),
           LayoutBuilder(builder: (context, c) {
@@ -111,7 +112,7 @@ class _BaseScreenState extends State<BaseScreen> {
         final agendaCard = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SectionCard(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('AGENDA MÉDICA DE HOY', style: overline()),
+              Text(l.baseAgendaTitle, style: overline()),
               const SizedBox(height: 12),
               for (final a in agenda)
                 Padding(
@@ -125,10 +126,9 @@ class _BaseScreenState extends State<BaseScreen> {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('La vista CMO requiere identificación (no incluida en el mockup).'))),
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.baseCmoSnack))),
             icon: const Icon(Icons.lock_outline),
-            label: const Text('Vista CMO · identificarse'),
+            label: Text(l.baseCmoButton),
           ),
         ]);
 
@@ -138,13 +138,13 @@ class _BaseScreenState extends State<BaseScreen> {
             padding: const EdgeInsets.all(28),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Wrap(spacing: 18, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                Text('BASE LUNAR · DÍA ${h['day']}', style: mono(size: 13, color: VColors.muted)),
-                Text('Gravedad ${h['gravity']}', style: mono(size: 13, color: VColors.muted)),
-                Text('Enlace con Tierra ${h['link']}', style: mono(size: 13, color: VColors.muted)),
+                Text(l.baseHeader('${h['day']}'), style: mono(size: 13, color: VColors.muted)),
+                Text(l.baseGravity('${h['gravity']}'), style: mono(size: 13, color: VColors.muted)),
+                Text(l.baseLink('${h['link']}'), style: mono(size: 13, color: VColors.muted)),
                 const SampleTag(),
               ]),
               const SizedBox(height: 16),
-              AlertBanner(title: 'Clima espacial', body: '${h['alert']}'),
+              AlertBanner(title: l.baseSpaceWeather, body: '${h['alert']}'),
               const SizedBox(height: 20),
               if (wide)
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

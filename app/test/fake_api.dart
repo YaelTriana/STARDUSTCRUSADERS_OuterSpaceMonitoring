@@ -62,6 +62,37 @@ class FakeApi extends TirelusApi {
       };
 
   @override
+  Future<Map<String, dynamic>> habitat() async => {
+        'day': 18,
+        'gravity': '0.17 g',
+        'link': '~4 s',
+        'environment': [
+          {'label': 'CO₂', 'value': '2.6', 'unit': 'mmHg', 'status': 'nominal'},
+        ],
+        'alert': 'Alerta de prueba',
+        'crew': [
+          {'name': 'Tripulante A', 'location': 'HÁBITAT', 'detail': 'Detalle', 'progress': 0.6},
+        ],
+        'agenda': [
+          {'time': '08:00', 'title': 'Vitales'},
+        ],
+        'team_challenge': {'title': 'Reto', 'done': 3, 'total': 5},
+      };
+
+  @override
+  Future<Map<String, dynamic>> eva() async => {
+        'elapsed': '02:18',
+        'o2_left': '5:42',
+        'return_in_min': 48,
+        'hr': 128,
+        'spo2': 97,
+        'temp': 37.6,
+        'co2': 'nominal',
+        'effort': 'alto',
+        'alert': 'Alerta EVA',
+      };
+
+  @override
   Future<Map<String, dynamic>> autonomous(MissionEnv env) async => {
         'title': 'Visión borrosa de cerca',
         'steps': [
