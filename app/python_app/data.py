@@ -16,6 +16,8 @@ SYSTOLIC_ABS_HIGH = 160.0  # límite clínico terrestre de respaldo (supuesto de
 #
 # Cada métrica necesita:
 #   label, unit       → texto para la UI
+#   system            → sistema del panel: cardio, ojos, hueso, mente o inmune
+#                       (mismos ids que body_system en db/schema.sql)
 #   base              → Baseline(low, high) personal prevuelo, o None si aún no hay dato
 #   abs_high/abs_low  → límite clínico terrestre de respaldo (supuesto de diseño) o None
 #   series            → últimos 14 días (D34–D47), la última lectura es hoy
@@ -30,6 +32,7 @@ METRICS: dict[str, dict] = {
     "systolic": {
         "label": "Presión sistólica",
         "unit": "mmHg",
+        "system": "cardio",
         "valid_range": (50, 260),  # límite de captura (supuesto de diseño); igual a db/schema.sql
         "base": SYSTOLIC_BASE,
         "abs_high": SYSTOLIC_ABS_HIGH,
@@ -39,9 +42,26 @@ METRICS: dict[str, dict] = {
         "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
         "source": "Captura en examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
+    "diastolic": {
+        "label": "Presión diastólica",
+        "unit": "mmHg",
+        "system": "cardio",
+        "valid_range": (30, 160),
+        # >>> DATOS: línea base prevuelo de diastólica, p. ej. Baseline(70, 82).
+        "base": None,
+        # >>> DATOS: límite terrestre de respaldo (supuesto de diseño), p. ej. 100.0.
+        "abs_high": None,
+        "abs_low": None,
+        # >>> DATOS: 14 lecturas diarias D34–D47, junto con la sistólica.
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
     "heart_rate": {
         "label": "FC en reposo",
         "unit": "lpm",
+        "system": "cardio",
         "valid_range": (20, 230),
         # >>> DATOS: línea base prevuelo de FC en reposo, p. ej. Baseline(55, 66).
         "base": None,
@@ -54,9 +74,113 @@ METRICS: dict[str, dict] = {
         "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
         "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
+    "spo2": {
+        "label": "SpO₂",
+        "unit": "%",
+        "system": "cardio",
+        "valid_range": (50, 100),
+        # >>> DATOS: línea base prevuelo de saturación, p. ej. Baseline(95, 100).
+        "base": None,
+        "abs_high": None,
+        # >>> DATOS: mínimo de respaldo (supuesto de diseño), p. ej. 90.0.
+        "abs_low": None,
+        # >>> DATOS: 14 lecturas diarias D34–D47.
+        "series": [],
+        # Aquí preocupa la baja: evaluate_trend recibe direction="below".
+        "alert_when": "below",
+        "rule": "Supuesto de diseño: saturación por debajo de la base personal.",
+        "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
+    "macular_thickness": {
+        "label": "Grosor macular",
+        "unit": "µm",
+        "system": "ojos",
+        "valid_range": (150, 600),
+        # >>> DATOS: línea base del OCT prevuelo, p. ej. Baseline(270, 300).
+        "base": None,
+        "abs_high": None,
+        "abs_low": None,
+        # >>> DATOS: una lectura por ciclo de OCT.
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "OCT a bordo (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
+    },
+    "rnfl_thickness": {
+        "label": "Capa de fibras (RNFL)",
+        "unit": "µm",
+        "system": "ojos",
+        "valid_range": (20, 200),
+        # >>> DATOS: línea base del OCT prevuelo, p. ej. Baseline(95, 115).
+        "base": None,
+        "abs_high": None,
+        "abs_low": None,
+        "series": [],
+        "alert_when": "above",  # si engrosa puede ser edema del disco óptico (SANS)
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "OCT a bordo (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
+    },
+    "near_vision_logmar": {
+        "label": "Visión cercana",
+        "unit": "logMAR",
+        "system": "ojos",
+        "valid_range": (-0.3, 2.0),
+        # >>> DATOS: autoprueba semanal prevuelo, p. ej. Baseline(-0.1, 0.1).
+        "base": None,
+        "abs_high": None,
+        "abs_low": None,
+        "series": [],
+        "alert_when": "above",  # más logMAR es peor visión
+        "rule": "Supuesto de diseño: autoprueba semanal peor que la base personal.",
+        "source": "Autoprueba de visión cercana (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
+    },
+    "intraocular_pressure": {
+        "label": "Presión intraocular",
+        "unit": "mmHg",
+        "system": "ojos",
+        "valid_range": (0, 60),
+        # >>> DATOS: tonometría prevuelo, p. ej. Baseline(12, 18).
+        "base": None,
+        "abs_high": None,
+        "abs_low": None,
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Tonómetro a bordo (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
+    },
+    "cup_to_disc_ratio": {
+        "label": "Relación copa/disco",
+        "unit": "ratio",
+        "system": "ojos",
+        "valid_range": (0, 1),
+        # >>> DATOS: fondo de ojo prevuelo, p. ej. Baseline(0.25, 0.4).
+        "base": None,
+        "abs_high": None,
+        "abs_low": None,
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Imagen del nervio óptico (ver db/002_ojos.sql). Umbral: supuesto de diseño.",
+    },
+    "body_mass": {
+        "label": "Masa corporal",
+        "unit": "kg",
+        "system": "hueso",
+        "valid_range": (30, 200),
+        # >>> DATOS: pesaje prevuelo, p. ej. Baseline(72.0, 74.0).
+        "base": None,
+        "abs_high": None,
+        # >>> DATOS: mínimo de respaldo (supuesto de diseño): pérdida que obliga a escalar.
+        "abs_low": None,
+        "series": [],
+        "alert_when": "below",  # sin carga del peso corporal se pierde hueso y músculo
+        "rule": "Supuesto de diseño: 3 días consecutivos bajo la base personal.",
+        "source": "Pesaje del examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
     "sleep_hours": {
         "label": "Horas de sueño",
         "unit": "h",
+        "system": "mente",
         "valid_range": (0, 24),
         # >>> DATOS: línea base prevuelo de sueño, p. ej. Baseline(6.5, 8.5).
         "base": None,
@@ -73,6 +197,7 @@ METRICS: dict[str, dict] = {
     "mood": {
         "label": "Ánimo (1–5)",
         "unit": "pts",
+        "system": "mente",
         "valid_range": (1, 5),
         # >>> DATOS: rango habitual del tripulante, p. ej. Baseline(3, 5).
         "base": None,
@@ -85,6 +210,35 @@ METRICS: dict[str, dict] = {
         "alert_when": "below",
         "rule": "Supuesto de diseño: autorreporte por debajo del rango habitual.",
         "source": "Autorreporte: supuesto de diseño, sin umbral publicado.",
+    },
+    "pvt_ms": {
+        "label": "Tiempo de reacción (PVT)",
+        "unit": "ms",
+        "system": "mente",
+        "valid_range": (100, 2000),
+        # >>> DATOS: batería cognitiva prevuelo, p. ej. Baseline(260, 320).
+        "base": None,
+        "abs_high": None,
+        "abs_low": None,
+        "series": [],
+        "alert_when": "above",  # más lento que tu base
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Batería cognitiva (~16 min) del examen periódico. Umbral: supuesto de diseño.",
+    },
+    "temperature": {
+        "label": "Temperatura corporal",
+        "unit": "°C",
+        "system": "inmune",
+        "valid_range": (30, 44),
+        # >>> DATOS: línea base prevuelo, p. ej. Baseline(36.1, 37.2).
+        "base": None,
+        # >>> DATOS: límite terrestre de respaldo (supuesto de diseño), p. ej. 38.0.
+        "abs_high": None,
+        "abs_low": None,
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
 }
 
@@ -110,75 +264,48 @@ ENVIRONMENTS = {
 }
 
 
-def _ind(label, value, unit, note, status="nominal"):
-    return {"label": label, "value": value, "unit": unit, "note": note, "status": status}
-
-
 SYSTEMS = [
     {
+        # Calculado: el estado y los azulejos los arma panel.py desde METRICS
+        # (sistólica, diastólica, FC y SpO₂). Aquí solo vive el texto educativo.
         "id": "cardio",
         "name": "Corazón y circulación",
-        "status": "atencion",
-        "indicators": [
-            _ind("Presión arterial", "132/84", "mmHg", "▲ base 118/76", "atencion"),
-            _ind("FC en reposo", "64", "lpm", "base 60"),
-            _ind("SpO₂", "98", "%", "en rango"),
-        ],
         "why": "En microgravedad los líquidos se desplazan hacia la cabeza y el corazón y los vasos "
         "se adaptan. La presión puede variar en las primeras semanas.",
         "action": "Repite la medición tras 5 min en reposo. Si sigue sobre tu base 3 días, TIRELUS "
         "la agrega al resumen de tu conferencia médica.",
     },
     {
+        # Calculado: SANS (umbrales publicados) + los indicadores de ojos de 002_ojos.sql.
         "id": "ojos",
         "name": "Ojos y cerebro (SANS)",
-        "status": "nominal",
-        "indicators": [
-            _ind("Grosor retiniano", "+8", "µm", "atención desde +20"),
-            _ind("Visión cercana", "sin cambio", "", "autoprueba semanal"),
-            _ind("Próximo OCT", "D90", "", "en 43 días"),
-        ],
         "why": "El desplazamiento de líquidos hacia la cabeza puede engrosar la retina y el nervio "
         "óptico. Es el principal riesgo de salud que señala NASA.",
         "action": "Haz la autoprueba de visión cercana cada semana y reporta visión borrosa en "
         "cuanto la notes.",
     },
     {
+        # Calculado: masa corporal. El ejercicio y la carga en ARED no son indicadores del
+        # esquema: viven en exercise_sessions y en la tarjeta de ejercicio del panel.
         "id": "hueso",
         "name": "Huesos y músculo",
-        "status": "nominal",
-        "indicators": [
-            _ind("Ejercicio hoy", "1:52", "h", "meta ~2 h"),
-            _ind("Masa corporal", "72.4", "kg", "base 73.0"),
-            _ind("Carga en ARED", "estable", "", "últimos 7 días"),
-        ],
         "why": "Sin carga del peso corporal, el hueso se degrada y el músculo se pierde. El "
         "ejercicio diario es la contramedida principal.",
         "action": "Completa los 8 minutos restantes de resistencia antes de las 18:00.",
     },
     {
+        # Calculado: sueño, ánimo (autorreporte) y tiempo de reacción (PVT).
         "id": "mente",
         "name": "Sueño y ánimo",
-        "status": "atencion",
-        "indicators": [
-            _ind("Sueño anoche", "6:10", "h", "▼ periodo 8.5 h", "atencion"),
-            _ind("Ánimo", "3", "/5", "autorreporte"),
-            _ind("Reacción (PVT)", "+9", "%", "más lento que tu base", "atencion"),
-        ],
         "why": "Horarios irregulares, ruido y aislamiento alteran el reloj biológico. La falta de "
         "sueño se nota primero en el tiempo de reacción.",
         "action": "Evita tareas críticas entre la 1 y las 7 h de tu ciclo. Opcional: agenda una "
         "conferencia psicológica privada.",
     },
     {
+        # Calculado: temperatura. Síntomas y muestras de saliva no son indicadores medidos.
         "id": "inmune",
         "name": "Sistema inmune",
-        "status": "nominal",
-        "indicators": [
-            _ind("Temperatura", "36.7", "°C", "en rango"),
-            _ind("Síntomas", "ninguno", "", "registro de hoy"),
-            _ind("Muestra de saliva", "D60", "", "en 13 días"),
-        ],
         "why": "El estrés del vuelo puede reactivar virus latentes y causar sarpullidos u otros síntomas.",
         "action": "Registra cualquier sarpullido, llaga o fiebre con foto; TIRELUS lo adjunta a tu expediente.",
     },

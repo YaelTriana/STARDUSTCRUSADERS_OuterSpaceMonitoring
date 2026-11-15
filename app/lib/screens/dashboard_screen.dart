@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../api.dart';
 import '../app_state.dart';
 import '../data/models.dart';
 import '../theme.dart';
@@ -7,58 +10,131 @@ import '../widgets/body_figure.dart';
 import '../widgets/common.dart';
 
 /// Panel principal: figura corporal + detalle del sistema seleccionado.
+///
+/// Se refresca solo cada [refreshEvery]: los estados los calcula Python desde el
+/// catálogo (datos de ejemplo o PostgreSQL), así que pueden cambiar sin que el
+/// tripulante toque nada. Un refresco que falla no borra el último dato bueno.
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, required this.onGoTo});
+  const DashboardScreen({super.key, required this.onGoTo, this.refreshEvery = dashboardRefresh});
   final ValueChanged<int> onGoTo;
+  final Duration refreshEvery;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  Future<Dashboard>? _future;
+  Dashboard? _data;
+  Object? _error; // solo manda mientras no haya ningún dato que mostrar
+  bool _offline = false;
+  DateTime? _updatedAt;
+  Timer? _timer;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= AppScope.of(context).api.dashboard();
+    if (_timer == null) {
+      _timer = Timer.periodic(widget.refreshEvery, (_) => _load());
+      _load();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // al salir de la pantalla se deja de preguntar
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final api = AppScope.of(context).api;
+    try {
+      final dashboard = await api.dashboard();
+      if (!mounted) return;
+      setState(() {
+        _data = dashboard;
+        _error = null;
+        _offline = false;
+        _updatedAt = DateTime.now();
+      });
+    } catch (err) {
+      if (!mounted) return;
+      setState(() {
+        if (_data == null) {
+          _error = err;
+        } else {
+          _offline = true; // se conserva lo último conocido
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    return AsyncView<Dashboard>(
-      future: _future!,
-      builder: (context, d) {
-        final current = d.system(state.selectedSystem);
-        final bodyCard = SectionCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('ESTADO POR SISTEMA · TOCA UNA ZONA', style: overline(color: VColors.muted)),
-            const SizedBox(height: 12),
-            BodyFigure(systems: d.systems, selected: state.selectedSystem, onSelect: state.selectSystem),
-          ]),
-        );
-        final detail = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _SystemDetail(system: current),
-          const SizedBox(height: 20),
-          _TaskRow(dashboard: d, onMeasure: () => widget.onGoTo(1)),
-        ]);
-        return LayoutBuilder(builder: (context, c) {
-          final wide = c.maxWidth >= 1000;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
-            child: wide
-                ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    SizedBox(width: 400, child: bodyCard),
-                    const SizedBox(width: 24),
-                    Expanded(child: detail),
-                  ])
-                : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [bodyCard, const SizedBox(height: 20), detail]),
-          );
-        });
-      },
+    if (_data == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: _error == null
+              ? const CircularProgressIndicator()
+              : Text('No se pudo leer el servidor Python local.\n$_error',
+                  textAlign: TextAlign.center, style: const TextStyle(color: VColors.critico)),
+        ),
+      );
+    }
+    final d = _data!;
+    final current = d.system(state.selectedSystem);
+    final bodyCard = SectionCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Wrap(spacing: 12, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          Text('ESTADO POR SISTEMA · TOCA UNA ZONA', style: overline(color: VColors.muted)),
+          _RefreshMark(updatedAt: _updatedAt, offline: _offline),
+        ]),
+        const SizedBox(height: 12),
+        BodyFigure(systems: d.systems, selected: state.selectedSystem, onSelect: state.selectSystem),
+      ]),
     );
+    final detail = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _SystemDetail(system: current),
+      const SizedBox(height: 20),
+      _TaskRow(dashboard: d, onMeasure: () => widget.onGoTo(1)),
+    ]);
+    return LayoutBuilder(builder: (context, c) {
+      final wide = c.maxWidth >= 1000;
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(28),
+        child: wide
+            ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                SizedBox(width: 400, child: bodyCard),
+                const SizedBox(width: 24),
+                Expanded(child: detail),
+              ])
+            : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [bodyCard, const SizedBox(height: 20), detail]),
+      );
+    });
+  }
+}
+
+/// Marca de frescura: cuándo se leyó por última vez y si la última lectura falló.
+class _RefreshMark extends StatelessWidget {
+  const _RefreshMark({required this.updatedAt, required this.offline});
+  final DateTime? updatedAt;
+  final bool offline;
+
+  static String _hora(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:${t.second.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final hora = updatedAt == null ? '—' : _hora(updatedAt!);
+    if (!offline) {
+      return Text('Actualizado $hora', style: mono(size: 11, color: VColors.muted));
+    }
+    return Wrap(spacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      const StatusShape(VStatus.atencion, size: 9),
+      Text('Sin conexión · último dato $hora', style: mono(size: 11, color: VColors.atencion)),
+    ]);
   }
 }
 

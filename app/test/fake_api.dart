@@ -33,12 +33,66 @@ Map<String, dynamic> trendJson({
       'avg7': 126,
     };
 
+/// Respuesta de /dashboard como la arma Python: cardio calculado por panel.py
+/// (un indicador con datos y el resto en "Sin dato") y los demás sistemas mockup.
+Map<String, dynamic> dashboardJson({
+  String status = 'atencion',
+  String value = '132',
+  String note = '▲ 6 sobre tu base (110–126)',
+}) =>
+    {
+      'mission_day': 47,
+      'sample_data': true,
+      'streak_days': 12,
+      'exercise': {'done_min': 112, 'goal_min': 120},
+      'tasks': [
+        {'time': '09:30', 'title': 'Medir presión arterial', 'detail': 'Guía paso a paso', 'pending': true},
+      ],
+      'systems': [
+        {
+          'id': 'cardio',
+          'name': 'Corazón y circulación',
+          'status': status,
+          'computed': true,
+          'why': 'En microgravedad los líquidos se desplazan hacia la cabeza.',
+          'action': 'Repite la medición tras 5 min en reposo.',
+          'indicators': [
+            {'label': 'Presión sistólica', 'value': value, 'unit': 'mmHg', 'note': note, 'status': status},
+            {'label': 'Presión diastólica', 'value': '—', 'unit': 'mmHg', 'note': 'Sin dato', 'status': 'sin_dato'},
+            {'label': 'FC en reposo', 'value': '—', 'unit': 'lpm', 'note': 'Sin dato', 'status': 'sin_dato'},
+            {'label': 'SpO₂', 'value': '—', 'unit': '%', 'note': 'Sin dato', 'status': 'sin_dato'},
+          ],
+        },
+        for (final s in ['ojos', 'hueso', 'mente', 'inmune'])
+          {
+            'id': s,
+            'name': s,
+            'status': 'nominal',
+            'computed': true,
+            'why': 'texto educativo',
+            'action': 'qué hacer',
+            'indicators': [
+              {'label': 'indicador', 'value': '1', 'unit': '', 'note': 'nota', 'status': 'nominal'},
+            ],
+          },
+      ],
+    };
+
 /// API falsa para pruebas de widgets: no abre conexiones.
 class FakeApi extends TirelusApi {
-  FakeApi({this.trends = const {}, this.sansStatus = 'nominal', this.evalStatus = 'nominal'})
-      : super(baseUrl: 'http://fake.invalid');
+  FakeApi({
+    this.trends = const {},
+    this.sansStatus = 'nominal',
+    this.evalStatus = 'nominal',
+    this.dashboardBody,
+    this.dashboardFails = false,
+  }) : super(baseUrl: 'http://fake.invalid');
 
   final Map<String, Map<String, dynamic>> trends;
+  /// Mutable a propósito: las pruebas lo cambian entre un refresco y el siguiente.
+  Map<String, dynamic>? dashboardBody;
+  bool dashboardFails;
+  int dashboardCalls = 0;
   final String sansStatus;
   final String evalStatus;
   final evaluated = <String, double>{};
@@ -51,6 +105,13 @@ class FakeApi extends TirelusApi {
 
   @override
   Future<Trend> trend(String metric) async => Trend.fromJson(trends[metric]!);
+
+  @override
+  Future<Dashboard> dashboard() async {
+    dashboardCalls++;
+    if (dashboardFails) throw Exception('sin servidor');
+    return Dashboard.fromJson(dashboardBody!);
+  }
 
   @override
   Future<Map<String, dynamic>> sansTrend() async => {

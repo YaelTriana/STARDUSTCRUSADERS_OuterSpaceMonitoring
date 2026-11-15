@@ -189,3 +189,56 @@ def test_build_con_variables_conecta_lee_y_cierra():
 def test_build_con_configuracion_invalida_no_tumba_la_app():
     cat = build_catalog({"TIRELUS_DB_HOST": "h", "TIRELUS_DB_PORT": "abc"}, connect_fn=lambda cfg: None)
     assert cat.snapshot().source == "ejemplo"
+
+
+# --- cada cuánto se relee la base ------------------------------------------
+
+
+def contador_de_intentos(cargas: list):
+    def connect_fn(cfg):
+        cargas.append(cfg.host)
+        raise ConnectionError("solo se cuentan los intentos de relectura")
+
+    return connect_fn
+
+
+def test_el_ttl_por_defecto_es_de_treinta_segundos():
+    cargas, reloj = [], Reloj()
+    cat = build_catalog(env={"TIRELUS_DB_HOST": "servidor"}, connect_fn=contador_de_intentos(cargas), clock=reloj)
+    cat.snapshot()
+    reloj.t = 29.0
+    cat.snapshot()
+    assert len(cargas) == 1  # dentro del TTL no se vuelve a molestar al servidor
+    reloj.t = 31.0
+    cat.snapshot()
+    assert len(cargas) == 2
+
+
+def test_el_ttl_sale_de_tirelus_db_ttl():
+    """Para la demo conviene un refresco corto; en la nave, uno largo."""
+    cargas, reloj = [], Reloj()
+    cat = build_catalog(
+        env={"TIRELUS_DB_HOST": "servidor", "TIRELUS_DB_TTL": "5"},
+        connect_fn=contador_de_intentos(cargas),
+        clock=reloj,
+    )
+    cat.snapshot()
+    reloj.t = 4.0
+    cat.snapshot()
+    assert len(cargas) == 1
+    reloj.t = 6.0
+    cat.snapshot()
+    assert len(cargas) == 2
+
+
+def test_un_ttl_invalido_no_desactiva_la_base():
+    cargas, reloj = [], Reloj()
+    cat = build_catalog(
+        env={"TIRELUS_DB_HOST": "servidor", "TIRELUS_DB_TTL": "cada rato"},
+        connect_fn=contador_de_intentos(cargas),
+        clock=reloj,
+    )
+    cat.snapshot()
+    reloj.t = 31.0
+    cat.snapshot()
+    assert len(cargas) == 2  # vuelve al TTL de 30 s en vez de quedarse sin base
