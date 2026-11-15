@@ -1,6 +1,6 @@
 # Pendientes · TIRELUS
 
-Matriz de tareas pendientes del hackathon (NASA Space Apps 2026). Se deriva de la sección "Matriz de pendientes" de [`README.md`](README.md); lo hecho y lo descartado quedan allí. Lo que se dejó para después de la demo está en [`planning/FUTURO.md`](planning/FUTURO.md).
+Matriz de tareas pendientes del hackathon (NASA Space Apps 2026). Es la fuente única de lo pendiente; lo hecho y lo descartado están en [`planning/HISTORIAL.md`](planning/HISTORIAL.md). Lo que se dejó para después de la demo está en [`planning/FUTURO.md`](planning/FUTURO.md).
 
 **Prioridad:** **P1** = importante para el MVP · **P2** = pulido si sobra tiempo.
 

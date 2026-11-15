@@ -48,7 +48,7 @@ Objetivo: entregar un prototipo funcional y la presentación antes del cierre de
 | 5. MVP completo (P1) y pulido (P2) | 5–8 h | P1: guardar el resumen entre reinicios, medición y tendencia de SANS, generalizar a más métricas. P2: selector de entorno en pantallas angostas, pruebas de widgets, accesibilidad | A medias: faltan datos de respaldo en `data.py`, y confirmar la carga del poblado |
 | 6. Entrega | 3 h | Video demo, presentación, página del proyecto con fuentes citadas | Pendiente |
 
-> El detalle de cada tarea (cómo hacerla y cuánto toma) está en la **Matriz de pendientes** del [`README.md`](../README.md#matriz-de-pendientes). Esa matriz es la fuente única: si cambia una tarea, se actualiza allá.
+> El detalle de cada tarea (cómo hacerla y cuánto toma) está en la **matriz de pendientes**, [`pendientes.md`](../pendientes.md). Esa matriz es la fuente única: si cambia una tarea, se actualiza allá.
 
 ## 3. Calendario
 

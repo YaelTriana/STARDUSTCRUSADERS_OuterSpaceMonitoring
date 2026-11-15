@@ -1,6 +1,6 @@
 # Planeación a futuro · TIRELUS
 
-Lo que se deja **fuera de la demo del hackathon** a propósito (decisiones del 15 nov 2026) y qué haría falta para retomarlo. Lo pendiente para la demo vive en [`pendientes.md`](../pendientes.md) y en la matriz del [`README.md`](../README.md#matriz-de-pendientes).
+Lo que se deja **fuera de la demo del hackathon** a propósito (decisiones del 15 nov 2026) y qué haría falta para retomarlo. Lo pendiente para la demo vive en [`pendientes.md`](../pendientes.md).
 
 La demo usa solo datos sintéticos ("Datos de ejemplo") del generador del equipo, [`SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring`](https://github.com/MerelyMeredith/SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring). Casi todo lo de este documento se vuelve obligatorio el día que haya datos reales.
 
