@@ -95,10 +95,15 @@ class _TrendPainter extends CustomPainter {
     double y(double v) => h - (v - minY) / (maxY - minY) * h;
     double x(int i) => _x(i, size.width, n);
 
-    // Banda del rango personal.
+    // Banda del rango personal: relleno translúcido + borde fino.
+    final bandRect = Rect.fromLTRB(_left, y(baseHigh), size.width, y(baseLow));
+    canvas.drawRect(bandRect, Paint()..color = const Color(0xFF1B4D3A).withValues(alpha: 0.35));
     canvas.drawRect(
-      Rect.fromLTRB(_left, y(baseHigh), size.width, y(baseLow)),
-      Paint()..color = const Color(0xFF1B4D3A).withValues(alpha: 0.6),
+      bandRect,
+      Paint()
+        ..color = const Color(0xFF3DD68C).withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
     );
     _label(canvas, baseLabel, Offset(_left + 10, y(baseLow) - 20), color: const Color(0xFF7FD8AE));
 
@@ -126,6 +131,22 @@ class _TrendPainter extends CustomPainter {
       for (var i = 1; i < n; i++) {
         path.lineTo(x(i), y(series[i]));
       }
+
+      // Relleno bajo la línea: degradado vertical del color de la serie.
+      final fillPath = Path.from(path)
+        ..lineTo(x(n - 1), h)
+        ..lineTo(x(0), h)
+        ..close();
+      canvas.drawPath(
+        fillPath,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x4D4D8DFF), Color(0x004D8DFF)], // signal: alpha 0.30 → 0
+          ).createShader(Rect.fromLTRB(_left, 0, size.width, h)),
+      );
+
       canvas.drawPath(
         path,
         Paint()
@@ -136,28 +157,30 @@ class _TrendPainter extends CustomPainter {
       );
     }
 
-    // Puntos: círculo dentro de rango, triángulo fuera de rango.
+    // Puntos: círculo dentro de rango, triángulo fuera de rango. 4 dp con aro.
     for (var i = 0; i < n; i++) {
       final v = series[i];
       final c = Offset(x(i), y(v));
       final out = v > baseHigh || v < baseLow;
+      final color = out ? VColors.atencion : VColors.signal;
+      canvas.drawCircle(c, 7, Paint()..color = color.withValues(alpha: 0.25)); // aro
       if (out) {
-        const s = 8.0;
+        const s = 4.5;
         canvas.drawPath(
           Path()
             ..moveTo(c.dx, c.dy - s)
             ..lineTo(c.dx + s, c.dy + s * 0.8)
             ..lineTo(c.dx - s, c.dy + s * 0.8)
             ..close(),
-          Paint()..color = VColors.atencion,
+          Paint()..color = color,
         );
       } else {
-        canvas.drawCircle(c, 4.5, Paint()..color = VColors.signal);
+        canvas.drawCircle(c, 2, Paint()..color = color);
       }
       if (i == selected) {
         canvas.drawCircle(
           c,
-          out ? 13 : 10,
+          10,
           Paint()
             ..color = VColors.text
             ..style = PaintingStyle.stroke

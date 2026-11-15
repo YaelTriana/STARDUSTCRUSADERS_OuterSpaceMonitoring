@@ -78,4 +78,17 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('1920x1080 sin desbordes (gráfica con relleno y aro)', (tester) async {
+    await _pump(tester, api, width: 1920, height: 1080);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('la gráfica funciona igual con el eje 1 a 5 de ánimo', (tester) async {
+    final apiMood = FakeApi(trends: {
+      'mood': trendJson(metric: 'mood', label: 'Ánimo (1–5)', unit: 'pts', series: [4, 3, 2, 2], base: {'low': 3, 'high': 5}, above: 0, below: 2),
+    });
+    await _pump(tester, apiMood, metric: 'mood', width: 1366, height: 768);
+    expect(tester.takeException(), isNull);
+  });
 }

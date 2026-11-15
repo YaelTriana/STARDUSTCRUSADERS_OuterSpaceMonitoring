@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
@@ -240,6 +242,52 @@ class _SystemDetail extends StatelessWidget {
   }
 }
 
+/// "Ejercicio" como anillo de progreso (decorativo); el texto con el valor
+/// (arriba) sigue siendo la fuente accesible, no el dibujo.
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.value});
+  final double value;
+  static const _size = 56.0;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+        child: SizedBox(
+          width: _size,
+          height: _size,
+          child: CustomPaint(
+            painter: _RingPainter(value.clamp(0.0, 1.0)),
+            child: Center(child: Text('${(value.clamp(0.0, 1.0) * 100).round()}%', style: mono(size: 13, weight: FontWeight.w600))),
+          ),
+        ),
+      );
+}
+
+class _RingPainter extends CustomPainter {
+  _RingPainter(this.value);
+  final double value;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2 - 4;
+    canvas.drawCircle(center, radius, Paint()..color = VColors.border..style = PaintingStyle.stroke..strokeWidth = 6);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * value,
+      false,
+      Paint()
+        ..color = VColors.nominal
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) => old.value != value;
+}
+
 /// Las mediciones del sistema en una sola tarjeta, divididas en celdas por
 /// líneas finas (no tarjetas sueltas): cifra grande + unidad + base con la
 /// forma y la palabra del estado. En angosto (<700) pasa a columna.
@@ -365,15 +413,17 @@ class _TaskRow extends StatelessWidget {
           Text('${other['title']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: VType.body)),
           Text('${other['detail']}', style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
         ])),
-      card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(l.exerciseLabel, style: mono(size: 12, color: VColors.muted)),
-        const SizedBox(height: 4),
-        Text(l.exerciseProgress(dashboard.exerciseDone ~/ 60, dashboard.exerciseDone % 60),
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: VType.body)),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(value: ratio, minHeight: 6, backgroundColor: VColors.border, color: VColors.nominal),
+      card(Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        _ProgressRing(value: ratio),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(l.exerciseLabel, style: mono(size: 12, color: VColors.muted)),
+            const SizedBox(height: 4),
+            // Texto del valor conservado para accesibilidad (el anillo es decorativo).
+            Text(l.exerciseProgress(dashboard.exerciseDone ~/ 60, dashboard.exerciseDone % 60),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: VType.body)),
+          ]),
         ),
       ])),
       // Racha amable: premia la constancia, nunca castiga.

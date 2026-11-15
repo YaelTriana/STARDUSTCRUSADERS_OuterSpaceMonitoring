@@ -77,12 +77,14 @@ void main() {
     expect(find.byType(StatusSideCard), findsOneWidget);
   });
 
-  for (final locale in [const Locale('es'), const Locale('en')]) {
-    testWidgets('1366x768 sin desbordes en ${locale.languageCode}', (tester) async {
-      final api = FakeApi(dashboard: dashboardJson());
-      await _pump(tester, api, locale: locale);
-      expect(tester.takeException(), isNull);
-    });
+  for (final size in [const Size(1366, 768), const Size(1920, 1080)]) {
+    for (final locale in [const Locale('es'), const Locale('en')]) {
+      testWidgets('${size.width.toInt()}x${size.height.toInt()} sin desbordes en ${locale.languageCode}', (tester) async {
+        final api = FakeApi(dashboard: dashboardJson());
+        await _pump(tester, api, locale: locale, width: size.width, height: size.height);
+        expect(tester.takeException(), isNull);
+      });
+    }
   }
 
   final fiveSystems = [
