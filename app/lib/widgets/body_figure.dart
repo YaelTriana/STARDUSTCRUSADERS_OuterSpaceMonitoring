@@ -5,8 +5,8 @@ import '../l10n/labels.dart';
 import '../theme.dart';
 import 'common.dart';
 
-/// Figura corporal abstracta (compacta, máx. ~220 dp de alto) con marcadores
-/// tocables por sistema, y debajo los 5 sistemas como filas completas.
+/// Holograma del cuerpo (imagen) con marcadores tocables por sistema, y
+/// debajo los 5 sistemas como filas completas.
 class BodyFigure extends StatelessWidget {
   const BodyFigure({super.key, required this.systems, required this.selected, required this.onSelect});
 
@@ -14,74 +14,108 @@ class BodyFigure extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onSelect;
 
-  // Punto que marca cada sistema en el lienzo 160×520 de la silueta.
+  // Fracciones (x, y) del tamaño de la imagen, desde la esquina superior izquierda.
   static const _dotAt = <String, Offset>{
-    'mente': Offset(80, 30),
-    'ojos': Offset(80, 52),
-    'cardio': Offset(96, 140),
-    'inmune': Offset(70, 200),
-    'hueso': Offset(104, 380),
+    'ojos': Offset(0.50, 0.075),
+    // "Sueño y ánimo" se desplaza para no encimarse con "ojos" (están muy
+    // cerca en la silueta); queda unido a su punto real con una guía corta.
+    'mente': Offset(0.82, 0.035),
+    'cardio': Offset(0.54, 0.25),
+    'inmune': Offset(0.47, 0.40),
+    'hueso': Offset(0.40, 0.68),
   };
 
-  static const _figureSize = Size(68, 220);
+  static const _menteAnchor = Offset(0.62, 0.035);
+
+  // Proporción real del PNG (ancho/alto). Si el contenedor es más angosto
+  // que esto a 260 dp de alto, el holograma se reduce sin cortarse.
+  static const _imageAspect = 1024 / 1536;
+  static const _maxHeight = 260.0;
 
   @override
-  Widget build(BuildContext context) {
-    final sx = _figureSize.width / 160;
-    final sy = _figureSize.height / 520;
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Center(
-        child: SizedBox(
-          width: _figureSize.width,
-          height: _figureSize.height,
-          child: Stack(children: [
-            CustomPaint(size: _figureSize, painter: const _BodyPainter()),
-            for (final s in systems)
-              if (_dotAt.containsKey(s.id))
-                Positioned(
-                  left: _dotAt[s.id]!.dx * sx - 24,
-                  top: _dotAt[s.id]!.dy * sy - 24,
-                  width: 48,
-                  height: 48,
-                  child: Semantics(
-                    button: true,
-                    selected: s.id == selected,
-                    label: '${s.name}, ${context.l10n.status(s.status)}',
-                    excludeSemantics: true,
-                    child: Material(
-                      color: Colors.transparent,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => onSelect(s.id),
-                        child: Center(
-                          child: Stack(alignment: Alignment.center, children: [
-                            // Aro exterior suave del color del estado.
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration:
-                                  BoxDecoration(shape: BoxShape.circle, color: statusColor(s.status).withValues(alpha: 0.22)),
-                            ),
-                            // Marcador: color + forma (StatusShape), 24 dp visual.
-                            StatusShape(s.status, size: 24),
-                          ]),
-                        ),
-                      ),
+  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
+        LayoutBuilder(builder: (context, c) {
+          var h = _maxHeight;
+          var w = h * _imageAspect;
+          if (c.maxWidth.isFinite && w > c.maxWidth) {
+            w = c.maxWidth;
+            h = w / _imageAspect;
+          }
+          Offset at(Offset frac) => Offset(frac.dx * w, frac.dy * h);
+          return Center(
+            child: SizedBox(
+              width: w,
+              height: h,
+              child: Stack(children: [
+                Image.asset(
+                  'assets/brand/holograma-tirelus.png',
+                  width: w,
+                  height: h,
+                  fit: BoxFit.contain,
+                  excludeFromSemantics: true,
+                  gaplessPlayback: true,
+                ),
+                // Guía corta entre el punto real de "mente" y su marcador desplazado.
+                CustomPaint(size: Size(w, h), painter: _GuideLine(at(_menteAnchor), at(_dotAt['mente']!))),
+                for (final s in systems)
+                  if (_dotAt.containsKey(s.id))
+                    Positioned(
+                      left: at(_dotAt[s.id]!).dx - 24,
+                      top: at(_dotAt[s.id]!).dy - 24,
+                      width: 48,
+                      height: 48,
+                      child: _Marker(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
                     ),
+              ]),
+            ),
+          );
+        }),
+        const SizedBox(height: VSpace.lg),
+        for (final s in systems)
+          Padding(
+            padding: const EdgeInsets.only(bottom: VSpace.sm),
+            child: _SystemRow(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
+          ),
+      ]);
+}
+
+/// Marcador tocable: aro exterior suave del color del estado + forma (color
+/// + forma, StatusShape); el seleccionado lleva borde signal.
+class _Marker extends StatelessWidget {
+  const _Marker({required this.system, required this.selected, required this.onTap});
+  final BodySystem system;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        selected: selected,
+        label: '${system.name}, ${context.l10n.status(system.status)}',
+        excludeSemantics: true,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Center(
+              child: Stack(alignment: Alignment.center, children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: statusColor(system.status).withValues(alpha: 0.22),
+                    border: selected ? Border.all(color: VColors.signal, width: 2) : null,
                   ),
                 ),
-          ]),
+                StatusShape(system.status, size: 24),
+              ]),
+            ),
+          ),
         ),
-      ),
-      const SizedBox(height: VSpace.lg),
-      for (final s in systems)
-        Padding(
-          padding: const EdgeInsets.only(bottom: VSpace.sm),
-          child: _SystemRow(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
-        ),
-    ]);
-  }
+      );
 }
 
 /// Fila completa por sistema: ícono de estado + nombre + palabra del estado.
@@ -129,35 +163,22 @@ class _SystemRow extends StatelessWidget {
   }
 }
 
-/// Solo la silueta: relleno surface2, contorno signal de baja opacidad.
-/// Los marcadores por sistema se pintan como widgets reales encima (no en
-/// el canvas), para que su tamaño no dependa de la escala de la figura.
-class _BodyPainter extends CustomPainter {
-  const _BodyPainter();
+class _GuideLine extends CustomPainter {
+  _GuideLine(this.from, this.to);
+  final Offset from;
+  final Offset to;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 160, size.height / 520);
-    final fill = Paint()..color = VColors.surface2;
-    final stroke = Paint()
-      ..color = VColors.signal.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    void shape(RRect r) {
-      canvas.drawRRect(r, fill);
-      canvas.drawRRect(r, stroke);
-    }
-
-    canvas.drawCircle(const Offset(80, 45), 32, fill);
-    canvas.drawCircle(const Offset(80, 45), 32, stroke);
-    shape(RRect.fromLTRBR(70, 76, 90, 94, Radius.zero));
-    shape(RRect.fromLTRBR(30, 92, 130, 272, const Radius.circular(40)));
-    shape(RRect.fromLTRBR(4, 100, 26, 270, const Radius.circular(11)));
-    shape(RRect.fromLTRBR(134, 100, 156, 270, const Radius.circular(11)));
-    shape(RRect.fromLTRBR(38, 262, 74, 502, const Radius.circular(18)));
-    shape(RRect.fromLTRBR(86, 262, 122, 502, const Radius.circular(18)));
+    canvas.drawLine(
+      from,
+      to,
+      Paint()
+        ..color = VColors.borderStrong
+        ..strokeWidth = 1.5,
+    );
   }
 
   @override
-  bool shouldRepaint(_BodyPainter old) => false;
+  bool shouldRepaint(_GuideLine old) => old.from != from || old.to != to;
 }
