@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'api.dart';
 import 'app_state.dart';
@@ -19,6 +20,9 @@ import 'widgets/common.dart';
 import 'widgets/env_selector.dart';
 
 void main() {
+  // Tipografías incluidas en assets/google_fonts/ (sin esto, google_fonts
+  // intenta descargarlas de fonts.gstatic.com la primera vez que se usan).
+  GoogleFonts.config.allowRuntimeFetching = false;
   final api = TirelusApi();
   runApp(TirelusApp(state: AppState(api)));
 }
