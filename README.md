@@ -5,7 +5,7 @@ App de automonitoreo de salud para astronautas — NASA Space Apps Challenge 202
 - **UI:** Flutter en `app/`
 - **Lógica:** Python en `app/python_app/`, embebido con serious_python; sirve una API local en `127.0.0.1:8765`
 - **Base de datos:** PostgreSQL (esquema en `db/`). Servidor externo compartido en desarrollo; PostgreSQL interno en la nave en la versión final (ver [Base de datos](#base-de-datos))
-- **Pruebas:** `pytest app/tests_py` (127 pruebas: motor de reglas, API, rangos válidos, exportación, configuración, TLS y lectura de PostgreSQL) · `cd app; flutter test` (68 pruebas: cliente de la API, semáforo, selector de entorno, contraste, tendencia, medición y SANS)
+- **Pruebas:** `pytest app/tests_py` (168 pruebas: motor de reglas, panel calculado (los cinco sistemas), API, rangos válidos, exportación, configuración, TLS, lectura de PostgreSQL y carga de datos sintéticos) · `cd app; flutter test` (78 pruebas: cliente de la API, puerto, panel con refresco, semáforo, selector de entorno, contraste, tendencia, medición y SANS)
 
 > La app no diagnostica. Todos los umbrales, salvo SANS, son supuestos de diseño. Los datos de la demo son sintéticos.
 
@@ -22,6 +22,14 @@ cd app
 python python_app/main.py                                   # servidor Python
 flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true  # UI usando ese servidor
 ```
+
+Banderas de compilación de la app (todas opcionales):
+
+| Bandera | Para qué |
+|---|---|
+| `--dart-define=TIRELUS_DEV_SERVER=true` | la app no arranca el Python embebido: usa el servidor que ya corre |
+| `--dart-define=TIRELUS_PORT=8766` | puerto de la API local (por defecto 8765), cuando el 8765 está ocupado |
+| `--dart-define=TIRELUS_REFRESH_SECONDS=2` | cada cuánto el panel vuelve a preguntar por los datos (por defecto 5 s) |
 
 ## Correr con Docker (PostgreSQL + API)
 
@@ -111,17 +119,58 @@ Hecha con un tripulante de prueba que se borró al terminar (la base quedó con 
 - El servidor compartido guarda solo datos sintéticos. Los datos médicos reales solo los ven el tripulante, el CMO y el flight surgeon (regla de `CLAUDE.md`); la base aún no tiene roles ni RLS.
 - Sistema de usuarios: **pendiente de decidir** (selección de perfil con rol para la demo o login real).
 
+## Simulación de datos en tiempo real
+
+Los signos vitales de la demo salen del generador del equipo
+([SyntheticData_STARDUSTCRUSADERS](https://github.com/MerelyMeredith/SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring)),
+que produce un CSV por tripulante con 68 variables y cascada causal. En el repo del generador:
+
+```bash
+python app/main.py generate --patients 4 --days 90     # 4 tripulantes, 360 filas
+```
+
+> Antes de generar, pon `blood_pressure_interval_days_min/max` en **1** dentro de
+> `config/synthetic_data_config.json`: por defecto la presión llega cada 3–14 días ("cuff de clínica") y la
+> regla de desviación sostenida necesita lecturas diarias. El examen retiniano sigue limitado a 1–2 por
+> corrida (está escrito a mano en `generate.py`), así que la serie de SANS queda corta.
+
+Y en este repo, `tools/sim_sinteticos.py` los traduce a los indicadores de `db/schema.sql` y los escribe en PostgreSQL:
+
+```bash
+export TIRELUS_DB_HOST=192.168.10.2 TIRELUS_DB_USER=tirelus_equipo TIRELUS_DB_PASSWORD=... TIRELUS_DB_TTL=2
+app/.venv/bin/python tools/sim_sinteticos.py cargar --csv ~/Desktop/SyntheticData_*/output/patients
+app/.venv/bin/python tools/sim_sinteticos.py vivo   --csv ... --cada 15   # un día de misión cada 15 s
+app/.venv/bin/python tools/sim_sinteticos.py limpiar
+```
+
+- `cargar` crea la tripulación (el primero como CMO), calcula la **línea base personal con los primeros 14 días**
+  (ventana prevuelo, media ± 2 desviaciones; `--desviaciones 1` la estrecha y hace aparecer más alertas) y
+  escribe el historial. Imprime el `TIRELUS_ASTRONAUT_ID` de cada tripulante.
+- `vivo` mete un día de misión cada N segundos: el panel avanza solo mientras se mira la app.
+- Cada lectura lleva un `client_id` determinista (recargar no duplica) y la marca
+  `note = 'Datos de ejemplo (sintéticos)'`; `limpiar` borra exactamente eso.
+- **Supuestos de diseño del mapeo:** el ánimo (1–5) se deriva del estrés percibido invertido, porque el
+  generador no trae autorreporte de ánimo; SANS es el **cambio** de `RNFL_Thickness_um` frente a la primera
+  lectura, que es la definición de la app.
+
+`tools/sim_tiempo_real.py` es la otra mitad: escenarios escritos a mano para empujar un sistema de nominal a
+atención a crítico (`ciclo`, `vivo`, `panel`, `limpiar`), útil para grabar el video sin esperar a que los datos
+sintéticos se desvíen. Lo medido en ambos casos está en
+[`planning/SIMULACION-TIEMPO-REAL.md`](planning/SIMULACION-TIEMPO-REAL.md): con el TTL por defecto el panel
+refleja un cambio de la base en ~30 s; con `TIRELUS_DB_TTL=2` y `TIRELUS_REFRESH_SECONDS=2`, en menos de 1 s.
+
 ## Estado del MVP
 
 | # | Punto | Estado |
 |---|---|---|
-| 1 | Panel con figura corporal y semáforo por sistema | ✅ Listo |
-| 2 | Medición guiada contra la línea base | 🟡 Pantallas listas para todas las métricas; faltan datos de FC, sueño, ánimo y SANS |
-| 3 | Tendencia con alerta por desviación sostenida | 🟡 Pantallas listas (alerta hacia arriba o hacia abajo); faltan datos |
+| 1 | Panel con figura corporal y semáforo por sistema | ✅ **Los cinco sistemas calculados** desde el catálogo y el motor de reglas (`python_app/panel.py`), con refresco automático. Ya no queda ninguna cifra escrita a mano en el panel |
+| 2 | Medición guiada contra la línea base | 🟡 Pantallas listas; con los datos sintéticos cargados hay 6 métricas con línea base personal (sistólica, diastólica, FC, SpO₂, sueño y ánimo). Sin base de datos, `data.py` sigue con FC, sueño y ánimo vacíos |
+| 3 | Tendencia con alerta por desviación sostenida | 🟡 Pantallas y regla listas (arriba o abajo); series de 14 días llegando de PostgreSQL. El eje de días todavía se calcula con `MISSION_DAY` fijo en `data.py` |
 | 4 | Resumen exportable para la conferencia médica | ✅ Se exporta en Markdown (portapapeles) |
 | 5 | Selector ISS / Luna / Marte y modo autónomo | ✅ Listo |
 | — | Extras: consola de base y EVA | ✅ Pantallas hechas |
-| — | Datos compartidos en PostgreSQL | 🟡 Servidor del equipo funcionando y API leyendo de él (probado); falta cargar FC, sueño, ánimo y SANS |
+| — | Datos compartidos en PostgreSQL | ✅ Servidor del equipo funcionando, API leyendo de él y cargador de datos sintéticos probado (4 tripulantes, ~590 lecturas cada uno) |
+| — | Simulación en tiempo real | ✅ `tools/sim_sinteticos.py` y `tools/sim_tiempo_real.py`; panel refrescándose solo |
 | — | Entrega (video, presentación, página con fuentes) | 🔴 Sin empezar |
 
 ## Matriz de pendientes
@@ -132,9 +181,13 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 
 | Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
 |---|---|---|---|---|
+| **P1** | Guardar lo que captura el astronauta | No hay endpoint de escritura de lecturas: lo que se mide se evalúa y se tira, así que la alerta por desviación sostenida no puede nacer durante la demo. `measurements` ya está diseñada para esto (`client_id` idempotente). Ver A2 en [`planning/AUDITORIA.md`](planning/AUDITORIA.md). | — | 1–2 h |
+| **P1** | Cerrar CORS por defecto | `main.py` monta `allow_origins=["*"]`: cualquier página abierta en ese equipo puede leer `/summary` y `/trend/*`. Montarlo solo con `TIRELUS_DEV_CORS`. Ver C en la auditoría. | — | 10 min |
+| **P1** | Día de misión real | `/trend/{metric}` calcula el eje con `MISSION_DAY = 47` fijo y `lib/main.dart:194` imprime "DÍA DE MISIÓN 047" como texto literal: con datos de la base el día que muestra el gráfico no coincide. Ver A6 en la auditoría. | — | 30 min |
+| **P2** | Examen retiniano periódico en el generador | `generate.py` programa el OCT con `{0}` y un segundo examen solo `if days >= 90` (80 y 90 escritos a mano, ignorando `retinal_exam_interval_days_*` del config). Sin eso, la serie de SANS se queda en 1–2 puntos. | Repo del generador | 30 min |
 | **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación, texto del formulario y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). El hackathon va del 14 al 15 de nov. Ya hay un prompt listo para producirlo en otra cuenta de Claude; falta revisar los requisitos de entrega vigentes de Space Apps 2026 (duración del video, límites de texto) y preparar capturas de la app. | Capturas de la app, nombres del equipo | 3–4 h |
-| **P1** | Completar en la base los datos de FC, sueño, ánimo y SANS | `db/003_demo.sql` (ya cargado en el servidor) solo trae la sistólica D34–D47 y su línea base. Faltan los `>>> DATOS:` de `data.py`, cada uno marcado "Datos de ejemplo". Tras cargarlos, `data_source` sigue en `db` y las pantallas dejan de decir "Sin dato". El usuario del equipo puede leer y escribir en `public`, pero no crear ni alterar tablas. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md). | Datos de la persona de ciencia | 1 h |
-| **P1** | Generalizar medición y tendencia a FC, sueño y ánimo | Las pantallas ya tienen selector de métrica y muestran "Sin dato" mientras falten datos. **Falta solo** en `METRICS` de `data.py`: línea base, límite de respaldo (supuesto de diseño) y serie de 14 días por métrica. Aparecen solas en la app. | Datos de la persona de ciencia | 20–30 min |
+| **P1** | Cargar la tripulación sintética en el servidor del equipo | Ya probado contra un PostgreSQL local: `tools/sim_sinteticos.py cargar` mete tripulación, línea base y lecturas (sistólica, diastólica, FC, SpO₂, temperatura, respiratoria, HRV, sueño, masa corporal, ánimo). Falta correrlo contra `192.168.10.2` para que todo el equipo vea los mismos datos. **SANS sigue corto** por el límite del generador. | Generar los CSV y la contraseña del equipo | 20 min |
+| **P2** | Valores de ejemplo en `data.py` (camino sin base de datos) | Con PostgreSQL cargado las pantallas ya muestran las 6 métricas. **Sin** base, `data.py` sigue con FC, sueño, ánimo, diastólica y SpO₂ vacíos (`>>> DATOS:`), así que la demo de respaldo diría "Sin dato". Se pueden copiar del CSV de un tripulante. | Un CSV del generador | 20 min |
 | **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
 | **P1** | Decidir sistema de usuarios | Hoy no hay usuarios: la API lee un tripulante fijo (`TIRELUS_ASTRONAUT_ID` o el primero de la base). Opciones: selección de perfil con rol (astronauta, CMO, flight surgeon) para la demo, o login real. Recomendado para la demo: selección de perfil. La base tampoco tiene roles ni RLS. | Decisión del equipo | 1–2 h |
 | **P1** | Decidir `heart_rate`: `above` o `both` | En la base `heart_rate` alerta en ambos sentidos (`both`); en la app solo hacia arriba (`evaluate_trend` acepta `above` o `below`). Hay que elegir una fuente de verdad para los umbrales (base o `data.py`). Ver `db/AUDITORIA.md`. | Criterio de la persona de ciencia | 30 min |
@@ -148,6 +201,13 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 
 | Prioridad | Qué | Resultado |
 |---|---|---|
+| ~~P1~~ ✅ | ~~Panel calculado por el motor de reglas (los cinco sistemas)~~ | **Ojos** lleva el azulejo de SANS con los umbrales publicados (+20 / 55 µm, regla propia `evaluate_sans`) más los cinco indicadores de `002_ojos.sql`; **hueso** la masa corporal; **mente** sueño, ánimo y PVT; **inmune** la temperatura. `data.SYSTEMS` se quedó solo con el texto educativo y `_ind` desapareció. |
+| ~~P1~~ ✅ | ~~Módulo cardio del panel~~ | `python_app/panel.py` arma cada bloque desde `catalog.snapshot()` con `evaluate_trend`: estado del sistema, valor, variación frente a la línea base y conteo de días ("1 de 3 días", "4 días seguidos"). `data.py` perdió las cifras de cardio; las métricas ganaron `system` y se agregaron diastólica y SpO₂ con los rangos de `db/schema.sql`. Pruebas en `tests_py/test_panel.py` y `test/dashboard_screen_test.dart`. |
+| ~~P1~~ ✅ | ~~El panel se refresca solo~~ | `DashboardScreen` vuelve a preguntar cada `TIRELUS_REFRESH_SECONDS` (5 s por defecto), conserva el último dato bueno si el refresco falla ("Sin conexión · último dato HH:MM:SS") y muestra "Actualizado HH:MM:SS". |
+| ~~P1~~ ✅ | ~~Cada cuánto se relee la base~~ | `TIRELUS_DB_TTL` (30 s por defecto, 2 s para la demo); un valor inválido no desactiva la base. |
+| ~~P2~~ ✅ | ~~Puerto de la API configurable~~ | `--dart-define=TIRELUS_PORT`, como ya pedía `CLAUDE.md`; antes estaba escrito a mano en Dart. |
+| ~~P1~~ ✅ | ~~Datos vitales de la tripulación~~ | `tools/sim_sinteticos.py` carga los CSV del generador del equipo a PostgreSQL: tripulación, línea base personal prevuelo y lecturas, con mapeo probado contra los indicadores reales del esquema. Verificado con 4 tripulantes × 90 días. |
+| ~~P2~~ ✅ | ~~`--records` exacto en el generador~~ | En el repo del generador: `--records` ahora es el número exacto de filas (decide cuántos pacientes, nunca su duración) y `--patients` manda sobre él; antes `--records 100` producía 6000 filas. 13 pruebas nuevas. |
 | ~~P1~~ ✅ | ~~Validar rangos en la API~~ | `POST /evaluate/{metric}` y `/evaluate/sans` responden 422 fuera de `valid_range` (o con NaN/inf), y el catálogo descarta lecturas de la base fuera de rango. Pruebas en `tests_py/test_ranges.py` y `test/api_range_test.dart` (la app muestra "Sin dato" en vez de lanzar). |
 | ~~P0~~ ✅ | ~~Levantar el servidor externo con PostgreSQL~~ | PostgreSQL 18.7 en la red local con un usuario de equipo sin permisos de DDL. Host y contraseña se comparten por un canal privado (no en el repo). Solo datos sintéticos. |
 | ~~P0~~ ✅ | ~~Probar la capa de PostgreSQL contra un servidor real~~ | El 14 nov las consultas de `db.py` se ejecutaron contra el servidor y `/health` dijo `data_source: db`. Prueba de estabilidad, inyección y concurrencia en [Base de datos](#prueba-de-estabilidad-14-nov-servidor-del-equipo). |

@@ -99,16 +99,24 @@ def health() -> dict:
     return body
 
 
-# Sistemas del panel ya calculados por el motor de reglas; el resto sigue siendo
-# mockup y se sirve tal cual (cada bloque dice si viene calculado en "computed").
-PANEL_CALCULADO = ("cardio",)
+# Los cinco sistemas del panel se calculan desde el catálogo y el motor de reglas.
+# Cada bloque lo declara en "computed" para no confundir lo medido con texto fijo.
+PANEL_CALCULADO = ("cardio", "ojos", "hueso", "mente", "inmune")
 
 
 @app.get("/dashboard")
 def dashboard() -> dict:
-    metrics = catalog.snapshot().metrics
+    snapshot = catalog.snapshot()
     systems = [
-        panel.build_system(s["id"], metrics, s) if s["id"] in PANEL_CALCULADO else {**s, "computed": False}
+        panel.build_system(
+            s["id"],
+            snapshot.metrics,
+            s,
+            # La serie de OCT solo le toca a ojos: ahí vive SANS.
+            sans=snapshot.sans_series if s["id"] == panel.SANS_SISTEMA else None,
+        )
+        if s["id"] in PANEL_CALCULADO
+        else {**s, "computed": False}
         for s in data.SYSTEMS
     ]
     return {

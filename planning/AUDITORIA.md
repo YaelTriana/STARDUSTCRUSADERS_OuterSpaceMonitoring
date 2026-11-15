@@ -26,10 +26,10 @@ La app cubre bien (2) y (3) para presión sistólica. Los dos huecos grandes sig
 
 ## A. Lo que el README da por listo y no lo está
 
-> **Al 14 nov por la noche:** el sistema **cardio** del panel ya está calculado desde el catálogo y el motor
-> de reglas (`app/python_app/panel.py`, pruebas en `tests_py/test_panel.py` y `test/dashboard_screen_test.dart`),
-> verificado contra PostgreSQL en [`SIMULACION-TIEMPO-REAL.md`](SIMULACION-TIEMPO-REAL.md#segunda-corrida-el-módulo-cardio-del-panel-ya-calculado).
-> Lo de abajo sigue vigente para los otros cuatro sistemas: ojos, hueso, mente e inmune.
+> **✅ Resuelto el 15 nov:** los **cinco** sistemas del panel se calculan desde el catálogo y el motor de
+> reglas (`app/python_app/panel.py`; pruebas en `tests_py/test_panel.py` y `test/dashboard_screen_test.dart`),
+> verificado contra PostgreSQL con los datos sintéticos del equipo. Ojos usa la regla publicada de SANS
+> (+20 / 55 µm) en vez de la línea base personal. El diagnóstico de abajo queda como registro de lo que era.
 
 ### A1. El panel principal no lee nada de la base — bloquea lo que se pidió del "tiempo real"
 La matriz dice que, cargando los datos que faltan, "las pantallas dejan de decir Sin dato". Es cierto para
@@ -68,7 +68,9 @@ en 1.6 s y que el mismo `client_id` dos veces deja una sola fila — o sea, la e
 `db/schema.sql:237` fue diseñada para soportar ya funciona contra el servidor del equipo. Lo que falta es
 el `POST /measurement/{metric}` que la use. 1–2 h.
 
-### A3. Flutter nunca vuelve a preguntar
+### A3. Flutter nunca vuelve a preguntar — ✅ resuelto el 15 nov
+> El panel se refresca cada `TIRELUS_REFRESH_SECONDS` (5 s por defecto), conserva el último dato bueno y
+> muestra "Actualizado HH:MM:SS"; el TTL del catálogo salió a `TIRELUS_DB_TTL`. Sigue vigente para las demás pantallas.
 Cada pantalla pide sus datos una sola vez (`_future ??=` en `didChangeDependencies`) y no hay forma de
 refrescar, ni automática ni manual. Hoy no se nota porque los datos son fijos; en el momento en que la base
 manda, se nota en la demo: alguien inserta filas y la pantalla sigue igual hasta reiniciar la app.
@@ -152,7 +154,7 @@ rotar la contraseña, solo datos sintéticos). Falta el tramo de al lado:
 2. **Nombres por defecto de Flutter en todo lo que se ve.** `windows/runner/main.cpp:30` → la barra de
    título dice `tirelus`; `pubspec.yaml:2`, `web/index.html:21` y `web/manifest.json:8` → descripción
    **"A new Flutter project."**. 10 min, y sale en cada captura del video.
-3. **Puerto 8765 fijo y arranque que puede colgarse.** `lib/api.dart:11` fija el puerto; si algo lo ocupa,
+3. **Puerto 8765 fijo** — ✅ resuelto el 15 nov con `--dart-define=TIRELUS_PORT`. Lo que sigue abierto es el arranque colgado: `lib/api.dart:11` fija el puerto; si algo lo ocupa,
    la pantalla de arranque espera 30 s y falla. Peor: en `waitUntilReady` (`api.dart:69-82`), si algo
    responde 200 sin `ok: true`, el ciclo gira sin pausa y sin revisar el plazo — la app se queda congelada
    en el splash. Mover el `delay` y la revisión del plazo fuera del `catch`: 15 min.

@@ -106,11 +106,6 @@ def test_dashboard_calcula_cardio_desde_el_catalogo():
     assert (sistolica["value"], sistolica["status"]) == ("132", "atencion")
 
 
-def test_dashboard_marca_los_sistemas_que_siguen_siendo_mockup():
-    body = client.get("/dashboard").json()
-    assert [s["id"] for s in body["systems"] if not s["computed"]] == ["ojos", "hueso", "mente", "inmune"]
-
-
 def test_dashboard_conserva_el_contrato_que_lee_flutter():
     body = client.get("/dashboard").json()
     assert len(body["systems"]) == 5
@@ -144,3 +139,78 @@ def test_un_valor_dentro_de_la_base_no_habla_de_dias():
     metricas = con_metricas(systolic={"series": [118.0, 120.0, 119.0]})
     sistolica = azulejo(panel.build_system("cardio", metricas, CONTENIDO_CARDIO), "Presión sistólica")
     assert "días" not in sistolica["note"]
+
+
+# --- los otros cuatro sistemas del panel -----------------------------------
+
+CONTENIDO = {"ojos": "Ojos y cerebro (SANS)", "hueso": "Huesos y músculo",
+             "mente": "Sueño y ánimo", "inmune": "Sistema inmune"}
+
+
+def contenido(system_id: str) -> dict:
+    return {"id": system_id, "name": CONTENIDO[system_id], "why": "porque sí", "action": "haz esto"}
+
+
+def test_el_azulejo_de_sans_usa_los_umbrales_publicados_no_la_base_personal():
+    """+20 µm es primer signo y 55 µm preocupación clínica: cifras publicadas, no supuestos."""
+    bloque = panel.build_system("ojos", data.METRICS, contenido("ojos"), sans=[8.0])
+    sans = azulejo(bloque, "Grosor retiniano (cambio)")
+    assert sans["status"] == "nominal"
+    assert sans["value"] == "+8"
+    assert "20" in sans["note"] and "55" in sans["note"]
+
+
+def test_sans_en_veinte_micrones_es_atencion_y_en_cincuenta_y_cinco_critico():
+    atencion = panel.build_system("ojos", data.METRICS, contenido("ojos"), sans=[8.0, 22.0])
+    assert azulejo(atencion, "Grosor retiniano (cambio)")["status"] == "atencion"
+    critico = panel.build_system("ojos", data.METRICS, contenido("ojos"), sans=[8.0, 58.0])
+    assert azulejo(critico, "Grosor retiniano (cambio)")["status"] == "critico"
+
+
+def test_sin_serie_de_oct_el_azulejo_de_sans_dice_sin_dato():
+    bloque = panel.build_system("ojos", data.METRICS, contenido("ojos"), sans=[])
+    sans = azulejo(bloque, "Grosor retiniano (cambio)")
+    assert (sans["value"], sans["note"], sans["status"]) == ("—", "Sin dato", "sin_dato")
+
+
+def test_el_estado_de_ojos_lo_manda_sans_cuando_es_lo_unico_con_datos():
+    bloque = panel.build_system("ojos", data.METRICS, contenido("ojos"), sans=[8.0, 22.0])
+    assert bloque["status"] == "atencion"
+
+
+def test_mente_agrupa_sueno_animo_y_tiempo_de_reaccion():
+    bloque = panel.build_system("mente", data.METRICS, contenido("mente"))
+    etiquetas = [i["label"] for i in bloque["indicators"]]
+    assert "Horas de sueño" in etiquetas and "Ánimo (1–5)" in etiquetas
+    assert any("reacción" in e.lower() or "pvt" in e.lower() for e in etiquetas)
+
+
+def test_mente_alerta_cuando_el_sueno_lleva_tres_noches_por_debajo():
+    metricas = con_metricas(sleep_hours={"base": Baseline(6.5, 8.5), "series": [7.0, 6.2, 6.0, 5.8]})
+    bloque = panel.build_system("mente", metricas, contenido("mente"))
+    assert azulejo(bloque, "Horas de sueño")["status"] == "atencion"
+    assert bloque["status"] == "atencion"
+
+
+def test_hueso_mide_la_masa_corporal():
+    metricas = con_metricas(body_mass={"base": Baseline(72.0, 74.0), "series": [73.0, 72.5, 72.2]})
+    bloque = panel.build_system("hueso", metricas, contenido("hueso"))
+    assert azulejo(bloque, "Masa corporal")["value"] == "72.2"
+
+
+def test_inmune_mide_la_temperatura():
+    metricas = con_metricas(temperature={"base": Baseline(36.1, 37.2), "series": [36.7, 36.8, 37.0]})
+    bloque = panel.build_system("inmune", metricas, contenido("inmune"))
+    assert azulejo(bloque, "Temperatura corporal")["value"] == "37"
+
+
+def test_el_dashboard_calcula_los_cinco_sistemas():
+    body = client.get("/dashboard").json()
+    assert [s["id"] for s in body["systems"]] == ["cardio", "ojos", "hueso", "mente", "inmune"]
+    assert all(s["computed"] for s in body["systems"])
+
+
+def test_los_cinco_sistemas_conservan_su_texto_educativo():
+    for s in client.get("/dashboard").json()["systems"]:
+        assert s["why"] and s["action"], s["id"]
+        assert CONTRATO_SISTEMA <= set(s)

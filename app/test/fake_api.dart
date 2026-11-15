@@ -68,7 +68,7 @@ Map<String, dynamic> dashboardJson({
             'id': s,
             'name': s,
             'status': 'nominal',
-            'computed': false,
+            'computed': true,
             'why': 'texto educativo',
             'action': 'qué hacer',
             'indicators': [
