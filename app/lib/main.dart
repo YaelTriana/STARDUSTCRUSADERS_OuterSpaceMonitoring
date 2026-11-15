@@ -183,10 +183,13 @@ class _ShellState extends State<Shell> {
         appBar: topBar,
         // stretch: las pantallas cortas empiezan arriba en vez de quedar centradas.
         body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // Riel compacto: con los 8 destinos y ventanas bajas (800×600) las
+          // etiquetas permanentes no caben; solo se muestra la del seleccionado.
           NavigationRail(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            labelType: NavigationRailLabelType.all,
+            labelType: NavigationRailLabelType.selected,
+            useIndicator: true,
             destinations: [
               for (final d in _dests) NavigationRailDestination(icon: Icon(d.icon), label: Text(d.label(l))),
             ],

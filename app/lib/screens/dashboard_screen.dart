@@ -82,7 +82,7 @@ class _DashboardSkeleton extends StatelessWidget {
   const _DashboardSkeleton();
 
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => const SingleChildScrollView(
         padding: EdgeInsets.all(28),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SkeletonBox(height: 88),
