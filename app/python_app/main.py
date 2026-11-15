@@ -290,12 +290,21 @@ def export_summary() -> dict:
     }
 
 
+def bind_host(env) -> str:
+    """Solo 127.0.0.1 por defecto. En Docker se pone TIRELUS_HOST=0.0.0.0 (y el puerto
+    se publica solo en el equipo local desde docker-compose.yml)."""
+    return (env.get("TIRELUS_HOST") or "").strip() or "127.0.0.1"
+
+
+def bind_port(env) -> int:
+    return int(env.get("TIRELUS_PORT") or 8765)
+
+
 def run() -> None:
     import uvicorn
 
-    port = int(os.environ.get("TIRELUS_PORT", "8765"))
     # log_config=None: embebido puede no haber stdout/stderr utilizables.
-    uvicorn.run(app, host="127.0.0.1", port=port, log_config=None, access_log=False)
+    uvicorn.run(app, host=bind_host(os.environ), port=bind_port(os.environ), log_config=None, access_log=False)
 
 
 if __name__ == "__main__":

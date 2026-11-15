@@ -15,6 +15,9 @@ venv/
 app/build/
 app/.dart_tool/
 
+# Credenciales locales (las crea tirelus.ps1)
+.env
+
 # Datasets locales (retinal pesa 117 MB, GitHub rechaza > 100 MB)
 datosdb/
 

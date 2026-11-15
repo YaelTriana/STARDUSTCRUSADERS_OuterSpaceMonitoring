@@ -1,0 +1,27 @@
+# API local de TIRELUS (FastAPI) lista para hablar con PostgreSQL.
+# Contexto de build: la raiz del repo (ver docker-compose.yml).
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TIRELUS_HOST=0.0.0.0 \
+    TIRELUS_PORT=8765 \
+    TIRELUS_DATA_DIR=/data
+
+WORKDIR /srv/tirelus
+
+COPY app/python_app/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app/python_app/ ./
+
+# Sin root: el resumen medico se guarda en /data.
+RUN useradd --system --no-create-home tirelus && mkdir /data && chown tirelus /data
+USER tirelus
+VOLUME /data
+EXPOSE 8765
+
+HEALTHCHECK --interval=10s --timeout=4s --start-period=5s --retries=3 \
+    CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ['TIRELUS_PORT'], timeout=3)"
+
+CMD ["python", "main.py"]

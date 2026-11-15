@@ -5,7 +5,7 @@ App de automonitoreo de salud para astronautas — NASA Space Apps Challenge 202
 - **UI:** Flutter en `app/`
 - **Lógica:** Python en `app/python_app/`, embebido con serious_python; sirve una API local en `127.0.0.1:8765`
 - **Base de datos:** PostgreSQL (esquema en `db/`). Servidor externo compartido en desarrollo; PostgreSQL interno en la nave en la versión final (ver [Base de datos](#base-de-datos))
-- **Pruebas:** `pytest app/tests_py` (89 pruebas: motor de reglas, API, exportación, configuración y lectura de PostgreSQL) · `cd app; flutter test` (64 pruebas: semáforo, selector de entorno, contraste, tendencia, medición y SANS)
+- **Pruebas:** `pytest app/tests_py` (92 pruebas: motor de reglas, API, exportación, configuración y lectura de PostgreSQL) · `cd app; flutter test` (64 pruebas: semáforo, selector de entorno, contraste, tendencia, medición y SANS)
 
 > La app no diagnostica. Todos los umbrales, salvo SANS, son supuestos de diseño. Los datos de la demo son sintéticos.
 
@@ -18,6 +18,26 @@ cd app
 python python_app/main.py                                   # servidor Python
 flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true  # UI usando ese servidor
 ```
+
+## Correr con Docker (PostgreSQL + API)
+
+Requiere Docker Desktop abierto. Desde la raíz del repo:
+
+```powershell
+.\tirelus.ps1              # levanta PostgreSQL y la API, y verifica que la API lea de la base
+.\tirelus.ps1 db -Lan      # solo PostgreSQL, visible en la red local (servidor compartido)
+.\tirelus.ps1 verificar    # comprueba /health: data_source debe decir "db"
+.\tirelus.ps1 datos        # (opcional) carga los datasets de referencia desde .\datosdb
+.\tirelus.ps1 down         # detiene (conserva datos) · reset: detiene y borra los datos
+```
+
+Si PowerShell bloquea el script: `powershell -ExecutionPolicy Bypass -File .\tirelus.ps1`.
+
+- La primera vez crea `.env` con una contraseña aleatoria (no se sube al repo; para compartir la base, pásala por un canal privado).
+- `docker-compose.yml` corre `db/schema.sql`, `db/002_ojos.sql` y `db/003_demo.sql` al crear la base. `003_demo.sql` solo trae lo que ya está en `data.py` (sistólica D34–D47 y su línea base) para poder probar `data_source: db`.
+- La API queda en `http://127.0.0.1:8765` y la base en `127.0.0.1:5432`, solo para este equipo. Con `-Lan` la base se abre a la red local; en ese caso abre el puerto 5432 en el firewall solo para red privada.
+- La app Flutter no va en Docker: `cd app; flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true`.
+- Variables nuevas del servidor: `TIRELUS_HOST` (por defecto `127.0.0.1`; la imagen usa `0.0.0.0` y compose publica el puerto solo en localhost).
 
 ## Base de datos
 
