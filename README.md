@@ -54,7 +54,7 @@ PostgreSQL. Los scripts viven en `db/`: `schema.sql` (esquema), `002_ojos.sql` (
 - El servidor compartido solo guarda datos sintéticos ("Datos de ejemplo"). La privacidad médica aplica también en la base.
 - **Conexión opcional ya escrita** (`app/python_app/db.py` y `catalog.py`, driver `pg8000`): con `TIRELUS_DB_HOST` definido la API lee línea base, límites y series de la base; sin él, o si el servidor no responde, sigue con los datos de `data.py`. `GET /health` dice `data_source` (`db` o `ejemplo`).
 - Variables: `TIRELUS_DB_HOST` (obligatoria), `TIRELUS_DB_PORT` (5432), `TIRELUS_DB_NAME` (tirelus), `TIRELUS_DB_USER` (postgres), `TIRELUS_DB_PASSWORD`, `TIRELUS_DB_TIMEOUT` (3 s) y `TIRELUS_ASTRONAUT_ID` (opcional).
-- **Aún no se ha probado contra un servidor real** y la base no trae lecturas de la app. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md) y la matriz de pendientes.
+- **Probado el 14 nov contra el servidor del equipo** (PostgreSQL 18.7, red local 192.168.10.0/24, usuario sin permisos de DDL): `/health` dice `data_source: db` y la sistólica sale de la base. Las credenciales no están en el repo. La base solo trae la sistólica de ejemplo (`db/003_demo.sql`); faltan FC, sueño, ánimo y SANS. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md) y la matriz de pendientes.
 
 ## Estado del MVP
 
@@ -66,7 +66,7 @@ PostgreSQL. Los scripts viven en `db/`: `schema.sql` (esquema), `002_ojos.sql` (
 | 4 | Resumen exportable para la conferencia médica | ✅ Se exporta en Markdown (portapapeles) |
 | 5 | Selector ISS / Luna / Marte y modo autónomo | ✅ Listo |
 | — | Extras: consola de base y EVA | ✅ Pantallas hechas |
-| — | Datos compartidos en PostgreSQL | 🟡 Esquema y capa de lectura en la API listos (con respaldo); falta el servidor externo, cargar datos de la app y probar |
+| — | Datos compartidos en PostgreSQL | 🟡 Servidor del equipo funcionando y API leyendo de él (probado); falta cargar FC, sueño, ánimo y SANS |
 | — | Entrega (video, presentación, página con fuentes) | 🔴 Sin empezar |
 
 ## Matriz de pendientes
@@ -77,9 +77,9 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 |---|---|---|---|
 | **P0** | Probar la app empaquetada en Windows | desde `app/`: `dart run serious_python:main package python_app -p Windows -r -r -r python_app/requirements.txt --cleanup` (detalles en la skill `tirelus-serious-python`), luego `flutter build windows`. Verificar que `/health` responda dentro de la app. Falta instalar Visual Studio con "Desarrollo para el escritorio con C++": hoy `flutter build windows` falla sin él (revisar con `flutter doctor`). | 1–2 h |
 | **P2** | Android (recortado de la demo; se intenta al final si sobra tiempo) | `-p Android` en el mismo comando y `flutter build apk`. Si uvicorn falla, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). Decidir también cómo llega el Python embebido al servidor y si hay caché local. | 2–3 h |
-| **P0** | Levantar el servidor externo con PostgreSQL | Montar PostgreSQL en un servidor accesible para todo el equipo, correr `db/schema.sql`, `db/002_ojos.sql` y `db/load_datos.sql`, y compartir las credenciales por un canal privado (no en el repo). Solo datos sintéticos. | 1–2 h |
-| **P0** | Probar la capa de PostgreSQL contra un servidor real | Hecho en código: `db.py` y `catalog.py` leen base, límites y series con respaldo a `data.py` (`tests_py/test_db_*.py`, `test_catalog.py`), pero solo se probaron con una conexión falsa. **Falta:** con el servidor arriba, definir `TIRELUS_DB_*`, correr `python python_app/main.py` y comprobar que `/health` dice `data_source: db` (las consultas SQL no se han ejecutado nunca). Además: instalar `pg8000` en el empaquetado de Windows. El servidor y el equipo están en la misma red (Ethernet por switch): usa la IP local del servidor como `TIRELUS_DB_HOST`. | 1–2 h |
-| **P1** | Cargar datos de la app en la base | Hoy ningún `.sql` crea tripulante, línea base ni lecturas. Falta un script (p. ej. `db/003_demo.sql`) con los datos de ejemplo de `data.py` y los `>>> DATOS:`, cada uno marcado "Datos de ejemplo". Ver los huecos en [`db/AUDITORIA.md`](db/AUDITORIA.md) (incluye `heart_rate` `both` vs `above`). | 1–2 h |
+| ~~P0~~ ✅ | ~~Levantar el servidor externo con PostgreSQL~~ | Hecho: PostgreSQL 18.7 en la red local con un usuario de equipo sin permisos de DDL. Host y contraseña se comparten por un canal privado (no en el repo). Solo datos sintéticos. | — |
+| ~~P0~~ ✅ | ~~Probar la capa de PostgreSQL contra un servidor real~~ | Hecho el 14 nov: las consultas de `db.py` se ejecutaron contra el servidor y `/health` dijo `data_source: db`. **Falta:** instalar `pg8000` en el empaquetado de Windows (`requirements.txt` ya lo lista). | — |
+| **P1** | Completar los datos de la app en la base | `db/003_demo.sql` (ya cargado en el servidor) solo trae la sistólica D34–D47 y su línea base. Faltan FC, sueño, ánimo y SANS (los `>>> DATOS:` de `data.py`), cada uno marcado "Datos de ejemplo". El usuario del equipo puede leer y escribir en `public`, pero no crear ni alterar tablas. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md) (incluye `heart_rate` `both` vs `above`). | 1 h |
 | **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). Hoy es el 14 de nov: el hackathon va de hoy al 15. | 3–4 h |
 | **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | 1 h |
 | ~~P0~~ ✅ | ~~Exportar el resumen médico~~ | Hecho: `GET /summary/export` devuelve Markdown con fecha, día de misión y "Datos de ejemplo" (`tests_py/test_export.py`). Botón "Exportar resumen médico" en la pantalla de tendencia: copia al portapapeles. Compartir con `share_plus` y PDF quedan para después. | — |
