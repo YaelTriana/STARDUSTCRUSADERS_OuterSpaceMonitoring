@@ -85,6 +85,21 @@ void main() {
     });
   }
 
+  final fiveSystems = [
+    for (final id in ['cardio', 'ojos', 'hueso', 'mente', 'inmune'])
+      {'id': id, 'name': id, 'status': 'nominal', 'indicators': <Map<String, dynamic>>[], 'why': 'x', 'action': 'y'},
+  ];
+  for (final locale in [const Locale('es'), const Locale('en')]) {
+    testWidgets('las 5 filas del cuerpo caben en 1366x768 en ${locale.languageCode}', (tester) async {
+      final api = FakeApi(dashboard: dashboardJson(systems: fiveSystems));
+      await _pump(tester, api, locale: locale);
+      for (final id in ['cardio', 'ojos', 'hueso', 'mente', 'inmune']) {
+        expect(find.text(id), findsWidgets);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('color + forma + palabra se conservan (StatusChip)', (tester) async {
     final api = FakeApi(dashboard: dashboardJson(systems: [
       {
