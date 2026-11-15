@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -169,7 +170,7 @@ class _DashboardSkeleton extends StatelessWidget {
   const _DashboardSkeleton();
 
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => const SingleChildScrollView(
         padding: EdgeInsets.all(28),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SkeletonBox(height: 88),
@@ -291,65 +292,169 @@ class _SystemDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final l = context.l10n;
-    return SectionCard(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          Text(system.name, style: t.headlineMedium),
-          StatusChip(system.status),
-        ]),
-        const SizedBox(height: 18),
-        if (system.status == VStatus.sinDato && system.indicators.isEmpty)
-          OutlinedButton.icon(onPressed: onMeasure, icon: const Icon(Icons.straighten), label: Text(l.noDataMeasure))
-        else
-          LayoutBuilder(builder: (context, c) {
-            final cols = c.maxWidth > 600 ? 3 : 1;
-            return Wrap(spacing: 14, runSpacing: 14, children: [
-              for (final i in system.indicators)
-                SizedBox(
-                  width: (c.maxWidth - 14 * (cols - 1)) / cols,
-                  child: MetricTile(
-                    label: i.label,
-                    value: i.value,
-                    unit: i.unit,
-                    note: i.note,
-                    noteColor: i.status == VStatus.nominal ? VColors.muted : statusColor(i.status),
-                  ),
-                ),
-            ]);
-          }),
-        const SizedBox(height: 20),
-        Wrap(spacing: 24, runSpacing: 16, children: [
-          _Explain(title: l.panelWhyTitle, body: system.why),
-          _Explain(title: l.panelActionTitle, body: system.action),
-        ]),
-        const SizedBox(height: VSpace.lg),
-        ActionChip(
-          avatar: const Icon(Icons.info_outline, size: 18, color: VColors.signalSoft),
-          label: Text(l.sourceChip),
-          side: const BorderSide(color: VColors.borderStrong),
-          backgroundColor: VColors.surface2,
-          onPressed: () => _showSource(context),
-        ),
+    // Atención/crítico: fondo surface2 y barra de 4 dp del color del estado.
+    // Nominal (y sin dato): fondo surface y borde de 1 px (SectionCard).
+    final alert = system.status == VStatus.atencion || system.status == VStatus.critico;
+    const pad = EdgeInsets.fromLTRB(28, 24, 28, 24);
+    final content = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Text(system.name, style: t.headlineMedium),
+        StatusChip(system.status),
       ]),
-    );
+      const SizedBox(height: 18),
+      if (system.status == VStatus.sinDato && system.indicators.isEmpty)
+        OutlinedButton.icon(onPressed: onMeasure, icon: const Icon(Icons.straighten), label: Text(l.noDataMeasure))
+      else
+        _MetricRow(indicators: system.indicators),
+      const SizedBox(height: 20),
+      Wrap(spacing: 24, runSpacing: 16, children: [
+        _Explain(title: l.panelWhyTitle, body: system.why),
+        // "Qué hacer ahora" siempre resalta con la barra del color del estado,
+        // nominal incluido: es la acción a tomar, no solo información.
+        _Explain(title: l.panelActionTitle, body: system.action, barColor: statusColor(system.status)),
+      ]),
+      const SizedBox(height: VSpace.lg),
+      ActionChip(
+        avatar: const Icon(Icons.info_outline, size: 18, color: VColors.signalSoft),
+        label: Text(l.sourceChip),
+        side: const BorderSide(color: VColors.borderStrong),
+        backgroundColor: VColors.surface2,
+        onPressed: () => _showSource(context),
+      ),
+    ]);
+    return alert
+        ? StatusSideCard(color: statusColor(system.status), padding: pad, child: content)
+        : SectionCard(padding: pad, child: content);
   }
 }
 
+/// "Ejercicio" como anillo de progreso (decorativo); el texto con el valor
+/// (arriba) sigue siendo la fuente accesible, no el dibujo.
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.value});
+  final double value;
+  static const _size = 56.0;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+        child: SizedBox(
+          width: _size,
+          height: _size,
+          child: CustomPaint(
+            painter: _RingPainter(value.clamp(0.0, 1.0)),
+            child: Center(child: Text('${(value.clamp(0.0, 1.0) * 100).round()}%', style: mono(size: 13, weight: FontWeight.w600))),
+          ),
+        ),
+      );
+}
+
+class _RingPainter extends CustomPainter {
+  _RingPainter(this.value);
+  final double value;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2 - 4;
+    canvas.drawCircle(center, radius, Paint()..color = VColors.border..style = PaintingStyle.stroke..strokeWidth = 6);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * value,
+      false,
+      Paint()
+        ..color = VColors.nominal
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) => old.value != value;
+}
+
+/// Las mediciones del sistema en una sola tarjeta, divididas en celdas por
+/// líneas finas (no tarjetas sueltas): cifra grande + unidad + base con la
+/// forma y la palabra del estado. En angosto (<700) pasa a columna.
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.indicators});
+  final List<Indicator> indicators;
+
+  Widget _cell(Indicator i) {
+    final valueColor = i.status == VStatus.nominal ? VColors.text : statusColor(i.status);
+    final noteColor = i.status == VStatus.nominal ? VColors.muted : statusColor(i.status);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(i.label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
+        const SizedBox(height: 8),
+        Text.rich(TextSpan(children: [
+          TextSpan(text: i.value, style: mono(size: 44, color: valueColor, weight: FontWeight.w500)),
+          if (i.unit.isNotEmpty) TextSpan(text: ' ${i.unit}', style: mono(size: 16, color: VColors.muted)),
+        ])),
+        const SizedBox(height: 10),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          StatusShape(i.status, size: 14, color: noteColor),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(i.note, style: TextStyle(fontSize: VType.label, color: noteColor), overflow: TextOverflow.ellipsis),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
+        final narrow = c.maxWidth < 700;
+        final cells = [for (final i in indicators) _cell(i)];
+        return Container(
+          decoration: BoxDecoration(
+            color: VColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VColors.border),
+          ),
+          child: narrow
+              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  for (var j = 0; j < cells.length; j++) ...[
+                    if (j > 0) const Divider(height: 1, color: VColors.border),
+                    cells[j],
+                  ],
+                ])
+              : IntrinsicHeight(
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    for (var j = 0; j < cells.length; j++) ...[
+                      if (j > 0) const VerticalDivider(width: 1, color: VColors.border),
+                      Expanded(child: cells[j]),
+                    ],
+                  ]),
+                ),
+        );
+      });
+}
+
 class _Explain extends StatelessWidget {
-  const _Explain({required this.title, required this.body});
+  const _Explain({required this.title, required this.body, this.barColor});
   final String title;
   final String body;
 
+  /// Si no es null, el texto va dentro de una StatusSideCard con esta barra.
+  final Color? barColor;
+
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: overline()),
-          const SizedBox(height: 8),
-          Text(body, style: const TextStyle(fontSize: VType.body, height: 1.55)),
-        ]),
-      );
+  Widget build(BuildContext context) {
+    final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title, style: overline()),
+      const SizedBox(height: 8),
+      Text(body, style: const TextStyle(fontSize: VType.body, height: 1.55)),
+    ]);
+    final color = barColor;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 380),
+      child: color == null ? text : StatusSideCard(color: color, padding: const EdgeInsets.all(14), child: text),
+    );
+  }
 }
 
 class _TaskRow extends StatelessWidget {
@@ -394,15 +499,17 @@ class _TaskRow extends StatelessWidget {
           Text('${other['title']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: VType.body)),
           Text('${other['detail']}', style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
         ])),
-      card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(l.exerciseLabel, style: mono(size: 12, color: VColors.muted)),
-        const SizedBox(height: 4),
-        Text(l.exerciseProgress(dashboard.exerciseDone ~/ 60, dashboard.exerciseDone % 60),
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: VType.body)),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(value: ratio, minHeight: 6, backgroundColor: VColors.border, color: VColors.nominal),
+      card(Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        _ProgressRing(value: ratio),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(l.exerciseLabel, style: mono(size: 12, color: VColors.muted)),
+            const SizedBox(height: 4),
+            // Texto del valor conservado para accesibilidad (el anillo es decorativo).
+            Text(l.exerciseProgress(dashboard.exerciseDone ~/ 60, dashboard.exerciseDone % 60),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: VType.body)),
+          ]),
         ),
       ])),
       // Racha amable: premia la constancia, nunca castiga.

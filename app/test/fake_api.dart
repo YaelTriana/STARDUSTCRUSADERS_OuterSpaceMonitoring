@@ -33,49 +33,57 @@ Map<String, dynamic> trendJson({
       'avg7': 126,
     };
 
-/// Respuesta de /dashboard como la arma Python: cardio calculado por panel.py
-/// (un indicador con datos y el resto en "Sin dato") y los demás sistemas mockup.
+/// Respuesta de /dashboard como la arma Python: los cinco sistemas calculados por
+/// panel.py. Por defecto, cardio con un indicador con datos y el resto en "Sin dato";
+/// `systems` permite pasar los sistemas a mano para las pruebas de diseño.
 Map<String, dynamic> dashboardJson({
+  int missionDay = 47,
+  List<Map<String, dynamic>>? systems,
+  List<Map<String, dynamic>> tasks = const [
+    {'time': '09:30', 'title': 'Medir presión arterial', 'detail': 'Guía paso a paso', 'pending': true},
+  ],
+  int exerciseDone = 112,
+  int exerciseGoal = 120,
+  int streakDays = 12,
   String status = 'atencion',
   String value = '132',
   String note = '▲ 6 sobre tu base (110–126)',
 }) =>
     {
-      'mission_day': 47,
-      'sample_data': true,
-      'streak_days': 12,
-      'exercise': {'done_min': 112, 'goal_min': 120},
-      'tasks': [
-        {'time': '09:30', 'title': 'Medir presión arterial', 'detail': 'Guía paso a paso', 'pending': true},
-      ],
-      'systems': [
-        {
-          'id': 'cardio',
-          'name': 'Corazón y circulación',
-          'status': status,
-          'computed': true,
-          'why': 'En microgravedad los líquidos se desplazan hacia la cabeza.',
-          'action': 'Repite la medición tras 5 min en reposo.',
-          'indicators': [
-            {'label': 'Presión sistólica', 'value': value, 'unit': 'mmHg', 'note': note, 'status': status},
-            {'label': 'Presión diastólica', 'value': '—', 'unit': 'mmHg', 'note': 'Sin dato', 'status': 'sin_dato'},
-            {'label': 'FC en reposo', 'value': '—', 'unit': 'lpm', 'note': 'Sin dato', 'status': 'sin_dato'},
-            {'label': 'SpO₂', 'value': '—', 'unit': '%', 'note': 'Sin dato', 'status': 'sin_dato'},
+      'mission_day': missionDay,
+      'systems': systems ??
+          [
+            {
+              'id': 'cardio',
+              'name': 'Corazón y circulación',
+              'status': status,
+              'computed': true,
+              'why': 'En microgravedad los líquidos se desplazan hacia la cabeza.',
+              'action': 'Repite la medición tras 5 min en reposo.',
+              'indicators': [
+                {'label': 'Presión sistólica', 'value': value, 'unit': 'mmHg', 'note': note, 'status': status},
+                {'label': 'Presión diastólica', 'value': '—', 'unit': 'mmHg', 'note': 'Sin dato', 'status': 'sin_dato'},
+                {'label': 'FC en reposo', 'value': '—', 'unit': 'lpm', 'note': 'Sin dato', 'status': 'sin_dato'},
+                {'label': 'SpO₂', 'value': '—', 'unit': '%', 'note': 'Sin dato', 'status': 'sin_dato'},
+              ],
+            },
+            for (final s in ['ojos', 'hueso', 'mente', 'inmune'])
+              {
+                'id': s,
+                'name': s,
+                'status': 'nominal',
+                'computed': true,
+                'why': 'texto educativo',
+                'action': 'qué hacer',
+                'indicators': [
+                  {'label': 'indicador', 'value': '1', 'unit': '', 'note': 'nota', 'status': 'nominal'},
+                ],
+              },
           ],
-        },
-        for (final s in ['ojos', 'hueso', 'mente', 'inmune'])
-          {
-            'id': s,
-            'name': s,
-            'status': 'nominal',
-            'computed': true,
-            'why': 'texto educativo',
-            'action': 'qué hacer',
-            'indicators': [
-              {'label': 'indicador', 'value': '1', 'unit': '', 'note': 'nota', 'status': 'nominal'},
-            ],
-          },
-      ],
+      'tasks': tasks,
+      'exercise': {'done_min': exerciseDone, 'goal_min': exerciseGoal},
+      'streak_days': streakDays,
+      'sample_data': true,
     };
 
 /// API falsa para pruebas de widgets: no abre conexiones.
@@ -84,13 +92,14 @@ class FakeApi extends TirelusApi {
     this.trends = const {},
     this.sansStatus = 'nominal',
     this.evalStatus = 'nominal',
-    this.dashboardBody,
+    Map<String, dynamic>? dashboard,
     this.dashboardFails = false,
-  }) : super(baseUrl: 'http://fake.invalid');
+  })  : dashboardBody = dashboard ?? dashboardJson(),
+        super(baseUrl: 'http://fake.invalid');
 
   final Map<String, Map<String, dynamic>> trends;
   /// Mutable a propósito: las pruebas lo cambian entre un refresco y el siguiente.
-  Map<String, dynamic>? dashboardBody;
+  Map<String, dynamic> dashboardBody;
   bool dashboardFails;
   int dashboardCalls = 0;
   final String sansStatus;
@@ -110,7 +119,7 @@ class FakeApi extends TirelusApi {
   Future<Dashboard> dashboard() async {
     dashboardCalls++;
     if (dashboardFails) throw Exception('sin servidor');
-    return Dashboard.fromJson(dashboardBody!);
+    return Dashboard.fromJson(dashboardBody);
   }
 
   @override
@@ -120,6 +129,37 @@ class FakeApi extends TirelusApi {
         'status': 'sin_dato',
         'thresholds': {'attention_um': 20.0, 'critical_um': 55.0},
         'source': 'Umbrales publicados de SANS.',
+      };
+
+  @override
+  Future<Map<String, dynamic>> habitat() async => {
+        'day': 18,
+        'gravity': '0.17 g',
+        'link': '~4 s',
+        'environment': [
+          {'label': 'CO₂', 'value': '2.6', 'unit': 'mmHg', 'status': 'nominal'},
+        ],
+        'alert': 'Alerta de prueba',
+        'crew': [
+          {'name': 'Tripulante A', 'location': 'HÁBITAT', 'detail': 'Detalle', 'progress': 0.6},
+        ],
+        'agenda': [
+          {'time': '08:00', 'title': 'Vitales'},
+        ],
+        'team_challenge': {'title': 'Reto', 'done': 3, 'total': 5},
+      };
+
+  @override
+  Future<Map<String, dynamic>> eva() async => {
+        'elapsed': '02:18',
+        'o2_left': '5:42',
+        'return_in_min': 48,
+        'hr': 128,
+        'spo2': 97,
+        'temp': 37.6,
+        'co2': 'nominal',
+        'effort': 'alto',
+        'alert': 'Alerta EVA',
       };
 
   @override

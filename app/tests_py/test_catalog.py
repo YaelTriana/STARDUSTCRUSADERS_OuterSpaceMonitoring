@@ -29,7 +29,7 @@ def test_sin_base_usa_los_datos_de_ejemplo():
     snap = hacer().snapshot()
     assert snap.source == "ejemplo"
     assert snap.metrics["systolic"]["series"] == data.SYSTOLIC_14
-    assert snap.metrics["heart_rate"]["base"] is None
+    assert snap.metrics["spo2"]["base"] is None  # sin datos de ejemplo todavía
 
 
 def test_con_base_la_sobrepone_sobre_el_catalogo():
@@ -49,9 +49,11 @@ def test_lo_que_la_base_no_trae_se_queda_como_estaba():
 
 
 def test_no_modifica_data_metrics():
+    antes = dict(data.METRICS["heart_rate"])
     hacer(loader=lambda: OVERLAY).snapshot()
-    assert data.METRICS["heart_rate"]["base"] is None
-    assert data.METRICS["heart_rate"]["series"] == []
+    # El overlay trae otra base y otra serie para FC: data.METRICS no debe moverse.
+    assert data.METRICS["heart_rate"]["base"] == antes["base"]
+    assert data.METRICS["heart_rate"]["series"] == antes["series"]
 
 
 def test_base_vacia_cuenta_como_ejemplo():

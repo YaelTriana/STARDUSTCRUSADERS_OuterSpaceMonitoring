@@ -1550,6 +1550,192 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudo evaluar con el motor. Revisa la conexión e intenta de nuevo.'**
   String get measEvalFailed;
+
+  /// No description provided for @baseEnvTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBIENTE DEL HÁBITAT'**
+  String get baseEnvTitle;
+
+  /// No description provided for @baseRadiationNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Dosis acumulada de radiación de cada quien: solo en su vista personal.'**
+  String get baseRadiationNote;
+
+  /// No description provided for @baseCrewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tripulación'**
+  String get baseCrewTitle;
+
+  /// No description provided for @baseNoClinical.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin datos clínicos en pantallas compartidas'**
+  String get baseNoClinical;
+
+  /// No description provided for @baseAgendaTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'AGENDA MÉDICA DE HOY'**
+  String get baseAgendaTitle;
+
+  /// No description provided for @baseCmoButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Vista CMO · identificarse'**
+  String get baseCmoButton;
+
+  /// No description provided for @baseCmoSnack.
+  ///
+  /// In es, this message translates to:
+  /// **'La vista CMO requiere identificación (no incluida en el mockup).'**
+  String get baseCmoSnack;
+
+  /// No description provided for @baseHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'BASE LUNAR · DÍA {day}'**
+  String baseHeader(String day);
+
+  /// No description provided for @baseGravity.
+  ///
+  /// In es, this message translates to:
+  /// **'Gravedad {value}'**
+  String baseGravity(String value);
+
+  /// No description provided for @baseLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Enlace con Tierra {value}'**
+  String baseLink(String value);
+
+  /// No description provided for @baseSpaceWeather.
+  ///
+  /// In es, this message translates to:
+  /// **'Clima espacial'**
+  String get baseSpaceWeather;
+
+  /// No description provided for @visorConcept.
+  ///
+  /// In es, this message translates to:
+  /// **'CONCEPTO A FUTURO · PANTALLA EN CASCO TIPO JOINT AR / SUITS'**
+  String get visorConcept;
+
+  /// No description provided for @visorO2.
+  ///
+  /// In es, this message translates to:
+  /// **'O₂ DEL TRAJE'**
+  String get visorO2;
+
+  /// No description provided for @visorEva.
+  ///
+  /// In es, this message translates to:
+  /// **'EVA'**
+  String get visorEva;
+
+  /// No description provided for @visorReturn.
+  ///
+  /// In es, this message translates to:
+  /// **'regreso al rover en {min} min'**
+  String visorReturn(String min);
+
+  /// No description provided for @visorSay.
+  ///
+  /// In es, this message translates to:
+  /// **'Di «TIRELUS, estado»'**
+  String get visorSay;
+
+  /// No description provided for @visorHr.
+  ///
+  /// In es, this message translates to:
+  /// **'FC'**
+  String get visorHr;
+
+  /// No description provided for @visorBpm.
+  ///
+  /// In es, this message translates to:
+  /// **' lpm ▲'**
+  String get visorBpm;
+
+  /// No description provided for @visorTemp.
+  ///
+  /// In es, this message translates to:
+  /// **'TEMP'**
+  String get visorTemp;
+
+  /// No description provided for @visorCo2.
+  ///
+  /// In es, this message translates to:
+  /// **'CO₂ TRAJE'**
+  String get visorCo2;
+
+  /// No description provided for @visorEffort.
+  ///
+  /// In es, this message translates to:
+  /// **'ESFUERZO'**
+  String get visorEffort;
+
+  /// No description provided for @handTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'EVA {elapsed} · TRIPULANTE B'**
+  String handTitle(String elapsed);
+
+  /// No description provided for @handAlertTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Esfuerzo alto'**
+  String get handAlertTitle;
+
+  /// No description provided for @handAlertBody.
+  ///
+  /// In es, this message translates to:
+  /// **'4 min sobre tu zona. Baja el ritmo o pausa 2 min.'**
+  String get handAlertBody;
+
+  /// No description provided for @handTemp.
+  ///
+  /// In es, this message translates to:
+  /// **'Temperatura'**
+  String get handTemp;
+
+  /// No description provided for @handCo2.
+  ///
+  /// In es, this message translates to:
+  /// **'CO₂ del traje'**
+  String get handCo2;
+
+  /// No description provided for @handPause.
+  ///
+  /// In es, this message translates to:
+  /// **'Pausa de 2 min'**
+  String get handPause;
+
+  /// No description provided for @handPauseSnack.
+  ///
+  /// In es, this message translates to:
+  /// **'Pausa de 2 min iniciada.'**
+  String get handPauseSnack;
+
+  /// No description provided for @handCallCmo.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamar al CMO'**
+  String get handCallCmo;
+
+  /// No description provided for @handCallSnack.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamando al CMO…'**
+  String get handCallSnack;
+
+  /// No description provided for @handNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Botones grandes para guantes presurizados. La misma información que el visor, por si el traje no tiene pantalla en el casco.'**
+  String get handNote;
 }
 
 class _AppLocalizationsDelegate

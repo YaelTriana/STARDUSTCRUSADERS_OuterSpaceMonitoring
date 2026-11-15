@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tirelus/app_state.dart';
+import 'package:tirelus/l10n/app_localizations.dart';
 import 'package:tirelus/screens/trend_screen.dart';
 import 'package:tirelus/theme.dart';
 
 import 'fake_api.dart';
 
-Future<void> _pump(WidgetTester tester, FakeApi api, {String metric = 'systolic', double width = 1300}) async {
-  tester.view.physicalSize = Size(width, 1400);
+Future<void> _pump(
+  WidgetTester tester,
+  FakeApi api, {
+  String metric = 'systolic',
+  double width = 1300,
+  double height = 1400,
+  Locale locale = const Locale('es'),
+}) async {
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(AppScope(
     state: AppState(api),
-    child: MaterialApp(theme: tirelusTheme(), home: Scaffold(body: TrendScreen(initialMetric: metric))),
+    child: MaterialApp(
+      theme: tirelusTheme(),
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: TrendScreen(initialMetric: metric)),
+    ),
   ));
   await tester.pumpAndSettle();
 }
@@ -51,6 +65,30 @@ void main() {
 
   testWidgets('pantalla angosta sin desbordes', (tester) async {
     await _pump(tester, api, metric: 'sleep_hours', width: 360);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final locale in [const Locale('es'), const Locale('en')]) {
+    testWidgets('1366x768 sin desbordes en ${locale.languageCode} (plan sugerido con pasos numerados)', (tester) async {
+      await _pump(tester, api, width: 1366, height: 768, locale: locale);
+      // Tres pasos ("1.", "2.", "3.") pintados como círculos, no como texto plano.
+      expect(find.text('1'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('1920x1080 sin desbordes (gráfica con relleno y aro)', (tester) async {
+    await _pump(tester, api, width: 1920, height: 1080);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('la gráfica funciona igual con el eje 1 a 5 de ánimo', (tester) async {
+    final apiMood = FakeApi(trends: {
+      'mood': trendJson(metric: 'mood', label: 'Ánimo (1–5)', unit: 'pts', series: [4, 3, 2, 2], base: {'low': 3, 'high': 5}, above: 0, below: 2),
+    });
+    await _pump(tester, apiMood, metric: 'mood', width: 1366, height: 768);
     expect(tester.takeException(), isNull);
   });
 }

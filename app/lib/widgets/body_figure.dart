@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../core/touch.dart';
 import '../data/models.dart';
 import '../l10n/labels.dart';
 import '../theme.dart';
 import 'common.dart';
 
-/// Figura corporal abstracta con zonas tocables por sistema.
-///
-/// En ancho suficiente, los botones van al lado de la figura. En angosto
-/// (móvil o ventana estrecha) pasan a una columna debajo, para que ninguna
-/// etiqueta se corte.
+/// Holograma del cuerpo (imagen) con marcadores tocables por sistema, y
+/// debajo los 5 sistemas como filas completas.
 class BodyFigure extends StatelessWidget {
   const BodyFigure({super.key, required this.systems, required this.selected, required this.onSelect});
 
@@ -18,69 +14,75 @@ class BodyFigure extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onSelect;
 
-  /// Debajo de este ancho se usa la disposición en columna.
-  static const _narrowBelow = 420.0;
-
-  // Posición vertical de cada botón (dp dentro de la figura de 480 de alto)
-  // y punto que marca la zona en el cuerpo (coordenadas del lienzo 160×520).
-  static const _layout = <String, (double, Offset)>{
-    'mente': (10, Offset(80, 30)),
-    'ojos': (82, Offset(80, 52)),
-    'cardio': (154, Offset(96, 140)),
-    'inmune': (226, Offset(70, 200)),
-    'hueso': (360, Offset(104, 380)),
+  // Fracciones (x, y) del tamaño de la imagen, desde la esquina superior izquierda.
+  static const _dotAt = <String, Offset>{
+    'ojos': Offset(0.50, 0.075),
+    // "Sueño y ánimo" se desplaza para no encimarse con "ojos" (están muy
+    // cerca en la silueta); queda unido a su punto real con una guía corta.
+    'mente': Offset(0.82, 0.035),
+    'cardio': Offset(0.54, 0.25),
+    'inmune': Offset(0.47, 0.40),
+    'hueso': Offset(0.40, 0.68),
   };
 
-  Map<Offset, Color> get _dots => {
-        for (final s in systems)
-          if (_layout.containsKey(s.id)) _layout[s.id]!.$2: statusColor(s.status),
-      };
+  static const _menteAnchor = Offset(0.62, 0.035);
+
+  // Proporción real del PNG (ancho/alto). Si el contenedor es más angosto
+  // que esto a 260 dp de alto, el holograma se reduce sin cortarse.
+  static const _imageAspect = 1024 / 1536;
+  static const _maxHeight = 260.0;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, box) =>
-            box.maxWidth < _narrowBelow ? _narrow(context) : _wide(),
-      );
-
-  Widget _wide() => SizedBox(
-        height: 500,
-        child: Stack(children: [
-          Positioned(
-            left: 20,
-            top: 10,
-            child: CustomPaint(size: const Size(150, 480), painter: _BodyPainter(_dots)),
-          ),
-          for (final s in systems)
-            if (_layout.containsKey(s.id))
-              Positioned(
-                left: 170,
-                right: 0,
-                top: _layout[s.id]!.$1,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _ZoneButton(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
+  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
+        LayoutBuilder(builder: (context, c) {
+          var h = _maxHeight;
+          var w = h * _imageAspect;
+          if (c.maxWidth.isFinite && w > c.maxWidth) {
+            w = c.maxWidth;
+            h = w / _imageAspect;
+          }
+          Offset at(Offset frac) => Offset(frac.dx * w, frac.dy * h);
+          return Center(
+            child: SizedBox(
+              width: w,
+              height: h,
+              child: Stack(children: [
+                Image.asset(
+                  'assets/brand/holograma-tirelus.png',
+                  width: w,
+                  height: h,
+                  fit: BoxFit.contain,
+                  excludeFromSemantics: true,
+                  gaplessPlayback: true,
                 ),
-              ),
-        ]),
-      );
-
-  Widget _narrow(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
-        CustomPaint(size: const Size(110, 352), painter: _BodyPainter(_dots)),
+                // Guía corta entre el punto real de "mente" y su marcador desplazado.
+                CustomPaint(size: Size(w, h), painter: _GuideLine(at(_menteAnchor), at(_dotAt['mente']!))),
+                for (final s in systems)
+                  if (_dotAt.containsKey(s.id))
+                    Positioned(
+                      left: at(_dotAt[s.id]!).dx - 24,
+                      top: at(_dotAt[s.id]!).dy - 24,
+                      width: 48,
+                      height: 48,
+                      child: _Marker(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
+                    ),
+              ]),
+            ),
+          );
+        }),
         const SizedBox(height: VSpace.lg),
-        Wrap(
-          spacing: Touch.gap,
-          runSpacing: Touch.gap,
-          children: [
-            for (final s in systems)
-              if (_layout.containsKey(s.id))
-                _ZoneButton(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
-          ],
-        ),
+        for (final s in systems)
+          Padding(
+            padding: const EdgeInsets.only(bottom: VSpace.sm),
+            child: _SystemRow(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
+          ),
       ]);
 }
 
-class _ZoneButton extends StatelessWidget {
-  const _ZoneButton({required this.system, required this.selected, required this.onTap});
+/// Marcador tocable: aro exterior suave del color del estado + forma (color
+/// + forma, StatusShape); el seleccionado lleva borde signal.
+class _Marker extends StatelessWidget {
+  const _Marker({required this.system, required this.selected, required this.onTap});
   final BodySystem system;
   final bool selected;
   final VoidCallback onTap;
@@ -90,63 +92,93 @@ class _ZoneButton extends StatelessWidget {
         button: true,
         selected: selected,
         label: '${system.name}, ${context.l10n.status(system.status)}',
+        excludeSemantics: true,
         child: Material(
-          color: selected ? VColors.surface : VColors.surface2,
-          shape: StadiumBorder(
-            side: BorderSide(color: selected ? VColors.signal : VColors.border, width: selected ? 2 : 1),
-          ),
+          color: Colors.transparent,
+          shape: const CircleBorder(),
           child: InkWell(
-            customBorder: const StadiumBorder(),
+            customBorder: const CircleBorder(),
             onTap: onTap,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: Touch.min),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  StatusShape(system.status, size: 12),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(system.name,
-                        maxLines: 2,
-                        style: TextStyle(fontSize: VType.body, fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
+            child: Center(
+              child: Stack(alignment: Alignment.center, children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: statusColor(system.status).withValues(alpha: 0.22),
+                    border: selected ? Border.all(color: VColors.signal, width: 2) : null,
                   ),
-                  if (selected) ...[const SizedBox(width: 6), const Icon(Icons.check, size: 16, color: VColors.signalSoft)],
-                ]),
-              ),
+                ),
+                StatusShape(system.status, size: 24),
+              ]),
             ),
           ),
         ),
       );
 }
 
-class _BodyPainter extends CustomPainter {
-  _BodyPainter(this.dots);
-  final Map<Offset, Color> dots;
+/// Fila completa por sistema: ícono de estado + nombre + palabra del estado.
+class _SystemRow extends StatelessWidget {
+  const _SystemRow({required this.system, required this.selected, required this.onTap});
+  final BodySystem system;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${system.name}, ${l.status(system.status)}',
+      excludeSemantics: true,
+      child: Material(
+        color: selected ? VColors.surface2 : VColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: selected ? VColors.signal : VColors.border, width: selected ? 2 : 1),
+            ),
+            child: Row(children: [
+              StatusShape(system.status, size: 18),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(system.name,
+                    style: TextStyle(fontSize: VType.body, fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
+              ),
+              Text(l.status(system.status),
+                  style: TextStyle(fontSize: VType.label, color: statusColor(system.status), fontWeight: FontWeight.w600)),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GuideLine extends CustomPainter {
+  _GuideLine(this.from, this.to);
+  final Offset from;
+  final Offset to;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 160, size.height / 520);
-    final fill = Paint()..color = VColors.surface2;
-    final stroke = Paint()
-      ..color = VColors.borderStrong
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    void shape(RRect r) {
-      canvas.drawRRect(r, fill);
-      canvas.drawRRect(r, stroke);
-    }
-
-    canvas.drawCircle(const Offset(80, 45), 32, fill);
-    canvas.drawCircle(const Offset(80, 45), 32, stroke);
-    shape(RRect.fromLTRBR(70, 76, 90, 94, Radius.zero));
-    shape(RRect.fromLTRBR(30, 92, 130, 272, const Radius.circular(40)));
-    shape(RRect.fromLTRBR(4, 100, 26, 270, const Radius.circular(11)));
-    shape(RRect.fromLTRBR(134, 100, 156, 270, const Radius.circular(11)));
-    shape(RRect.fromLTRBR(38, 262, 74, 502, const Radius.circular(18)));
-    shape(RRect.fromLTRBR(86, 262, 122, 502, const Radius.circular(18)));
-    dots.forEach((o, c) => canvas.drawCircle(o, 7, Paint()..color = c));
+    canvas.drawLine(
+      from,
+      to,
+      Paint()
+        ..color = VColors.borderStrong
+        ..strokeWidth = 1.5,
+    );
   }
 
   @override
-  bool shouldRepaint(_BodyPainter old) => old.dots != dots;
+  bool shouldRepaint(_GuideLine old) => old.from != from || old.to != to;
 }

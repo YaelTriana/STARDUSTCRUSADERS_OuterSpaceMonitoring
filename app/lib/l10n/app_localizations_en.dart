@@ -866,4 +866,112 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get measEvalFailed =>
       'Could not evaluate with the engine. Check the connection and try again.';
+
+  @override
+  String get baseEnvTitle => 'HABITAT ENVIRONMENT';
+
+  @override
+  String get baseRadiationNote =>
+      'Each person\'s accumulated radiation dose: only in their personal view.';
+
+  @override
+  String get baseCrewTitle => 'Crew';
+
+  @override
+  String get baseNoClinical => 'No clinical data on shared screens';
+
+  @override
+  String get baseAgendaTitle => 'TODAY\'S MEDICAL AGENDA';
+
+  @override
+  String get baseCmoButton => 'CMO view · sign in';
+
+  @override
+  String get baseCmoSnack =>
+      'The CMO view requires sign-in (not included in the mockup).';
+
+  @override
+  String baseHeader(String day) {
+    return 'LUNAR BASE · DAY $day';
+  }
+
+  @override
+  String baseGravity(String value) {
+    return 'Gravity $value';
+  }
+
+  @override
+  String baseLink(String value) {
+    return 'Link to Earth $value';
+  }
+
+  @override
+  String get baseSpaceWeather => 'Space weather';
+
+  @override
+  String get visorConcept =>
+      'FUTURE CONCEPT · HELMET DISPLAY, JOINT AR / SUITS STYLE';
+
+  @override
+  String get visorO2 => 'SUIT O₂';
+
+  @override
+  String get visorEva => 'EVA';
+
+  @override
+  String visorReturn(String min) {
+    return 'back at the rover in $min min';
+  }
+
+  @override
+  String get visorSay => 'Say \"TIRELUS, status\"';
+
+  @override
+  String get visorHr => 'HR';
+
+  @override
+  String get visorBpm => ' bpm ▲';
+
+  @override
+  String get visorTemp => 'TEMP';
+
+  @override
+  String get visorCo2 => 'SUIT CO₂';
+
+  @override
+  String get visorEffort => 'EFFORT';
+
+  @override
+  String handTitle(String elapsed) {
+    return 'EVA $elapsed · CREW MEMBER B';
+  }
+
+  @override
+  String get handAlertTitle => 'High effort';
+
+  @override
+  String get handAlertBody =>
+      '4 min above your zone. Slow down or pause for 2 min.';
+
+  @override
+  String get handTemp => 'Temperature';
+
+  @override
+  String get handCo2 => 'Suit CO₂';
+
+  @override
+  String get handPause => '2 min pause';
+
+  @override
+  String get handPauseSnack => '2 min pause started.';
+
+  @override
+  String get handCallCmo => 'Call the CMO';
+
+  @override
+  String get handCallSnack => 'Calling the CMO…';
+
+  @override
+  String get handNote =>
+      'Large buttons for pressurized gloves. The same information as the visor, in case the suit has no helmet display.';
 }

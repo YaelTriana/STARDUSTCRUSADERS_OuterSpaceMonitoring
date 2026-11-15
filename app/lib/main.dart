@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'api.dart';
 import 'app_state.dart';
@@ -19,6 +20,9 @@ import 'widgets/common.dart';
 import 'widgets/env_selector.dart';
 
 void main() {
+  // Tipografías incluidas en assets/google_fonts/ (sin esto, google_fonts
+  // intenta descargarlas de fonts.gstatic.com la primera vez que se usan).
+  GoogleFonts.config.allowRuntimeFetching = false;
   final api = TirelusApi();
   runApp(TirelusApp(state: AppState(api)));
 }
@@ -118,7 +122,7 @@ final _dests = <_Dest>[
   _Dest((l) => l.navEyes, Icons.remove_red_eye_outlined),
   _Dest((l) => l.navAutonomous, Icons.satellite_alt_outlined),
   _Dest((l) => l.navBase, Icons.home_work_outlined),
-  _Dest((l) => l.navVisor, Icons.visibility_outlined),
+  _Dest((l) => l.navVisor, Icons.vrpano_outlined),
   _Dest((l) => l.navHandheld, Icons.smartphone),
 ];
 
@@ -168,7 +172,8 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final width = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final width = size.width;
     final wide = width >= 760;
     final topBar = _TopBar(compact: width < 900);
     final body = KeyedSubtree(
@@ -179,6 +184,12 @@ class _ShellState extends State<Shell> {
 
     // Tablet horizontal / escritorio: riel lateral.
     if (wide) {
+      // >=1000: riel extendido con texto siempre visible junto al ícono.
+      // 760-999: etiquetas completas si hay alto (>=720), si no solo la seleccionada.
+      final extended = width >= 1000;
+      final labelType = extended
+          ? NavigationRailLabelType.none
+          : (size.height >= 720 ? NavigationRailLabelType.all : NavigationRailLabelType.selected);
       return Scaffold(
         appBar: topBar,
         // stretch: las pantallas cortas empiezan arriba en vez de quedar centradas.
@@ -186,9 +197,16 @@ class _ShellState extends State<Shell> {
           NavigationRail(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            labelType: NavigationRailLabelType.all,
+            extended: extended,
+            minExtendedWidth: 208,
+            labelType: labelType,
+            useIndicator: true,
             destinations: [
-              for (final d in _dests) NavigationRailDestination(icon: Icon(d.icon), label: Text(d.label(l))),
+              for (final d in _dests)
+                NavigationRailDestination(
+                  icon: Icon(d.icon),
+                  label: Text(d.label(l), style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis),
+                ),
             ],
           ),
           const VerticalDivider(width: 1),
@@ -197,7 +215,7 @@ class _ShellState extends State<Shell> {
       );
     }
 
-    // Vertical y móvil: barra inferior con 4 destinos + "Más".
+    // Vertical y móvil: barra inferior con 4 destinos + "Más", etiquetas siempre visibles.
     const main = 4;
     return Scaffold(
       appBar: topBar,
@@ -205,6 +223,7 @@ class _ShellState extends State<Shell> {
       bottomNavigationBar: NavigationBar(
         backgroundColor: VColors.space,
         indicatorColor: VColors.surface2,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         selectedIndex: _index < main ? _index : main,
         onDestinationSelected: (i) => i == main ? _showMore() : setState(() => _index = i),
         destinations: [
@@ -259,7 +278,13 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: Row(children: [
-        const TirelusMark(size: 30),
+        Image.asset(
+          'assets/brand/tirelus-isotipo.png',
+          width: 32,
+          height: 32,
+          filterQuality: FilterQuality.high,
+          excludeFromSemantics: true,
+        ),
         const SizedBox(width: 12),
         Flexible(
           child: Text('TIRELUS',

@@ -47,8 +47,8 @@ def test_el_azulejo_de_la_sistolica_muestra_el_valor_de_hoy_y_su_variacion():
 
 def test_una_metrica_sin_datos_dice_sin_dato():
     bloque = panel.build_system("cardio", data.METRICS, CONTENIDO_CARDIO)
-    fc = azulejo(bloque, "FC en reposo")
-    assert (fc["value"], fc["note"], fc["status"]) == ("—", "Sin dato", "sin_dato")
+    spo2 = azulejo(bloque, "SpO₂")  # aún sin datos de ejemplo
+    assert (spo2["value"], spo2["note"], spo2["status"]) == ("—", "Sin dato", "sin_dato")
 
 
 def test_el_estado_del_sistema_es_el_peor_de_sus_indicadores_con_datos():
@@ -60,7 +60,8 @@ def test_el_estado_del_sistema_es_el_peor_de_sus_indicadores_con_datos():
 
 
 def test_un_sistema_sin_ninguna_metrica_con_datos_queda_en_sin_dato():
-    metricas = con_metricas(systolic={"base": None, "series": []})
+    sin_datos = {"base": None, "series": []}
+    metricas = con_metricas(systolic=sin_datos, diastolic=sin_datos, heart_rate=sin_datos, spo2=sin_datos)
     bloque = panel.build_system("cardio", metricas, CONTENIDO_CARDIO)
     assert bloque["status"] == "sin_dato"
 

@@ -26,8 +26,37 @@ from rules import (
 SIN_DATO = "—"
 
 # SANS es el único indicador con cifras publicadas, así que lleva su propio azulejo.
-SANS_LABEL = "Grosor retiniano (cambio)"
 SANS_SISTEMA = "ojos"
+
+# El panel no solo copia textos: también los GENERA (la nota de cada azulejo), así que
+# necesita su propio paquete por idioma. Los textos de las métricas y de los sistemas
+# siguen viniendo de data.for_lang().
+TEXTOS: dict[str, dict[str, str]] = {
+    "es": {
+        "sin_dato": "Sin dato",
+        "sobre": "▲ {delta} sobre tu base {rango}",
+        "bajo": "▼ {delta} bajo tu base {rango}",
+        "en_base": "en tu base {rango}",
+        "parcial": "{n} de {total} días",
+        "sostenida": "{n} días seguidos",
+        "sans_label": "Grosor retiniano (cambio)",
+        "sans_umbrales": "atención desde +{atencion} µm · preocupación clínica {critico} µm",
+    },
+    "en": {
+        "sin_dato": "No data",
+        "sobre": "▲ {delta} above your baseline {rango}",
+        "bajo": "▼ {delta} below your baseline {rango}",
+        "en_base": "within your baseline {rango}",
+        "parcial": "{n} of {total} days",
+        "sostenida": "{n} days in a row",
+        "sans_label": "Retinal thickness (change)",
+        "sans_umbrales": "attention from +{atencion} µm · clinical concern {critico} µm",
+    },
+}
+
+
+def _textos(lang: str) -> dict[str, str]:
+    return TEXTOS.get(lang, TEXTOS["es"])
 
 # De mejor a peor: el sistema hereda el peor estado de sus indicadores con datos.
 _SEVERIDAD = {Status.SIN_DATO: 0, Status.NOMINAL: 1, Status.ATENCION: 2, Status.CRITICO: 3}
@@ -38,25 +67,26 @@ def _fmt(value: float) -> str:
     return f"{value:.0f}" if float(value).is_integer() else f"{value:.1f}"
 
 
-def _nota(last: float, base, streak: int) -> str:
+def _nota(last: float, base, streak: int, lang: str = "es") -> str:
     """Variación frente a la línea base personal, con el rango y el conteo de días.
 
     El conteo evita el azulejo contradictorio (un valor sobre la base con estado
     nominal): la regla pide SUSTAINED_DAYS días seguidos, y la nota dice en qué
     parte del conteo va.
     """
+    t = _textos(lang)
     rango = f"({_fmt(base.low)}–{_fmt(base.high)})"
     if last > base.high:
-        cuerpo = f"▲ {_fmt(last - base.high)} sobre tu base {rango}"
+        cuerpo = t["sobre"].format(delta=_fmt(last - base.high), rango=rango)
     elif last < base.low:
-        cuerpo = f"▼ {_fmt(base.low - last)} bajo tu base {rango}"
+        cuerpo = t["bajo"].format(delta=_fmt(base.low - last), rango=rango)
     else:
-        return f"en tu base {rango}"
+        return t["en_base"].format(rango=rango)
     if streak <= 0:
         return cuerpo
     if streak >= SUSTAINED_DAYS:
-        return f"{cuerpo} · {streak} días seguidos"
-    return f"{cuerpo} · {streak} de {SUSTAINED_DAYS} días"
+        return f"{cuerpo} · " + t["sostenida"].format(n=streak)
+    return f"{cuerpo} · " + t["parcial"].format(n=streak, total=SUSTAINED_DAYS)
 
 
 def _con_signo(valor: float) -> str:
@@ -64,32 +94,34 @@ def _con_signo(valor: float) -> str:
     return f"+{_fmt(valor)}" if valor > 0 else _fmt(valor)
 
 
-def build_sans_indicator(serie: Sequence[float]) -> dict:
+def build_sans_indicator(serie: Sequence[float], lang: str = "es", label: str | None = None) -> dict:
     """Azulejo de SANS: cambio de grosor retiniano frente a la base del OCT.
 
     No se compara contra la línea base personal como el resto: los umbrales de SANS
     (+20 µm primer signo, 55 µm preocupación clínica) son las únicas cifras publicadas
     del proyecto, y los aplica `rules.evaluate_sans`.
     """
+    t = _textos(lang)
+    etiqueta = label or t["sans_label"]
     if not serie:
         return {
-            "label": SANS_LABEL,
+            "label": etiqueta,
             "value": SIN_DATO,
             "unit": "µm",
-            "note": "Sin dato",
+            "note": t["sin_dato"],
             "status": Status.SIN_DATO.value,
         }
     ultimo = float(serie[-1])
     return {
-        "label": SANS_LABEL,
+        "label": etiqueta,
         "value": _con_signo(ultimo),
         "unit": "µm",
-        "note": f"atención desde +{_fmt(SANS_ATTENTION_UM)} µm · preocupación clínica {_fmt(SANS_CRITICAL_UM)} µm",
+        "note": t["sans_umbrales"].format(atencion=_fmt(SANS_ATTENTION_UM), critico=_fmt(SANS_CRITICAL_UM)),
         "status": evaluate_sans(ultimo).value,
     }
 
 
-def build_indicator(metric: dict) -> dict:
+def build_indicator(metric: dict, lang: str = "es") -> dict:
     """Un azulejo del panel a partir de una métrica del catálogo."""
     series, base = metric["series"], metric["base"]
     if not series or base is None:
@@ -97,7 +129,7 @@ def build_indicator(metric: dict) -> dict:
             "label": metric["label"],
             "value": SIN_DATO,
             "unit": metric["unit"],
-            "note": "Sin dato",
+            "note": _textos(lang)["sin_dato"],
             "status": Status.SIN_DATO.value,
         }
     result = evaluate_trend(
@@ -119,7 +151,7 @@ def build_indicator(metric: dict) -> dict:
         "label": metric["label"],
         "value": _fmt(last),
         "unit": metric["unit"],
-        "note": _nota(last, base, streak),
+        "note": _nota(last, base, streak, lang),
         "status": result.status.value,
     }
 
@@ -136,6 +168,8 @@ def build_system(
     metrics: dict,
     content: dict,
     sans: Sequence[float] | None = None,
+    lang: str = "es",
+    sans_label: str | None = None,
 ) -> dict:
     """Bloque del panel para un sistema: estado, azulejos y texto educativo.
 
@@ -144,9 +178,9 @@ def build_system(
     cuando se pasa (sistema de ojos), su azulejo va primero porque es el indicador con
     cifras publicadas.
     """
-    indicators = [] if sans is None else [build_sans_indicator(sans)]
+    indicators = [] if sans is None else [build_sans_indicator(sans, lang, sans_label)]
     indicators += [
-        build_indicator(metric) for metric in metrics.values() if metric.get("system") == system_id
+        build_indicator(metric, lang) for metric in metrics.values() if metric.get("system") == system_id
     ]
     return {
         "id": system_id,

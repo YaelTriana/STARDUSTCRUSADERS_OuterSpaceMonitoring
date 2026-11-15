@@ -89,20 +89,48 @@ class StatusChip extends StatelessWidget {
 }
 
 class SectionCard extends StatelessWidget {
-  const SectionCard({super.key, required this.child, this.padding = const EdgeInsets.all(22), this.highlight = false});
+  const SectionCard({super.key, required this.child, this.padding = const EdgeInsets.all(22), this.highlight = false, this.color = VColors.surface});
   final Widget child;
   final EdgeInsets padding;
   final bool highlight;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: VColors.surface,
+          color: color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: highlight ? VColors.signal : VColors.border, width: highlight ? 2 : 1),
         ),
         child: child,
+      );
+}
+
+/// Tarjeta de atención: fondo surface2 y barra izquierda de 4 dp del color
+/// del estado. No usa Border (ancho distinto por lado + borderRadius truena).
+///
+/// Row+stretch necesitaría una altura acotada del padre (falla en Wrap o
+/// Column, que dan altura infinita) y IntrinsicHeight no funciona si el
+/// contenido tiene un LayoutBuilder adentro (como la grilla de MetricTile).
+/// Por eso: Stack con el contenido como hijo normal (define el alto real) y
+/// la barra como Positioned de top a bottom, estirada a ese alto ya resuelto.
+class StatusSideCard extends StatelessWidget {
+  const StatusSideCard({super.key, required this.color, required this.child, this.padding = const EdgeInsets.all(16)});
+  final Color color;
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: ColoredBox(
+          color: VColors.surface2,
+          child: Stack(children: [
+            Padding(padding: padding.add(const EdgeInsets.only(left: 4)), child: child),
+            Positioned(left: 0, top: 0, bottom: 0, width: 4, child: ColoredBox(color: color)),
+          ]),
+        ),
       );
 }
 
@@ -157,7 +185,7 @@ class AlertBanner extends StatelessWidget {
 }
 
 class MetricTile extends StatelessWidget {
-  const MetricTile({super.key, required this.label, required this.value, this.unit = '', this.note, this.noteColor, this.valueColor, this.valueSize = 28});
+  const MetricTile({super.key, required this.label, required this.value, this.unit = '', this.note, this.noteColor, this.valueColor, this.valueSize = 32});
   final String label;
   final String value;
   final String unit;
@@ -174,7 +202,7 @@ class MetricTile extends StatelessWidget {
           Text(label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
           const SizedBox(height: 6),
           Text.rich(TextSpan(children: [
-            TextSpan(text: value, style: mono(size: valueSize, color: valueColor ?? VColors.text)),
+            TextSpan(text: value, style: mono(size: valueSize, color: valueColor ?? VColors.text, weight: FontWeight.w500)),
             if (unit.isNotEmpty) TextSpan(text: ' $unit', style: mono(size: 13, color: VColors.muted)),
           ])),
           if (note != null) ...[

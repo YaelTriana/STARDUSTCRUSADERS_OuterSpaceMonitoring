@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tirelus/app_state.dart';
+import 'package:tirelus/l10n/app_localizations.dart';
 import 'package:tirelus/screens/measurement_screen.dart';
 import 'package:tirelus/theme.dart';
 
 import 'fake_api.dart';
 
-Future<void> _pump(WidgetTester tester, FakeApi api, {String metric = 'systolic', double width = 1300}) async {
-  tester.view.physicalSize = Size(width, 1600);
+Future<void> _pump(
+  WidgetTester tester,
+  FakeApi api, {
+  String metric = 'systolic',
+  double width = 1300,
+  double height = 1600,
+  Locale locale = const Locale('es'),
+}) async {
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(AppScope(
     state: AppState(api),
-    child: MaterialApp(theme: tirelusTheme(), home: Scaffold(body: MeasurementScreen(initialMetric: metric))),
+    child: MaterialApp(
+      theme: tirelusTheme(),
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: MeasurementScreen(initialMetric: metric)),
+    ),
   ));
   await tester.pumpAndSettle();
 }
@@ -64,4 +78,11 @@ void main() {
     expect(find.text('Horas de sueño (h)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  for (final locale in [const Locale('es'), const Locale('en')]) {
+    testWidgets('1366x768 sin desbordes en ${locale.languageCode} (campo activo resaltado)', (tester) async {
+      await _pump(tester, _api(), width: 1366, height: 768, locale: locale);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

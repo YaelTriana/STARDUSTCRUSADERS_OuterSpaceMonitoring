@@ -55,7 +55,7 @@ def test_tendencia_usa_la_serie_de_la_base(con_base):
 def test_catalogo_de_metricas_marca_con_datos_las_que_trae_la_base(con_base):
     por_id = {m["id"]: m for m in client.get("/metrics").json()["metrics"]}
     assert por_id["heart_rate"]["has_data"] is True
-    assert por_id["mood"]["has_data"] is False
+    assert por_id["spo2"]["has_data"] is False  # ni la base ni data.py la traen
 
 
 def test_evaluacion_usa_la_base_personal_de_la_base_de_datos(con_base):
@@ -77,4 +77,5 @@ def test_si_la_base_esta_caida_la_api_responde_con_datos_de_ejemplo(base_caida):
     assert health["data_source"] == "ejemplo"
     assert health["db_error"] == "ConnectionError"
     assert client.get("/trend/systolic").json()["series"] == data.SYSTOLIC_14
-    assert client.get("/trend/heart_rate").json()["status"] == "sin_dato"
+    # FC ya tiene datos de ejemplo: con la base caída se sirven esos, no "sin dato".
+    assert client.get("/trend/heart_rate").json()["series"] == data.METRICS["heart_rate"]["series"]

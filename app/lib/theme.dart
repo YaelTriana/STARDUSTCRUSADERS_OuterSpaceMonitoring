@@ -6,9 +6,9 @@ import 'core/touch.dart';
 /// Paleta de TIRELUS (ver propuesta visual). Tema oscuro de cabina.
 class VColors {
   static const space = Color(0xFF060B18);
-  static const surface = Color(0xFF0E1830);
-  static const surface2 = Color(0xFF15223F);
-  static const border = Color(0xFF24345A);
+  static const surface = Color(0xFF0B1326);
+  static const surface2 = Color(0xFF162647);
+  static const border = Color(0xFF1C2B4B);
   /// Bordes de controles (campos, botones con contorno, pasos pendientes):
   /// ≥ 3:1 sobre space, surface y surface2 (WCAG 1.4.11).
   static const borderStrong = Color(0xFF5B6F9E);
@@ -16,7 +16,7 @@ class VColors {
   static const signalSoft = Color(0xFF7FB0FF);
   static const text = Color(0xFFE8EEF9);
   static const muted = Color(0xFF9AA8C4);
-  static const nominal = Color(0xFF3DD68C);
+  static const nominal = Color(0xFF16E093);
   static const atencion = Color(0xFFF7B23B);
   static const critico = Color(0xFFFF6B5E);
   static const onStatus = Color(0xFF06121F);

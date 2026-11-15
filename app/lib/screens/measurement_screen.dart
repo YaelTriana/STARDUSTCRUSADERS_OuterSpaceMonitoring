@@ -339,6 +339,9 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
             onTap: () => setState(() => _active = f),
           ),
       ]),
+      // El medidor de línea base va justo debajo del número que se teclea.
+      const SizedBox(height: VSpace.lg),
+      _RangeMeter(value: _sysValue, low: _baseLow, high: _baseHigh, status: _status ?? VStatus.sinDato),
       const SizedBox(height: VSpace.lg),
       Text(l.measSource, style: overline(color: VColors.muted)),
       const SizedBox(height: VSpace.sm),
@@ -354,8 +357,6 @@ class _BloodPressureState extends State<_BloodPressureMeasurement> {
             onSelected: (_) => setState(() => _source = id),
           ),
       ]),
-      const SizedBox(height: VSpace.lg),
-      _RangeMeter(value: _sysValue, low: _baseLow, high: _baseHigh, status: _status ?? VStatus.sinDato),
       if (_evalFailed) ...[
         const SizedBox(height: VSpace.sm),
         Text(l.measEvalFailed, style: const TextStyle(fontSize: VType.label, color: VColors.critico, height: 1.4)),
@@ -441,7 +442,8 @@ class _FieldTile extends StatelessWidget {
         label: '$label, ${value.isEmpty ? '—' : value} $unit',
         excludeSemantics: true,
         child: Material(
-          color: selected ? VColors.surface : VColors.surface2,
+          // El campo que se está tecleando (selected) resalta: surface2 + borde signal.
+          color: selected ? VColors.surface2 : VColors.surface,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
@@ -458,7 +460,10 @@ class _FieldTile extends StatelessWidget {
                 Text(label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
                 const SizedBox(height: 2),
                 Text.rich(TextSpan(children: [
-                  TextSpan(text: value.isEmpty ? '—' : value, style: mono(size: 30)),
+                  TextSpan(
+                    text: value.isEmpty ? '—' : value,
+                    style: mono(size: selected ? 36 : 30, weight: selected ? FontWeight.w500 : null),
+                  ),
                   TextSpan(text: ' $unit', style: mono(size: 13, color: VColors.muted)),
                 ])),
               ]),
