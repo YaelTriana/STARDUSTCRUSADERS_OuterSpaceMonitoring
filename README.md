@@ -117,7 +117,7 @@ Hecha con un tripulante de prueba que se borró al terminar (la base quedó con 
 | 4 | Resumen exportable para la conferencia médica | ✅ Se exporta en Markdown (portapapeles) |
 | 5 | Selector ISS / Luna / Marte y modo autónomo | ✅ Listo |
 | — | Extras: consola de base y EVA | ✅ Pantallas hechas |
-| — | Datos compartidos en PostgreSQL | 🟡 Servidor del equipo funcionando y API leyendo de él (probado); falta cargar FC, sueño, ánimo y SANS |
+| — | Datos compartidos en PostgreSQL | 🟡 Servidor del equipo funcionando y API leyendo de él (probado). El poblado completo ya está en `db/004_populate.sql` (30 tripulantes, 21 indicadores); falta confirmar que se cargó en el servidor |
 | — | Entrega (video, presentación, página con fuentes) | 🔴 Sin empezar |
 
 ## Matriz de pendientes
@@ -136,27 +136,41 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 | **P2** | Rotar la contraseña del servidor después de la demo | La contraseña del usuario `tirelus_equipo` se compartió por chat. Cambiarla al terminar y avisar al equipo por un canal privado. | Administrador del servidor | 5 min |
 | **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | — | 1 h |
 
-##### Data mining · Prina (datos)
+##### Datos · Prina y Angel
+
+Fuente única de los datos sintéticos: el repo [`SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring`](https://github.com/MerelyMeredith/SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring) (genera `dataset.csv`, 68 columnas; Angel elabora el dataset). El CSV no se versiona aquí: va en `db/datosdb/`.
 
 | Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
 |---|---|---|---|---|
-| **P1** | Completar en la base los datos de FC, sueño, ánimo y SANS | `db/003_demo.sql` (ya cargado en el servidor) solo trae la sistólica D34–D47 y su línea base. Faltan los `>>> DATOS:` de `data.py`, cada uno marcado "Datos de ejemplo". Tras cargarlos, `data_source` sigue en `db` y las pantallas dejan de decir "Sin dato". El usuario del equipo puede leer y escribir en `public`, pero no crear ni alterar tablas. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md). | Datos de la persona de ciencia | 1 h |
+| **P1** | Cargar el poblado completo en el servidor y verificarlo | 🟡 A medias. El SQL ya existe en `main`: `db/004_populate.sql` (30 903 mediciones, 30 tripulantes, 21 indicadores; `mood` derivado del estrés, SANS como cambio de RNFL), generado por `db/generate_populate_sql.py`. **Falta:** confirmar que se cargó en el servidor del equipo (`schema.sql` → `002_ojos.sql` → `004_populate.sql`), que `/health` diga `data_source: db`, que las pantallas dejen de decir "Sin dato" y que se vea "Datos de ejemplo". Ver [`db/AUDITORIA.md`](db/AUDITORIA.md). | Dataset de Angel | 30 min |
+| **P1** | Citar el repo de datos y anotar cómo se generó el dataset | TIRELUS no cita el repo de datos en ningún archivo y `data.py` aún nombra `Claude outputs/TIRELUS_matriz_simulacion.xlsx` como origen. El repo documenta 30 × 60 = 1800 filas y el poblado usa 3000 (30 × 100): anotar commit y parámetros. | Dataset de Angel | 15 min |
+| **P2** | Umbrales de respaldo que faltan | `body_mass`, `hrv`, `macular_thickness`, `rnfl_thickness`, `cup_to_disc_ratio` y `near_vision_logmar` no tienen umbral. No se inventan: son supuestos de diseño que decide la persona de ciencia (`db/AUDITORIA.md` §5.1). | Criterio de la persona de ciencia | 30 min |
 
 #### Decisiones
 
 | Prioridad | Qué decidir | Detalle / contexto | Depende de | Esfuerzo |
 |---|---|---|---|---|
 | **P1** | Decidir sistema de usuarios | Hoy no hay usuarios: la API lee un tripulante fijo (`TIRELUS_ASTRONAUT_ID` o el primero de la base). Opciones: selección de perfil con rol (astronauta, CMO, flight surgeon) para la demo, o login real. Recomendado para la demo: selección de perfil. La base tampoco tiene roles ni RLS. | Decisión del equipo | 1–2 h |
-| **P1** | Decidir `heart_rate`: `above` o `both` | En la base `heart_rate` alerta en ambos sentidos (`both`); en la app solo hacia arriba (`evaluate_trend` acepta `above` o `below`). Hay que elegir una fuente de verdad para los umbrales (base o `data.py`). Ver `db/AUDITORIA.md`. | Criterio de la persona de ciencia | 30 min |
-| **P1** | Decidir qué hacer con `Claude outputs/` | Carpeta sin versionar con `TIRELUS_matriz_simulacion.xlsx`, que `data.py` cita como origen de las series. O se sube al repo o se cambia la referencia. | — | 5 min |
+| **P1** | Decidir `heart_rate`: `above` o `both` | En la base `heart_rate` alerta en ambos sentidos (`both`); en la app solo hacia arriba (`evaluate_trend` acepta `above` o `below`). Lo mismo pasa con `respiratory_rate`, `temperature`, `intraocular_pressure`, `rnfl_thickness` y `cup_to_disc_ratio`. Hoy no falla porque `db.py` no lee `alert_when` de la base. Hay que elegir una fuente de verdad para los umbrales (base o `data.py`). Ver `db/AUDITORIA.md` §5.2. | Criterio de la persona de ciencia | 30 min |
+| **P1** | Decidir qué hacer con `Claude outputs/` | Carpeta sin versionar con `TIRELUS_matriz_simulacion.xlsx`, que `data.py` cita como origen de las series. Como la fuente de datos ya es el repo de datos sintéticos, lo recomendado es cambiar la referencia y no subir la carpeta. | — | 5 min |
 
 #### Backend · Angel
 
 | Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
 |---|---|---|---|---|
-| **P1** | Generalizar medición y tendencia a FC, sueño y ánimo | Las pantallas ya tienen selector de métrica y muestran "Sin dato" mientras falten datos. **Falta solo** en `METRICS` de `data.py`: línea base, límite de respaldo (supuesto de diseño) y serie de 14 días por métrica. Aparecen solas en la app. | Datos de la persona de ciencia | 20–30 min |
-| **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
+| **P1** | Generalizar medición y tendencia a FC, sueño y ánimo | Las pantallas ya tienen selector de métrica y muestran "Sin dato" mientras falten datos. Con la base cargada los datos llegan por `db.py`. **Falta solo** el respaldo sin base, en `METRICS` de `data.py`: línea base, límite de respaldo (supuesto de diseño) y serie de 14 días por métrica, tomados del dataset. | Dataset de Angel | 20–30 min |
+| **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` (del dataset, como cambio de RNFL) y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
 | **P2** | Android (recortado de la demo; se intenta al final) | `-p Android` en el comando de empaquetado y `flutter build apk`. Si uvicorn falla, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). Decidir también cómo llega el Python embebido al servidor y si hay caché local. Va después de resolver el empaquetado, que está descartado para la demo. | Empaquetado | 2–3 h |
+
+#### Front · Jenny
+
+Sin pendientes: `frontend/jen-trabajo` se fusionó en `main` el 15 nov (ver Hecho).
+
+#### Ramas
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P2** | Cerrar `AngelPrueba` y borrar ramas ya fusionadas | `AngelPrueba` (`fc979d5`) es otra capa de PostgreSQL, anterior a la que entró a `main`; choca en `db.py`, `main.py` y `db/003_demo.sql`. Ya fusionadas: `feat/p0-export`, `feat/p1-*`, `feat/p2-pulido`, `feat/docker`, `feat/db-acceso`, `feat/db-postgres`, `docs/planning`, `feat/flutter-mockup`, `chore/claude-setup`. | Confirmación de Angel | 10 min |
 
 #### Entrega
 
@@ -168,6 +182,7 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 
 | Prioridad | Qué | Resultado |
 |---|---|---|
+| ~~P1~~ ✅ | ~~Fusionar `frontend/jen-trabajo` en `main`~~ | Fusionado el 15 nov (`707c4c6`), sin conflictos: ES/EN con `flutter_localizations`, navegación adaptable, teclado numérico propio, tendencia con puntos tocables, aviso al CMO con deshacer, modo Autónomo con protocolo guiado, SANS localizado, texto mínimo de 13 px y áreas táctiles de 44 px, avisos cuando el motor no responde. `flutter test`: 88 pruebas pasan. |
 | ~~P1~~ ✅ | ~~Validar rangos en la API~~ | `POST /evaluate/{metric}` y `/evaluate/sans` responden 422 fuera de `valid_range` (o con NaN/inf), y el catálogo descarta lecturas de la base fuera de rango. Pruebas en `tests_py/test_ranges.py` y `test/api_range_test.dart` (la app muestra "Sin dato" en vez de lanzar). |
 | ~~P0~~ ✅ | ~~Levantar el servidor externo con PostgreSQL~~ | PostgreSQL 18.7 en la red local con un usuario de equipo sin permisos de DDL. Host y contraseña se comparten por un canal privado (no en el repo). Solo datos sintéticos. |
 | ~~P0~~ ✅ | ~~Probar la capa de PostgreSQL contra un servidor real~~ | El 14 nov las consultas de `db.py` se ejecutaron contra el servidor y `/health` dijo `data_source: db`. Prueba de estabilidad, inyección y concurrencia en [Base de datos](#prueba-de-estabilidad-14-nov-servidor-del-equipo). |
