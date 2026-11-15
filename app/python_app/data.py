@@ -46,13 +46,14 @@ METRICS: dict[str, dict] = {
     "heart_rate": {
         "label": "FC en reposo",
         "unit": "lpm",
-        # >>> DATOS: línea base prevuelo de FC en reposo, p. ej. Baseline(55, 66).
-        "base": None,
-        # >>> DATOS: límite terrestre de respaldo (supuesto de diseño), p. ej. 100.0.
-        "abs_high": None,
+        # Línea base prevuelo de FC en reposo. Coincide con la nota "base 60" del Panel.
+        "base": Baseline(55, 66),
+        # Límite terrestre de respaldo (supuesto de diseño).
+        "abs_high": 100.0,
         "abs_low": None,
-        # >>> DATOS: 14 lecturas diarias D34–D47 (matriz: escenarios nominal · atención).
-        "series": [],
+        # D34–D47: estable, ligera subida al final, nunca cruza la base (66) → nominal.
+        # Última lectura (D47) = 64, igual al Panel (/dashboard, sistema "cardio").
+        "series": [58, 59, 57, 60, 58, 61, 59, 62, 60, 63, 61, 64, 62, 64],
         "alert_when": "above",
         "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
         "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
@@ -60,13 +61,14 @@ METRICS: dict[str, dict] = {
     "sleep_hours": {
         "label": "Horas de sueño",
         "unit": "h",
-        # >>> DATOS: línea base prevuelo de sueño, p. ej. Baseline(6.5, 8.5).
-        "base": None,
+        # Línea base prevuelo de sueño (periodo de 8.5 h de referencia, ver rule/source).
+        "base": Baseline(6.5, 8.5),
         "abs_high": None,
-        # >>> DATOS: mínimo de respaldo (supuesto de diseño), p. ej. 5.0.
-        "abs_low": None,
-        # >>> DATOS: 14 noches D34–D47 (matriz: escenarios nominal · déficit).
-        "series": [],
+        # Mínimo de respaldo (supuesto de diseño).
+        "abs_low": 5.0,
+        # D34–D47: déficit sostenido los últimos 5 días (< 6.5 h) → atención.
+        # Última lectura (D47) = 6.17 h, igual al Panel ("6:10", sistema "mente").
+        "series": [7.8, 7.5, 8.0, 7.6, 7.2, 7.0, 6.9, 6.8, 6.6, 6.3, 6.1, 6.0, 6.2, 6.17],
         # Aquí preocupa la baja: evaluate_trend recibe direction="below".
         "alert_when": "below",
         "rule": "Supuesto de diseño: periodo de sueño de 8.5 h; déficit sostenido frente a la base.",
@@ -75,13 +77,18 @@ METRICS: dict[str, dict] = {
     "mood": {
         "label": "Ánimo (1–5)",
         "unit": "pts",
-        # >>> DATOS: rango habitual del tripulante, p. ej. Baseline(3, 5).
-        "base": None,
+        # Rango habitual del tripulante: autorreporte normal es 4–5. Baseline(4, 5) y no
+        # (3, 5): la última lectura de hoy (D47) debe quedar en 3, igual al Panel, y con
+        # low=3 un valor de 3 nunca cuenta como "por debajo" (evaluate_trend usa v < low),
+        # así que la caída sostenida nunca dispararía "atención" hoy. Con low=4, 3 sí
+        # cuenta como desviación y la racha de días por debajo si incluye hoy.
+        "base": Baseline(4, 5),
         "abs_high": None,
-        # >>> DATOS: mínimo de respaldo (supuesto de diseño), p. ej. 1.0.
-        "abs_low": None,
-        # >>> DATOS: 14 autorreportes D34–D47 (matriz: escenarios estable · baja).
-        "series": [],
+        # Mínimo de respaldo (supuesto de diseño).
+        "abs_low": 1.0,
+        # D34–D47: estable en 4–5, caída sostenida a 3 los últimos 6 días → atención.
+        # Última lectura (D47) = 3, igual al Panel ("3", sistema "mente").
+        "series": [5, 4, 5, 4, 5, 4, 4, 4, 3, 3, 3, 3, 3, 3],
         # Igual que sueño: preocupa la baja.
         "alert_when": "below",
         "rule": "Supuesto de diseño: autorreporte por debajo del rango habitual.",
