@@ -122,7 +122,7 @@ final _dests = <_Dest>[
   _Dest((l) => l.navEyes, Icons.remove_red_eye_outlined),
   _Dest((l) => l.navAutonomous, Icons.satellite_alt_outlined),
   _Dest((l) => l.navBase, Icons.home_work_outlined),
-  _Dest((l) => l.navVisor, Icons.visibility_outlined),
+  _Dest((l) => l.navVisor, Icons.vrpano_outlined),
   _Dest((l) => l.navHandheld, Icons.smartphone),
 ];
 
@@ -172,7 +172,8 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final width = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final width = size.width;
     final wide = width >= 760;
     final topBar = _TopBar(compact: width < 900);
     final body = KeyedSubtree(
@@ -183,19 +184,29 @@ class _ShellState extends State<Shell> {
 
     // Tablet horizontal / escritorio: riel lateral.
     if (wide) {
+      // >=1000: riel extendido con texto siempre visible junto al ícono.
+      // 760-999: etiquetas completas si hay alto (>=720), si no solo la seleccionada.
+      final extended = width >= 1000;
+      final labelType = extended
+          ? NavigationRailLabelType.none
+          : (size.height >= 720 ? NavigationRailLabelType.all : NavigationRailLabelType.selected);
       return Scaffold(
         appBar: topBar,
         // stretch: las pantallas cortas empiezan arriba en vez de quedar centradas.
         body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          // Riel compacto: con los 8 destinos y ventanas bajas (800×600) las
-          // etiquetas permanentes no caben; solo se muestra la del seleccionado.
           NavigationRail(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            labelType: NavigationRailLabelType.selected,
+            extended: extended,
+            minExtendedWidth: 208,
+            labelType: labelType,
             useIndicator: true,
             destinations: [
-              for (final d in _dests) NavigationRailDestination(icon: Icon(d.icon), label: Text(d.label(l))),
+              for (final d in _dests)
+                NavigationRailDestination(
+                  icon: Icon(d.icon),
+                  label: Text(d.label(l), style: const TextStyle(fontSize: 15), overflow: TextOverflow.ellipsis),
+                ),
             ],
           ),
           const VerticalDivider(width: 1),
@@ -204,7 +215,7 @@ class _ShellState extends State<Shell> {
       );
     }
 
-    // Vertical y móvil: barra inferior con 4 destinos + "Más".
+    // Vertical y móvil: barra inferior con 4 destinos + "Más", etiquetas siempre visibles.
     const main = 4;
     return Scaffold(
       appBar: topBar,
@@ -212,6 +223,7 @@ class _ShellState extends State<Shell> {
       bottomNavigationBar: NavigationBar(
         backgroundColor: VColors.space,
         indicatorColor: VColors.surface2,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         selectedIndex: _index < main ? _index : main,
         onDestinationSelected: (i) => i == main ? _showMore() : setState(() => _index = i),
         destinations: [

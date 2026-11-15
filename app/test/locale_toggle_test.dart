@@ -42,4 +42,23 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  for (final locale in [const Locale('es'), const Locale('en')]) {
+    testWidgets('riel extendido a 1366x768 en ${locale.languageCode}, sin desbordes', (tester) async {
+      tester.view.physicalSize = const Size(1366, 768);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final api = _ReadyFakeApi(trends: {'systolic': trendJson()});
+      final state = AppState(api);
+      if (locale.languageCode == 'en') state.setLocale(locale);
+      await tester.pumpWidget(TirelusApp(state: state));
+      await tester.pumpAndSettle();
+
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.extended, isTrue);
+      expect(rail.labelType, NavigationRailLabelType.none);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
