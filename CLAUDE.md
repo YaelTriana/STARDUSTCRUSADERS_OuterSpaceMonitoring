@@ -35,7 +35,7 @@
 
 ## Diseño
 - Inspirado en el Horizon Design System de NASA: Inter (títulos), Public Sans (texto), DM Mono (cifras y etiquetas).
-- Tema oscuro de cabina. Colores: espacio #060B18, superficie #0E1830, señal #4D8DFF, texto #E8EEF9, nominal #3DD68C, atención #F7B23B, crítico #FF6B5E.
+- Tema oscuro de cabina. Colores: espacio #060B18, superficie #0B1326, superficie 2 #162647, borde #1C2B4B, señal #4D8DFF, texto #E8EEF9, nominal #16E093, atención #F7B23B, crítico #FF6B5E.
 - Cada estado combina color + forma + palabra. Contraste mínimo 4.5:1 y áreas táctiles de al menos 44 px.
 - Prohibido usar la insignia ("meatball"), el logotipo ("worm") o cualquier marca oficial de NASA. Solo marca propia y citas a las fuentes.
 

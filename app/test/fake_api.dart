@@ -33,15 +33,60 @@ Map<String, dynamic> trendJson({
       'avg7': 126,
     };
 
+/// Respuesta de /dashboard como la arma Python (ver python_app/data.py).
+Map<String, dynamic> dashboardJson({
+  int missionDay = 47,
+  List<Map<String, dynamic>>? systems,
+  List<Map<String, dynamic>> tasks = const [],
+  int exerciseDone = 0,
+  int exerciseGoal = 120,
+  int streakDays = 0,
+}) =>
+    {
+      'mission_day': missionDay,
+      'systems': systems ??
+          [
+            {
+              'id': 'cardio',
+              'name': 'Corazón y circulación',
+              'status': 'atencion',
+              'indicators': [
+                {'label': 'Presión arterial', 'value': '132/84', 'unit': 'mmHg', 'note': '▲ base 118/76', 'status': 'atencion'},
+              ],
+              'why': 'Por qué cambia de prueba.',
+              'action': 'Qué hacer de prueba.',
+            },
+            {
+              'id': 'hueso',
+              'name': 'Huesos y músculo',
+              'status': 'nominal',
+              'indicators': [
+                {'label': 'Ejercicio hoy', 'value': '1:52', 'unit': 'h', 'note': 'meta ~2 h', 'status': 'nominal'},
+              ],
+              'why': 'Por qué cambia de prueba.',
+              'action': 'Qué hacer de prueba.',
+            },
+          ],
+      'tasks': tasks,
+      'exercise': {'done_min': exerciseDone, 'goal_min': exerciseGoal},
+      'streak_days': streakDays,
+      'sample_data': true,
+    };
+
 /// API falsa para pruebas de widgets: no abre conexiones.
 class FakeApi extends TirelusApi {
-  FakeApi({this.trends = const {}, this.sansStatus = 'nominal', this.evalStatus = 'nominal'})
-      : super(baseUrl: 'http://fake.invalid');
+  FakeApi({this.trends = const {}, this.sansStatus = 'nominal', this.evalStatus = 'nominal', Map<String, dynamic>? dashboard})
+      : dashboardData = dashboard ?? dashboardJson(),
+        super(baseUrl: 'http://fake.invalid');
 
   final Map<String, Map<String, dynamic>> trends;
   final String sansStatus;
   final String evalStatus;
+  final Map<String, dynamic> dashboardData;
   final evaluated = <String, double>{};
+
+  @override
+  Future<Dashboard> dashboard() async => Dashboard.fromJson(dashboardData);
 
   @override
   Future<List<Map<String, dynamic>>> metrics() async => [

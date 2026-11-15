@@ -204,65 +204,78 @@ class _SystemDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final l = context.l10n;
-    return SectionCard(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          Text(system.name, style: t.headlineMedium),
-          StatusChip(system.status),
-        ]),
-        const SizedBox(height: 18),
-        if (system.status == VStatus.sinDato && system.indicators.isEmpty)
-          OutlinedButton.icon(onPressed: onMeasure, icon: const Icon(Icons.straighten), label: Text(l.noDataMeasure))
-        else
-          LayoutBuilder(builder: (context, c) {
-            final cols = c.maxWidth > 600 ? 3 : 1;
-            return Wrap(spacing: 14, runSpacing: 14, children: [
-              for (final i in system.indicators)
-                SizedBox(
-                  width: (c.maxWidth - 14 * (cols - 1)) / cols,
-                  child: MetricTile(
-                    label: i.label,
-                    value: i.value,
-                    unit: i.unit,
-                    note: i.note,
-                    noteColor: i.status == VStatus.nominal ? VColors.muted : statusColor(i.status),
-                  ),
-                ),
-            ]);
-          }),
-        const SizedBox(height: 20),
-        Wrap(spacing: 24, runSpacing: 16, children: [
-          _Explain(title: l.panelWhyTitle, body: system.why),
-          _Explain(title: l.panelActionTitle, body: system.action),
-        ]),
-        const SizedBox(height: VSpace.lg),
-        ActionChip(
-          avatar: const Icon(Icons.info_outline, size: 18, color: VColors.signalSoft),
-          label: Text(l.sourceChip),
-          side: const BorderSide(color: VColors.borderStrong),
-          backgroundColor: VColors.surface2,
-          onPressed: () => _showSource(context),
-        ),
+    // Atención/crítico: fondo surface2 y barra de 4 dp del color del estado.
+    // Nominal (y sin dato): fondo surface y borde de 1 px (SectionCard).
+    final alert = system.status == VStatus.atencion || system.status == VStatus.critico;
+    const pad = EdgeInsets.fromLTRB(28, 24, 28, 24);
+    final content = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Text(system.name, style: t.headlineMedium),
+        StatusChip(system.status),
       ]),
-    );
+      const SizedBox(height: 18),
+      if (system.status == VStatus.sinDato && system.indicators.isEmpty)
+        OutlinedButton.icon(onPressed: onMeasure, icon: const Icon(Icons.straighten), label: Text(l.noDataMeasure))
+      else
+        LayoutBuilder(builder: (context, c) {
+          final cols = c.maxWidth > 600 ? 3 : 1;
+          return Wrap(spacing: 14, runSpacing: 14, children: [
+            for (final i in system.indicators)
+              SizedBox(
+                width: (c.maxWidth - 14 * (cols - 1)) / cols,
+                child: MetricTile(
+                  label: i.label,
+                  value: i.value,
+                  unit: i.unit,
+                  note: i.note,
+                  noteColor: i.status == VStatus.nominal ? VColors.muted : statusColor(i.status),
+                ),
+              ),
+          ]);
+        }),
+      const SizedBox(height: 20),
+      Wrap(spacing: 24, runSpacing: 16, children: [
+        _Explain(title: l.panelWhyTitle, body: system.why),
+        // "Qué hacer ahora" siempre resalta con la barra del color del estado,
+        // nominal incluido: es la acción a tomar, no solo información.
+        _Explain(title: l.panelActionTitle, body: system.action, barColor: statusColor(system.status)),
+      ]),
+      const SizedBox(height: VSpace.lg),
+      ActionChip(
+        avatar: const Icon(Icons.info_outline, size: 18, color: VColors.signalSoft),
+        label: Text(l.sourceChip),
+        side: const BorderSide(color: VColors.borderStrong),
+        backgroundColor: VColors.surface2,
+        onPressed: () => _showSource(context),
+      ),
+    ]);
+    return alert
+        ? StatusSideCard(color: statusColor(system.status), padding: pad, child: content)
+        : SectionCard(padding: pad, child: content);
   }
 }
 
 class _Explain extends StatelessWidget {
-  const _Explain({required this.title, required this.body});
+  const _Explain({required this.title, required this.body, this.barColor});
   final String title;
   final String body;
 
+  /// Si no es null, el texto va dentro de una StatusSideCard con esta barra.
+  final Color? barColor;
+
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: overline()),
-          const SizedBox(height: 8),
-          Text(body, style: const TextStyle(fontSize: VType.body, height: 1.55)),
-        ]),
-      );
+  Widget build(BuildContext context) {
+    final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title, style: overline()),
+      const SizedBox(height: 8),
+      Text(body, style: const TextStyle(fontSize: VType.body, height: 1.55)),
+    ]);
+    final color = barColor;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 380),
+      child: color == null ? text : StatusSideCard(color: color, padding: const EdgeInsets.all(14), child: text),
+    );
+  }
 }
 
 class _TaskRow extends StatelessWidget {

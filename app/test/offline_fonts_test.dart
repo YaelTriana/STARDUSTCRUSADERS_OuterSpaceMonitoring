@@ -5,10 +5,10 @@ import 'package:google_fonts/src/google_fonts_base.dart';
 import 'package:google_fonts/src/google_fonts_family_with_variant.dart';
 import 'package:google_fonts/src/google_fonts_variant.dart';
 
-/// Los únicos pesos que theme.dart pide de verdad (ver lib/theme.dart):
-/// Inter solo en w700/w800 (headlines y titleLarge), Public Sans en
-/// w400/w500/w600 (publicSansTextTheme + overrides), DM Mono solo en w400
-/// (mono()/overline(), ningún llamado pasa weight).
+/// Los únicos pesos que la app pide de verdad: Inter solo en w700/w800
+/// (headlines y titleLarge en theme.dart), Public Sans en w400/w500/w600
+/// (publicSansTextTheme + overrides), DM Mono en w400 (mono()/overline(),
+/// la mayoría de los llamados) y w500 (la cifra de MetricTile, common.dart).
 const _neededVariants = [
   GoogleFontsFamilyWithVariant(
     family: 'Inter',
@@ -33,6 +33,10 @@ const _neededVariants = [
   GoogleFontsFamilyWithVariant(
     family: 'DMMono',
     googleFontsVariant: GoogleFontsVariant(fontWeight: FontWeight.w400, fontStyle: FontStyle.normal),
+  ),
+  GoogleFontsFamilyWithVariant(
+    family: 'DMMono',
+    googleFontsVariant: GoogleFontsVariant(fontWeight: FontWeight.w500, fontStyle: FontStyle.normal),
   ),
 ];
 
