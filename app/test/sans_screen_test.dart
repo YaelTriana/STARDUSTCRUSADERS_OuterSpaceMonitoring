@@ -27,6 +27,15 @@ void main() {
     expect(find.text('Atención'), findsWidgets);
   });
 
+  testWidgets('escribe el valor con su estado, no solo con color', (tester) async {
+    await _pump(tester, FakeApi(sansStatus: 'critico'));
+    await tester.enterText(find.byKey(const Key('sans-input')), '58');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Tu valor: +58 µm · Crítico'), findsOneWidget);
+    expect(find.text('Crítico: avisa hoy a tu CMO'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_drop_down), findsOneWidget);
+  });
+
   testWidgets('muestra los umbrales publicados y su fuente', (tester) async {
     await _pump(tester, FakeApi());
     expect(find.textContaining('+20 µm'), findsWidgets);

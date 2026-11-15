@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tirelus/app_state.dart';
 import 'package:tirelus/screens/dashboard_screen.dart';
 import 'package:tirelus/theme.dart';
+import 'package:tirelus/widgets/common.dart';
 
 import 'fake_api.dart';
 
@@ -35,7 +36,7 @@ Future<void> _tick(WidgetTester tester, Duration every) async {
 void main() {
   testWidgets('dibuja el estado y las cifras que calculó Python', (tester) async {
     await _pump(tester, FakeApi(dashboardBody: dashboardJson()));
-    expect(find.text('Atención'), findsWidgets); // chip del sistema, de la API
+    expect(find.descendant(of: find.byType(StatusChip), matching: find.text('Atención')), findsOneWidget);
     expect(find.text('132 mmHg'), findsOneWidget);
     expect(find.textContaining('sobre tu base'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -43,16 +44,22 @@ void main() {
 
   testWidgets('un indicador sin datos dice "Sin dato"', (tester) async {
     await _pump(tester, FakeApi(dashboardBody: dashboardJson()));
-    expect(find.text('Sin dato'), findsNWidgets(3));
+    expect(
+      find.descendant(of: find.byType(MetricTile), matching: find.text('Sin dato')),
+      findsNWidgets(3), // los tres azulejos sin datos; la leyenda no cuenta
+    );
     expect(find.text('— lpm'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('sigue al dato: si Python dice nominal, el panel no alerta', (tester) async {
     await _pump(tester, FakeApi(dashboardBody: dashboardJson(status: 'nominal', value: '118', note: 'en tu base (110–126)')));
-    expect(find.text('Nominal'), findsWidgets);
+    expect(find.descendant(of: find.byType(StatusChip), matching: find.text('Nominal')), findsOneWidget);
     expect(find.text('118 mmHg'), findsOneWidget);
-    expect(find.text('Atención'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(StatusChip), matching: find.text('Atención')),
+      findsNothing, // el chip del sistema no alerta (la leyenda sí nombra el estado)
+    );
     expect(tester.takeException(), isNull);
   });
 

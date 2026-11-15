@@ -216,7 +216,7 @@ class _HandheldScreenState extends State<HandheldScreen> with _EvaData {
                 const SizedBox(height: 12),
                 const Text(
                   'Botones grandes para guantes presurizados. La misma información que el visor, por si el traje no tiene pantalla en el casco.',
-                  style: TextStyle(fontSize: 12, color: VColors.muted, height: 1.5),
+                  style: TextStyle(fontSize: 13, color: VColors.muted, height: 1.5),
                 ),
               ]),
             ),

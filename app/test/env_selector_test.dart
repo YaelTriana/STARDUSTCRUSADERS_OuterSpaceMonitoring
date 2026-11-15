@@ -5,6 +5,8 @@ import 'package:tirelus/app_state.dart';
 import 'package:tirelus/data/models.dart';
 import 'package:tirelus/widgets/env_selector.dart';
 
+import 'test_helpers.dart';
+
 /// API falsa: el selector no llama al servidor, pero AppState la necesita.
 class FakeApi extends TirelusApi {
   FakeApi() : super(baseUrl: 'http://fake.invalid');
@@ -17,7 +19,7 @@ Future<AppState> _pump(WidgetTester tester, {required double width}) async {
   final state = AppState(FakeApi());
   await tester.pumpWidget(AppScope(
     state: state,
-    child: MaterialApp(
+    child: localizedApp(
       home: Builder(builder: (context) {
         final s = AppScope.of(context);
         return Scaffold(
