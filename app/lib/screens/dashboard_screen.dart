@@ -217,22 +217,7 @@ class _SystemDetail extends StatelessWidget {
       if (system.status == VStatus.sinDato && system.indicators.isEmpty)
         OutlinedButton.icon(onPressed: onMeasure, icon: const Icon(Icons.straighten), label: Text(l.noDataMeasure))
       else
-        LayoutBuilder(builder: (context, c) {
-          final cols = c.maxWidth > 600 ? 3 : 1;
-          return Wrap(spacing: 14, runSpacing: 14, children: [
-            for (final i in system.indicators)
-              SizedBox(
-                width: (c.maxWidth - 14 * (cols - 1)) / cols,
-                child: MetricTile(
-                  label: i.label,
-                  value: i.value,
-                  unit: i.unit,
-                  note: i.note,
-                  noteColor: i.status == VStatus.nominal ? VColors.muted : statusColor(i.status),
-                ),
-              ),
-          ]);
-        }),
+        _MetricRow(indicators: system.indicators),
       const SizedBox(height: 20),
       Wrap(spacing: 24, runSpacing: 16, children: [
         _Explain(title: l.panelWhyTitle, body: system.why),
@@ -253,6 +238,66 @@ class _SystemDetail extends StatelessWidget {
         ? StatusSideCard(color: statusColor(system.status), padding: pad, child: content)
         : SectionCard(padding: pad, child: content);
   }
+}
+
+/// Las mediciones del sistema en una sola tarjeta, divididas en celdas por
+/// líneas finas (no tarjetas sueltas): cifra grande + unidad + base con la
+/// forma y la palabra del estado. En angosto (<700) pasa a columna.
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.indicators});
+  final List<Indicator> indicators;
+
+  Widget _cell(Indicator i) {
+    final valueColor = i.status == VStatus.nominal ? VColors.text : statusColor(i.status);
+    final noteColor = i.status == VStatus.nominal ? VColors.muted : statusColor(i.status);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(i.label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
+        const SizedBox(height: 8),
+        Text.rich(TextSpan(children: [
+          TextSpan(text: i.value, style: mono(size: 44, color: valueColor, weight: FontWeight.w500)),
+          if (i.unit.isNotEmpty) TextSpan(text: ' ${i.unit}', style: mono(size: 16, color: VColors.muted)),
+        ])),
+        const SizedBox(height: 10),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          StatusShape(i.status, size: 14, color: noteColor),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(i.note, style: TextStyle(fontSize: VType.label, color: noteColor), overflow: TextOverflow.ellipsis),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
+        final narrow = c.maxWidth < 700;
+        final cells = [for (final i in indicators) _cell(i)];
+        return Container(
+          decoration: BoxDecoration(
+            color: VColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VColors.border),
+          ),
+          child: narrow
+              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  for (var j = 0; j < cells.length; j++) ...[
+                    if (j > 0) const Divider(height: 1, color: VColors.border),
+                    cells[j],
+                  ],
+                ])
+              : IntrinsicHeight(
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    for (var j = 0; j < cells.length; j++) ...[
+                      if (j > 0) const VerticalDivider(width: 1, color: VColors.border),
+                      Expanded(child: cells[j]),
+                    ],
+                  ]),
+                ),
+        );
+      });
 }
 
 class _Explain extends StatelessWidget {
