@@ -15,7 +15,10 @@ from datetime import date
 from pathlib import Path
 
 # Permite importar rules/data tanto embebido como desde la terminal.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+except NameError:  # embebido: serious_python ejecuta main.py sin __file__; la carpeta de la app ya va en sys.path
+    pass
 
 from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
@@ -54,7 +57,7 @@ def _summary_path() -> Path:
         try:
             folder = str(Path.home() / ".tirelus")
         except RuntimeError:  # embebido (Android) puede no tener HOME
-            folder = str(Path(__file__).resolve().parent / "data")
+            folder = str(Path(os.getcwd()) / "data")
     return Path(folder) / "summary.json"
 
 
