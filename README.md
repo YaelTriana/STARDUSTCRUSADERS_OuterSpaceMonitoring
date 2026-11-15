@@ -126,19 +126,43 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 
 ### Falta
 
+#### Base de datos
+
+##### Servidor · Francisco (db)
+
 | Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
 |---|---|---|---|---|
-| **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación, texto del formulario y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). El hackathon va del 14 al 15 de nov. Ya hay un prompt listo para producirlo en otra cuenta de Claude; falta revisar los requisitos de entrega vigentes de Space Apps 2026 (duración del video, límites de texto) y preparar capturas de la app. | Capturas de la app, nombres del equipo | 3–4 h |
+| **P2** | Activar TLS en el servidor PostgreSQL | El cliente ya soporta `TIRELUS_DB_SSL=require\|verify` (`tests_py/test_db_tls.py`), pero **el servidor responde `ssl = off`** y rechaza el cifrado ("Server refuses SSL"). Lo hace quien administra el servidor: certificado, `ssl = on` y regla `hostssl` en `pg_hba.conf`. Solo importa si algún día hay datos reales. | Administrador del servidor | 30 min |
+| **P2** | Rotar la contraseña del servidor después de la demo | La contraseña del usuario `tirelus_equipo` se compartió por chat. Cambiarla al terminar y avisar al equipo por un canal privado. | Administrador del servidor | 5 min |
+| **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | — | 1 h |
+
+##### Data mining · Prina (datos)
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
 | **P1** | Completar en la base los datos de FC, sueño, ánimo y SANS | `db/003_demo.sql` (ya cargado en el servidor) solo trae la sistólica D34–D47 y su línea base. Faltan los `>>> DATOS:` de `data.py`, cada uno marcado "Datos de ejemplo". Tras cargarlos, `data_source` sigue en `db` y las pantallas dejan de decir "Sin dato". El usuario del equipo puede leer y escribir en `public`, pero no crear ni alterar tablas. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md). | Datos de la persona de ciencia | 1 h |
-| **P1** | Generalizar medición y tendencia a FC, sueño y ánimo | Las pantallas ya tienen selector de métrica y muestran "Sin dato" mientras falten datos. **Falta solo** en `METRICS` de `data.py`: línea base, límite de respaldo (supuesto de diseño) y serie de 14 días por métrica. Aparecen solas en la app. | Datos de la persona de ciencia | 20–30 min |
-| **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
+
+#### Decisiones
+
+| Prioridad | Qué decidir | Detalle / contexto | Depende de | Esfuerzo |
+|---|---|---|---|---|
 | **P1** | Decidir sistema de usuarios | Hoy no hay usuarios: la API lee un tripulante fijo (`TIRELUS_ASTRONAUT_ID` o el primero de la base). Opciones: selección de perfil con rol (astronauta, CMO, flight surgeon) para la demo, o login real. Recomendado para la demo: selección de perfil. La base tampoco tiene roles ni RLS. | Decisión del equipo | 1–2 h |
 | **P1** | Decidir `heart_rate`: `above` o `both` | En la base `heart_rate` alerta en ambos sentidos (`both`); en la app solo hacia arriba (`evaluate_trend` acepta `above` o `below`). Hay que elegir una fuente de verdad para los umbrales (base o `data.py`). Ver `db/AUDITORIA.md`. | Criterio de la persona de ciencia | 30 min |
 | **P1** | Decidir qué hacer con `Claude outputs/` | Carpeta sin versionar con `TIRELUS_matriz_simulacion.xlsx`, que `data.py` cita como origen de las series. O se sube al repo o se cambia la referencia. | — | 5 min |
-| **P2** | Activar TLS en el servidor PostgreSQL | El cliente ya soporta `TIRELUS_DB_SSL=require\|verify` (`tests_py/test_db_tls.py`), pero **el servidor responde `ssl = off`** y rechaza el cifrado ("Server refuses SSL"). Lo hace quien administra el servidor: certificado, `ssl = on` y regla `hostssl` en `pg_hba.conf`. Solo importa si algún día hay datos reales. | Administrador del servidor | 30 min |
-| **P2** | Rotar la contraseña del servidor después de la demo | La contraseña del usuario `tirelus_equipo` se compartió por chat. Cambiarla al terminar y avisar al equipo por un canal privado. | Administrador del servidor | 5 min |
+
+#### Backend · Angel
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P1** | Generalizar medición y tendencia a FC, sueño y ánimo | Las pantallas ya tienen selector de métrica y muestran "Sin dato" mientras falten datos. **Falta solo** en `METRICS` de `data.py`: línea base, límite de respaldo (supuesto de diseño) y serie de 14 días por métrica. Aparecen solas en la app. | Datos de la persona de ciencia | 20–30 min |
+| **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
 | **P2** | Android (recortado de la demo; se intenta al final) | `-p Android` en el comando de empaquetado y `flutter build apk`. Si uvicorn falla, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). Decidir también cómo llega el Python embebido al servidor y si hay caché local. Va después de resolver el empaquetado, que está descartado para la demo. | Empaquetado | 2–3 h |
-| **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | — | 1 h |
+
+#### Entrega
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación, texto del formulario y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). El hackathon va del 14 al 15 de nov. Ya hay un prompt listo para producirlo en otra cuenta de Claude; falta revisar los requisitos de entrega vigentes de Space Apps 2026 (duración del video, límites de texto) y preparar capturas de la app. | Capturas de la app, nombres del equipo | 3–4 h |
 
 ### Hecho
 
