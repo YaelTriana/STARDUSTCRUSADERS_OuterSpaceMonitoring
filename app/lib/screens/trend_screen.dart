@@ -163,7 +163,14 @@ class _TrendScreenState extends State<TrendScreen> {
           tooltip: l.trendPrev,
           constraints: const BoxConstraints(minWidth: Touch.min, minHeight: Touch.min),
           onPressed: idx > 0 ? () => setState(() => _selected = idx - 1) : null,
-          icon: const Icon(Icons.chevron_left),
+          icon: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.chevron_left, size: 18),
+            SizedBox(
+              width: 56,
+              child: Text(l.trendPrev,
+                  style: const TextStyle(fontSize: VType.label), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+            ),
+          ]),
         ),
         Expanded(
           child: Column(children: [
@@ -186,7 +193,14 @@ class _TrendScreenState extends State<TrendScreen> {
           tooltip: l.trendNext,
           constraints: const BoxConstraints(minWidth: Touch.min, minHeight: Touch.min),
           onPressed: idx < series.length - 1 ? () => setState(() => _selected = idx + 1) : null,
-          icon: const Icon(Icons.chevron_right),
+          icon: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.chevron_right, size: 18),
+            SizedBox(
+              width: 56,
+              child: Text(l.trendNext,
+                  style: const TextStyle(fontSize: VType.label), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+            ),
+          ]),
         ),
       ]),
     );
