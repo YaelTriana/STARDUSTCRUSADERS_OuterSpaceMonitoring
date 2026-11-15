@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from rules import Baseline
+
+# Idioma de la API: "es" (por defecto) o "en". Cualquier otro valor cae en "es".
+LANGS = ("es", "en")
 
 MISSION_DAY = 47
 
@@ -84,6 +89,43 @@ METRICS: dict[str, dict] = {
     },
 }
 
+# Texto en inglés de cada métrica (label/rule/source). base/abs_high/abs_low/series/
+# alert_when son el mismo objeto que en METRICS: ningún valor numérico cambia por idioma.
+_METRICS_EN_TEXT: dict[str, dict] = {
+    "systolic": {
+        "label": "Systolic blood pressure",
+        "rule": "Design assumption: 3 consecutive days above personal baseline.",
+        "source": "Captured during periodic health exam (NTRS 20250000330). Threshold: design assumption.",
+    },
+    "heart_rate": {
+        "label": "Resting heart rate",
+        "rule": "Design assumption: 3 consecutive days above personal baseline.",
+        "source": "Periodic health exam (NTRS 20250000330). Threshold: design assumption.",
+    },
+    "sleep_hours": {
+        "label": "Sleep hours",
+        "rule": "Design assumption: 8.5 h sleep period; sustained deficit from baseline.",
+        "source": "Historical average <6.1 h (Basner et al., PMC4691281). Threshold: design assumption.",
+    },
+    "mood": {
+        "label": "Mood (1-5)",
+        "rule": "Design assumption: self-report below the usual range.",
+        "source": "Self-report: design assumption, no published threshold.",
+    },
+}
+
+
+def _translate(base: dict[str, dict], text_en: dict[str, dict]) -> dict[str, dict]:
+    """Copia `base` pero reemplaza solo las claves de texto que trae `text_en`.
+
+    Las claves numéricas/estructurales (base, series, abs_high...) quedan como
+    el mismo objeto de `base`: nunca se duplican ni pueden desincronizarse.
+    """
+    return {key: {**m, **text_en.get(key, {})} for key, m in base.items()}
+
+
+METRICS_EN: dict[str, dict] = _translate(METRICS, _METRICS_EN_TEXT)
+
 # ---------------------------------------------------------------------------
 # SANS: cambio de grosor retiniano (µm) frente a la base, una lectura por ciclo de OCT.
 # Los umbrales (+20 / 55 µm) viven en rules.py porque son cifras publicadas.
@@ -95,11 +137,22 @@ SANS_SERIES: list[float] = []
 SANS_DAYS: list[int] = []
 # >>> FUENTE: referencia NASA exacta de los umbrales de SANS (NASA HRP / NTRS) para citarla en la app.
 SANS_SOURCE = "Umbrales publicados de SANS: +20 µm primer signo; 55 µm preocupación clínica. Referencia NASA por confirmar."
+SANS_SOURCE_EN = "Published SANS thresholds: +20 µm first sign; 55 µm clinical concern. NASA reference to be confirmed."
+
+# Etiqueta de /trend/sans (no vive en METRICS porque SANS no se mide con valor único).
+SANS_LABEL = "Grosor retiniano (cambio frente a la base)"
+SANS_LABEL_EN = "Retinal thickness (change from baseline)"
 
 ENVIRONMENTS = {
     "iss": {"label": "ISS", "delay": "tiempo real", "autonomous": False},
     "luna": {"label": "Luna", "delay": "4–12 s", "autonomous": True},
     "marte": {"label": "Marte", "delay": "hasta 20 min", "autonomous": True},
+}
+
+ENVIRONMENTS_EN = {
+    "iss": {"label": "ISS", "delay": "real time", "autonomous": False},
+    "luna": {"label": "Moon", "delay": "4–12 s", "autonomous": True},
+    "marte": {"label": "Mars", "delay": "up to 20 min", "autonomous": True},
 }
 
 
@@ -177,9 +230,84 @@ SYSTEMS = [
     },
 ]
 
+SYSTEMS_EN = [
+    {
+        "id": "cardio",
+        "name": "Heart and circulation",
+        "status": "atencion",
+        "indicators": [
+            _ind("Blood pressure", "132/84", "mmHg", "▲ baseline 118/76", "atencion"),
+            _ind("Resting HR", "64", "lpm", "baseline 60"),
+            _ind("SpO₂", "98", "%", "in range"),
+        ],
+        "why": "In microgravity, fluids shift toward the head and the heart and vessels adapt. "
+        "Blood pressure can vary during the first weeks.",
+        "action": "Repeat the measurement after 5 min of rest. If it stays above your baseline for "
+        "3 days, TIRELUS adds it to your medical conference summary.",
+    },
+    {
+        "id": "ojos",
+        "name": "Eyes and brain (SANS)",
+        "status": "nominal",
+        "indicators": [
+            _ind("Retinal thickness", "+8", "µm", "attention from +20"),
+            _ind("Near vision", "no change", "", "weekly self-test"),
+            _ind("Next OCT", "D90", "", "in 43 days"),
+        ],
+        "why": "Fluid shift toward the head can thicken the retina and optic nerve. It's the main "
+        "health risk NASA flags.",
+        "action": "Do the near-vision self-test every week and report blurry vision as soon as you "
+        "notice it.",
+    },
+    {
+        "id": "hueso",
+        "name": "Bone and muscle",
+        "status": "nominal",
+        "indicators": [
+            _ind("Exercise today", "1:52", "h", "goal ~2 h"),
+            _ind("Body mass", "72.4", "kg", "baseline 73.0"),
+            _ind("ARED load", "stable", "", "last 7 days"),
+        ],
+        "why": "Without body-weight loading, bone degrades and muscle is lost. Daily exercise is "
+        "the main countermeasure.",
+        "action": "Finish the remaining 8 minutes of resistance training before 18:00.",
+    },
+    {
+        "id": "mente",
+        "name": "Sleep and mood",
+        "status": "atencion",
+        "indicators": [
+            _ind("Sleep last night", "6:10", "h", "▼ 8.5 h sleep period", "atencion"),
+            _ind("Mood", "3", "/5", "self-report"),
+            _ind("Reaction (PVT)", "+9", "%", "slower than your baseline", "atencion"),
+        ],
+        "why": "Irregular schedules, noise and isolation disrupt the body clock. Sleep loss shows "
+        "up first in reaction time.",
+        "action": "Avoid critical tasks between hour 1 and 7 of your cycle. Optional: schedule a "
+        "private psychological conference.",
+    },
+    {
+        "id": "inmune",
+        "name": "Immune system",
+        "status": "nominal",
+        "indicators": [
+            _ind("Temperature", "36.7", "°C", "in range"),
+            _ind("Symptoms", "none", "", "today's log"),
+            _ind("Saliva sample", "D60", "", "in 13 days"),
+        ],
+        "why": "Flight stress can reactivate latent viruses and cause rashes or other symptoms.",
+        "action": "Log any rash, sore or fever with a photo; TIRELUS attaches it to your record.",
+    },
+]
+
 TASKS = [
     {"time": "09:30", "title": "Medir presión arterial", "detail": "Guía paso a paso · 6 min", "pending": True},
     {"time": "14:00", "title": "Batería cognitiva", "detail": "10 pruebas · ~16 min", "pending": False},
+]
+
+TASKS_EN = [
+    {"time": "09:30", "title": "Measure blood pressure", "detail": "Step-by-step guide · 6 min", "pending": True},
+    {"time": "14:00", "title": "Cognitive battery", "detail": "10 tests · ~16 min", "pending": False},
 ]
 
 EXERCISE = {"done_min": 112, "goal_min": 120}
@@ -216,6 +344,36 @@ HABITAT = {
     "team_challenge": {"title": "Reto de equipo: ejercicio completo", "done": 3, "total": 5},
 }
 
+HABITAT_EN = {
+    "day": 18,
+    "gravity": "0.17 g",
+    "link": "~4 s",
+    "environment": [
+        {"label": "CO₂", "value": "2.6", "unit": "mmHg", "status": "nominal"},
+        {"label": "O₂", "value": "21.1", "unit": "%", "status": "nominal"},
+        {"label": "Pressure", "value": "101", "unit": "kPa", "status": "nominal"},
+        {"label": "Temperature", "value": "22.4", "unit": "°C", "status": "nominal"},
+        {"label": "Noise", "value": "52", "unit": "dBA", "status": "nominal"},
+        {"label": "Airlock dust", "value": "High", "unit": "", "status": "atencion"},
+    ],
+    "alert": "Space weather: possible solar particle event in ~6 h. Review the shelter route and "
+    "limit outside excursions.",
+    "crew": [
+        {"name": "Crew Member A · CMO", "location": "HABITAT", "detail": "2 health tasks pending today", "progress": 0.6},
+        {"name": "Crew Member B", "location": "EVA · ROVER", "detail": "01:42 outside · active monitoring", "highlight": True},
+        {"name": "Crew Member C", "location": "LAB", "detail": "Health tasks up to date", "progress": 1.0},
+        {"name": "Crew Member D", "location": "REST", "detail": "Sleep period · do not disturb until 16:30"},
+    ],
+    "agenda": [
+        {"time": "08:00", "title": "Vitals and weigh-in · everyone"},
+        {"time": "10:30", "title": "Eye OCT · Crew Member A"},
+        {"time": "13:00", "title": "Pre-EVA medical clearance · B"},
+        {"time": "15:30", "title": "Dry saliva samples · everyone"},
+        {"time": "18:00", "title": "Private medical conference · C"},
+    ],
+    "team_challenge": {"title": "Team challenge: full exercise", "done": 3, "total": 5},
+}
+
 # Telemetría de caminata espacial (visor y variante de mano).
 EVA = {
     "elapsed": "02:18",
@@ -227,6 +385,18 @@ EVA = {
     "co2": "nominal",
     "effort": "alto",
     "alert": "Esfuerzo alto 4 min · baja el ritmo",
+}
+
+EVA_EN = {
+    "elapsed": "02:18",
+    "o2_left": "5:42",
+    "return_in_min": 48,
+    "hr": 128,
+    "spo2": 97,
+    "temp": 37.6,
+    "co2": "nominal",
+    "effort": "high",
+    "alert": "High effort 4 min · slow down",
 }
 
 AUTONOMOUS_PROTOCOL = {
@@ -242,6 +412,58 @@ AUTONOMOUS_PROTOCOL = {
     "queue": [
         {"title": "Resumen semanal D210", "state": "Recibido"},
         {"title": "Respuesta a consulta de sueño", "state": "Llega en 9 min"},
+        # Estos dos valores ("Este protocolo" / "Recibido" arriba) NO se traducen:
+        # autonomous_screen.dart los compara literalmente en español (q['title']
+        # == 'Este protocolo', q['state'] == 'Recibido') para decidir el check
+        # verde y el toggle de envío. Traducirlos rompería eso en inglés.
         {"title": "Este protocolo", "state": "Borrador"},
     ],
 }
+
+AUTONOMOUS_PROTOCOL_EN = {
+    "title": "Blurry near vision",
+    "steps": [
+        {"title": "Near-vision self-test", "detail": "Right eye worse than your baseline", "state": "done"},
+        {"title": "OCT with on-screen guide", "detail": "The CMO operates; TIRELUS guides the position step by step", "state": "current"},
+        {"title": "Compare retinal thickness with your baseline", "detail": "Attention from +20 µm · clinical concern at 55 µm", "state": "todo"},
+        {"title": "On-board decision", "detail": "Protocol options + medical kit inventory", "state": "todo"},
+    ],
+    "message": "D212 · Near vision ↓ OD\nBP 124/80 · HR 62 · no headache\nOCT: pending (step 2/4)\n"
+    "Attachments: self-test, 30-day trend",
+    "queue": [
+        {"title": "Weekly summary D210", "state": "Recibido"},
+        {"title": "Reply to sleep inquiry", "state": "Arrives in 9 min"},
+        {"title": "Este protocolo", "state": "Borrador"},
+    ],
+}
+
+
+def for_lang(lang: str) -> SimpleNamespace:
+    """Devuelve las constantes traducibles para `lang` ("es" o "en"; cualquier otro cae en "es").
+
+    Los ids, claves y valores numéricos son los mismos objetos en los dos
+    idiomas; solo cambia el texto (label/name/why/action/...).
+    """
+    if lang == "en":
+        return SimpleNamespace(
+            SYSTEMS=SYSTEMS_EN,
+            TASKS=TASKS_EN,
+            ENVIRONMENTS=ENVIRONMENTS_EN,
+            METRICS=METRICS_EN,
+            HABITAT=HABITAT_EN,
+            EVA=EVA_EN,
+            AUTONOMOUS_PROTOCOL=AUTONOMOUS_PROTOCOL_EN,
+            SANS_SOURCE=SANS_SOURCE_EN,
+            SANS_LABEL=SANS_LABEL_EN,
+        )
+    return SimpleNamespace(
+        SYSTEMS=SYSTEMS,
+        TASKS=TASKS,
+        ENVIRONMENTS=ENVIRONMENTS,
+        METRICS=METRICS,
+        HABITAT=HABITAT,
+        EVA=EVA,
+        AUTONOMOUS_PROTOCOL=AUTONOMOUS_PROTOCOL,
+        SANS_SOURCE=SANS_SOURCE,
+        SANS_LABEL=SANS_LABEL,
+    )

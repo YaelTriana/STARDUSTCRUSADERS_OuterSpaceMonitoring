@@ -91,12 +91,18 @@ def health() -> dict:
     return {"ok": True, "app": "TIRELUS"}
 
 
+def _lang(lang: str) -> str:
+    """"es" (por defecto) o "en"; cualquier otro valor cae en "es"."""
+    return lang if lang in data.LANGS else "es"
+
+
 @app.get("/dashboard")
-def dashboard() -> dict:
+def dashboard(lang: str = "es") -> dict:
+    d = data.for_lang(_lang(lang))
     return {
         "mission_day": data.MISSION_DAY,
-        "systems": data.SYSTEMS,
-        "tasks": data.TASKS,
+        "systems": d.SYSTEMS,
+        "tasks": d.TASKS,
         "exercise": data.EXERCISE,
         "streak_days": data.STREAK_DAYS,
         "sample_data": True,
@@ -104,55 +110,60 @@ def dashboard() -> dict:
 
 
 @app.get("/environments")
-def environments() -> dict:
-    return data.ENVIRONMENTS
+def environments(lang: str = "es") -> dict:
+    return data.for_lang(_lang(lang)).ENVIRONMENTS
 
 
 @app.get("/metrics")
-def metrics() -> dict:
+def metrics(lang: str = "es") -> dict:
     """Catálogo de métricas con medición y tendencia."""
+    d = data.for_lang(_lang(lang))
     return {
         "metrics": [
             {"id": key, "label": m["label"], "unit": m["unit"], "has_data": bool(m["series"]) and m["base"] is not None}
-            for key, m in data.METRICS.items()
+            for key, m in d.METRICS.items()
         ]
     }
 
 
 # Las rutas de SANS van antes de /{metric} para que FastAPI no las confunda.
 @app.get("/trend/sans")
-def trend_sans() -> dict:
+def trend_sans(lang: str = "es") -> dict:
+    d = data.for_lang(_lang(lang))
     series = data.SANS_SERIES
     last = series[-1] if series else None
     return {
         "metric": "sans",
-        "label": "Grosor retiniano (cambio frente a la base)",
+        "label": d.SANS_LABEL,
         "unit": "µm",
         "series": series,
         "days": data.SANS_DAYS,
         "status": evaluate_sans(last).value if last is not None else Status.SIN_DATO.value,
         "thresholds": {"attention_um": SANS_ATTENTION_UM, "critical_um": SANS_CRITICAL_UM},
-        "source": data.SANS_SOURCE,
+        "source": d.SANS_SOURCE,
         "sample_data": True,
     }
 
 
 @app.post("/evaluate/sans")
-def evaluate_sans_reading(reading: Reading) -> dict:
+def evaluate_sans_reading(reading: Reading, lang: str = "es") -> dict:
     """reading.value = cambio de grosor retiniano en µm frente a la base."""
+    d = data.for_lang(_lang(lang))
     return {
         "metric": "sans",
         "status": evaluate_sans(reading.value).value,
         "delta_um": reading.value,
         "thresholds": {"attention_um": SANS_ATTENTION_UM, "critical_um": SANS_CRITICAL_UM},
-        "source": data.SANS_SOURCE,
+        "source": d.SANS_SOURCE,
     }
 
 
-def _metric(metric: str) -> dict:
-    m = data.METRICS.get(metric)
+def _metric(metric: str, lang: str = "es") -> dict:
+    d = data.for_lang(_lang(lang))
+    m = d.METRICS.get(metric)
     if m is None:
-        raise HTTPException(status_code=404, detail=f"Métrica desconocida: {metric}")
+        detail = f"Unknown metric: {metric}" if _lang(lang) == "en" else f"Métrica desconocida: {metric}"
+        raise HTTPException(status_code=404, detail=detail)
     return m
 
 
@@ -162,8 +173,8 @@ def _base_json(m: dict) -> dict | None:
 
 
 @app.get("/trend/{metric}")
-def trend(metric: str) -> dict:
-    m = _metric(metric)
+def trend(metric: str, lang: str = "es") -> dict:
+    m = _metric(metric, lang)
     series, base = m["series"], m["base"]
     common = {
         "metric": metric,
@@ -200,8 +211,8 @@ def trend(metric: str) -> dict:
 
 
 @app.post("/evaluate/{metric}")
-def evaluate(metric: str, reading: Reading) -> dict:
-    m = _metric(metric)
+def evaluate(metric: str, reading: Reading, lang: str = "es") -> dict:
+    m = _metric(metric, lang)
     base = m["base"]
     if base is None:
         return {"metric": metric, "status": Status.SIN_DATO.value, "delta_from_high": 0, "base": None}
@@ -215,19 +226,20 @@ def evaluate(metric: str, reading: Reading) -> dict:
 
 
 @app.get("/autonomous")
-def autonomous(env: str = "marte") -> dict:
-    info = data.ENVIRONMENTS.get(env, data.ENVIRONMENTS["marte"])
-    return {"env": info, **data.AUTONOMOUS_PROTOCOL}
+def autonomous(env: str = "marte", lang: str = "es") -> dict:
+    d = data.for_lang(_lang(lang))
+    info = d.ENVIRONMENTS.get(env, d.ENVIRONMENTS["marte"])
+    return {"env": info, **d.AUTONOMOUS_PROTOCOL}
 
 
 @app.get("/habitat")
-def habitat() -> dict:
-    return data.HABITAT
+def habitat(lang: str = "es") -> dict:
+    return data.for_lang(_lang(lang)).HABITAT
 
 
 @app.get("/eva")
-def eva() -> dict:
-    return data.EVA
+def eva(lang: str = "es") -> dict:
+    return data.for_lang(_lang(lang)).EVA
 
 
 @app.get("/summary")
@@ -245,8 +257,31 @@ def add_summary(entry: SummaryItem) -> dict:
 
 
 
-def build_summary_export(items: list[str], mission_day: int, today: date) -> str:
+def build_summary_export(items: list[str], mission_day: int, today: date, lang: str = "es") -> str:
     """Arma el resumen en Markdown para la conferencia médica privada semanal."""
+    if _lang(lang) == "en":
+        lines = [
+            "# Summary for the private medical conference",
+            "",
+            f"- Date: {today.isoformat()}",
+            f"- Mission day: {mission_day}",
+            "- Sample data (synthetic, demo only)",
+            "",
+            "## Logged findings",
+            "",
+        ]
+        lines += [f"- {item}" for item in items] or ["No findings logged."]
+        lines += [
+            "",
+            "---",
+            "TIRELUS does not diagnose: it flags deviations from the personal preflight baseline",
+            "and suggests who to escalate to (crew member → CMO → flight surgeon).",
+            "Confidential: only for the crew member, the CMO and the flight surgeon.",
+            "Thresholds are design assumptions, except SANS (+20 µm and 55 µm).",
+            "",
+        ]
+        return "\n".join(lines)
+
     lines = [
         "# Resumen para la conferencia médica privada",
         "",
@@ -271,11 +306,11 @@ def build_summary_export(items: list[str], mission_day: int, today: date) -> str
 
 
 @app.get("/summary/export")
-def export_summary() -> dict:
+def export_summary(lang: str = "es") -> dict:
     items = _load_summary()
     today = date.today()
     return {
-        "text": build_summary_export(items, data.MISSION_DAY, today),
+        "text": build_summary_export(items, data.MISSION_DAY, today, lang),
         "filename": f"tirelus_resumen_D{data.MISSION_DAY}_{today.isoformat()}.md",
         "items": items,
         "mission_day": data.MISSION_DAY,
