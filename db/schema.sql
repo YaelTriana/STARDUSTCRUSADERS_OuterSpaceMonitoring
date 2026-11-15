@@ -25,16 +25,40 @@ BEGIN;
 -- =====================================================================
 -- Tipos enumerados (coincidentes con app/python_app)
 -- =====================================================================
-CREATE TYPE environment   AS ENUM ('iss', 'luna', 'marte');
-CREATE TYPE health_status AS ENUM ('nominal', 'atencion', 'critico');
-CREATE TYPE body_system   AS ENUM ('cardio', 'ojos', 'hueso', 'mente', 'inmune');
-CREATE TYPE body_state    AS ENUM ('reposo', 'activo');
-CREATE TYPE hazard        AS ENUM ('radiacion', 'aislamiento', 'distancia', 'gravedad', 'ambiente_hostil');
-CREATE TYPE crew_role     AS ENUM ('astronauta', 'cmo', 'flight_surgeon');
-CREATE TYPE escalation    AS ENUM ('astronauta', 'cmo', 'flight_surgeon');
-CREATE TYPE task_kind     AS ENUM ('medicion', 'ejercicio', 'sueno', 'cognitiva', 'psicologica');
+DO $$ BEGIN
+    CREATE TYPE environment AS ENUM ('iss', 'luna', 'marte');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE health_status AS ENUM ('nominal', 'atencion', 'critico');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE body_system AS ENUM ('cardio', 'ojos', 'hueso', 'mente', 'inmune');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE body_state AS ENUM ('reposo', 'activo');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE hazard AS ENUM ('radiacion', 'aislamiento', 'distancia', 'gravedad', 'ambiente_hostil');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE crew_role AS ENUM ('astronauta', 'cmo', 'flight_surgeon');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE escalation AS ENUM ('astronauta', 'cmo', 'flight_surgeon');
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
+DO $$ BEGIN
+    CREATE TYPE task_kind AS ENUM ('medicion', 'ejercicio', 'sueno', 'cognitiva', 'psicologica');
 
 -- =====================================================================
+EXCEPTION WHEN duplicate_object THEN NULL;  -- recargable: el tipo ya existe
+END $$;
 -- Esquema ref: Staging poblacional y tablas de referencia
 -- =====================================================================
 CREATE SCHEMA IF NOT EXISTS ref;
@@ -692,6 +716,7 @@ INSERT INTO indicators (id, name, unit, system, alert_when, valid_min, valid_max
     ('near_vision_logmar','Visión cercana (autoprueba)',   'logMAR','ojos',   'above', -0.3, 2.0, 'Carta de visión cercana a 40 cm.', 'Pérdida de acomodación hipermetrópica adquirida en vuelo.'),
     ('body_mass',        'Masa corporal',                  'kg',    'hueso',  'below',  30, 200, 'Dispositivo de medición de masa por oscilación inercial (SLAMMD).', 'Atrofia muscular y balance calórico negativo en microgravedad.'),
     ('sleep_hours',      'Horas de sueño',                 'h',     'mente',  'below',   0,  24, 'Actigrafía continua de muñeca.', 'Alteración del ritmo circadiano (16 amaneceres/día en LEO).'),
+    ('mood',             'Ánimo (autorreporte)',           'pts',   'mente',  'below',   1,   5, 'Autorreporte de 1 a 5 al cerrar la jornada.', 'El aislamiento, el confinamiento y la falta de sueño golpean el estado de ánimo.'),
     ('pvt_ms',           'Tiempo de reacción (PVT)',       'ms',    'mente',  'above', 100, 2000,'Prueba psicomotora de 3–5 min en tableta.', 'Monitoreo de fatiga cognitiva y lentitud psicomotora.'),
     ('fasting_glucose',  'Glucosa en ayuno',               'mg/dL', 'inmune', 'both',   40, 400, 'Analizador de sangre capilar a bordo.', 'Resistencia a la insulina inducida por microgravedad e inactividad.'),
     ('hba1c',            'HbA1c',                          '%',     'inmune', 'above',   3,  15, 'Cartucho de bioquímica seca a bordo.', 'Control glucémico a mediano plazo en misiones de exploración.'),
@@ -714,6 +739,7 @@ INSERT INTO thresholds (indicator_id, atencion_low, atencion_high, critico_low, 
     ('temperature',          NULL, 37.5, 35.0, 38.3, true,  'Fiebre espacial e hipotermia.'),
     ('respiratory_rate',        8,  20,     6,  25, true,  'Taquipnea o bradipnea.'),
     ('sleep_hours',           6.0, NULL,  4.5, NULL, true,  'Déficit crítico de sueño.'),
+    ('mood',                  2.5, NULL,  1.5, NULL, true,  'Autorreporte derivado del estrés percibido. Supuesto de diseño: sin umbral publicado.'),
     ('pvt_ms',               NULL, 350,  NULL, 500, true,  'Lentitud de respuesta psicomotora.'),
     ('retinal_delta',        NULL,  20,  NULL,  55, false, 'Umbrales publicados de SANS (NASA HRP). 20 µm primer signo, 55 µm clínico.'),
     ('intraocular_pressure',   10,  21,     8,  25, true,  'Rango clínico terrestre habitual.'),

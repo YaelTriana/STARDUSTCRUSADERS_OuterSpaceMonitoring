@@ -36,6 +36,18 @@ def sql_quote(val) -> str:
     s = str(val).replace("'", "''")
     return f"'{s}'"
 
+def mood_from_stress(stress: float) -> float:
+    """Ánimo 1-5 derivado del estrés percibido 0-10, invertido.
+
+    SUPUESTO DE DISEÑO: el dataset no trae autorreporte de ánimo, pero sí estrés
+    percibido (que correlaciona con sueño y regulación emocional). La app muestra
+    el ánimo en 1-5 (indicators.mood), así que se deriva aquí y queda documentado.
+    Misma fórmula que tools/sim_sinteticos.py, para no tener dos verdades.
+    """
+    proporcion = min(1.0, max(0.0, float(stress) / 10.0))
+    return round(5.0 - proporcion * 4.0, 2)
+
+
 def snellen_to_logmar(snellen: str) -> float | None:
     try:
         parts = snellen.split("/")
@@ -331,6 +343,20 @@ ON CONFLICT (id) DO NOTHING;\n""")
         # Retinal delta baseline (0 +/- 5)
         baseline_rows.append(f"('{a_uuid}', 'retinal_delta', 'reposo', -5.0, 5.0)")
 
+        # Estrés y ánimo: diarios, misma convención de percentiles
+        stress_s = sub["Stress_Level"].dropna()
+        if len(stress_s) > 0:
+            low_st, high_st = round(float(stress_s.quantile(0.05)), 2), round(float(stress_s.quantile(0.95)), 2)
+            baseline_rows.append(f"('{a_uuid}', 'stress_level', 'reposo', {low_st}, {high_st})")
+            mood_s = stress_s.map(mood_from_stress)
+            low_mo, high_mo = round(float(mood_s.quantile(0.05)), 2), round(float(mood_s.quantile(0.95)), 2)
+            baseline_rows.append(f"('{a_uuid}', 'mood', 'reposo', {low_mo}, {high_mo})")
+
+        water_s = sub["Water_Intake_liters"].dropna()
+        if len(water_s) > 0:
+            low_w, high_w = round(float(water_s.quantile(0.05)), 2), round(float(water_s.quantile(0.95)), 2)
+            baseline_rows.append(f"('{a_uuid}', 'water_intake', 'reposo', {low_w}, {high_w})")
+
         # PVT reaction time baseline
         pvt_s = sub["PVT_Reaction_Time_ms"].dropna()
         if len(pvt_s) > 0:
@@ -343,10 +369,13 @@ ON CONFLICT (id) DO NOTHING;\n""")
     lines.append("-- 12. Mediciones de Telemetría para API (measurements)")
     meas_rows = []
     
-    # Pre-calculamos líneas base de grosor macular para delta de SANS
-    macular_bases = {}
+    # Base del RNFL para el delta de SANS. Los umbrales publicados (+20 / 55 um) son
+    # de grosor retiniano PERIPAPILAR, no macular: ver el encabezado de
+    # SANS_ATTENTION_UM en app/python_app/rules.py.
+    rnfl_bases = {}
     for _, r in eye_df.iterrows():
-        macular_bases[r["Patient_ID"]] = float(r["Macular_Thickness_um"])
+        if pd.notna(r["RNFL_Thickness_um"]):
+            rnfl_bases[r["Patient_ID"]] = float(r["RNFL_Thickness_um"])
 
     for _, r in df.iterrows():
         p_id = r["Patient_ID"]
@@ -373,10 +402,19 @@ ON CONFLICT (id) DO NOTHING;\n""")
         add_meas("rnfl_thickness", r["RNFL_Thickness_um"])
         add_meas("intraocular_pressure", r["Intraocular_Pressure_mmhg"])
 
-        # Para SANS: retinal_delta frente al baseline inicial
-        if pd.notna(r["Macular_Thickness_um"]) and p_id in macular_bases:
-            delta = float(r["Macular_Thickness_um"]) - macular_bases[p_id]
-            add_meas("retinal_delta", delta)
+        # Columnas que llegaban a las tablas de dominio pero no a la API
+        add_meas("stress_level", r["Stress_Level"])
+        if pd.notna(r["Stress_Level"]):
+            add_meas("mood", mood_from_stress(r["Stress_Level"]))
+        add_meas("fasting_glucose", r["Fasting_Glucose_mg_dl"])
+        add_meas("hba1c", r["HbA1c_pct"])
+        add_meas("water_intake", r["Water_Intake_liters"])
+        add_meas("cup_to_disc_ratio", r["Cup_to_Disc_Ratio"])
+        add_meas("near_vision_logmar", snellen_to_logmar(r["Visual_Acuity"]))
+
+        # SANS: retinal_delta = cambio del RNFL frente a la primera lectura
+        if pd.notna(r["RNFL_Thickness_um"]) and p_id in rnfl_bases:
+            add_meas("retinal_delta", float(r["RNFL_Thickness_um"]) - rnfl_bases[p_id])
 
     lines.append(chunked_inserts("measurements", ["client_id", "astronaut_id", "indicator_id", "body_state", "value", "measured_at", "mission_day", "environment"], meas_rows, chunk_size=500))
 
