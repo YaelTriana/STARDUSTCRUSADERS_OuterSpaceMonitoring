@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../core/touch.dart';
 import '../data/models.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 import 'common.dart';
 
 /// Figura corporal abstracta con zonas tocables por sistema.
+///
+/// En ancho suficiente, los botones van al lado de la figura. En angosto
+/// (móvil o ventana estrecha) pasan a una columna debajo, para que ninguna
+/// etiqueta se corte.
 class BodyFigure extends StatelessWidget {
   const BodyFigure({super.key, required this.systems, required this.selected, required this.onSelect});
 
@@ -12,42 +18,65 @@ class BodyFigure extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onSelect;
 
-  // Posición vertical de cada botón (px dentro de la figura de 480 de alto)
+  /// Debajo de este ancho se usa la disposición en columna.
+  static const _narrowBelow = 420.0;
+
+  // Posición vertical de cada botón (dp dentro de la figura de 480 de alto)
   // y punto que marca la zona en el cuerpo (coordenadas del lienzo 160×520).
   static const _layout = <String, (double, Offset)>{
-    'mente': (18, Offset(80, 30)),
-    'ojos': (72, Offset(80, 52)),
-    'cardio': (140, Offset(96, 140)),
-    'inmune': (206, Offset(70, 200)),
+    'mente': (10, Offset(80, 30)),
+    'ojos': (82, Offset(80, 52)),
+    'cardio': (154, Offset(96, 140)),
+    'inmune': (226, Offset(70, 200)),
     'hueso': (360, Offset(104, 380)),
   };
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 500,
-      child: Stack(children: [
-        Positioned(
-          left: 20,
-          top: 10,
-          child: CustomPaint(
-            size: const Size(150, 480),
-            painter: _BodyPainter({
-              for (final s in systems)
-                if (_layout.containsKey(s.id)) _layout[s.id]!.$2: statusColor(s.status),
-            }),
-          ),
-        ),
+  Map<Offset, Color> get _dots => {
         for (final s in systems)
-          if (_layout.containsKey(s.id))
-            Positioned(
-              left: 170,
-              top: _layout[s.id]!.$1,
-              child: _ZoneButton(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
-            ),
-      ]),
-    );
-  }
+          if (_layout.containsKey(s.id)) _layout[s.id]!.$2: statusColor(s.status),
+      };
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, box) =>
+            box.maxWidth < _narrowBelow ? _narrow(context) : _wide(),
+      );
+
+  Widget _wide() => SizedBox(
+        height: 500,
+        child: Stack(children: [
+          Positioned(
+            left: 20,
+            top: 10,
+            child: CustomPaint(size: const Size(150, 480), painter: _BodyPainter(_dots)),
+          ),
+          for (final s in systems)
+            if (_layout.containsKey(s.id))
+              Positioned(
+                left: 170,
+                right: 0,
+                top: _layout[s.id]!.$1,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ZoneButton(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
+                ),
+              ),
+        ]),
+      );
+
+  Widget _narrow(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
+        CustomPaint(size: const Size(110, 352), painter: _BodyPainter(_dots)),
+        const SizedBox(height: VSpace.lg),
+        Wrap(
+          spacing: Touch.gap,
+          runSpacing: Touch.gap,
+          children: [
+            for (final s in systems)
+              if (_layout.containsKey(s.id))
+                _ZoneButton(system: s, selected: s.id == selected, onTap: () => onSelect(s.id)),
+          ],
+        ),
+      ]);
 }
 
 class _ZoneButton extends StatelessWidget {
@@ -60,9 +89,9 @@ class _ZoneButton extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
         button: true,
         selected: selected,
-        label: '${system.name}, ${system.status.label}',
+        label: '${system.name}, ${context.l10n.status(system.status)}',
         child: Material(
-          color: VColors.surface2,
+          color: selected ? VColors.surface : VColors.surface2,
           shape: StadiumBorder(
             side: BorderSide(color: selected ? VColors.signal : VColors.border, width: selected ? 2 : 1),
           ),
@@ -70,13 +99,18 @@ class _ZoneButton extends StatelessWidget {
             customBorder: const StadiumBorder(),
             onTap: onTap,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 44),
+              constraints: const BoxConstraints(minHeight: Touch.min),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   StatusShape(system.status, size: 12),
                   const SizedBox(width: 8),
-                  Text(system.name, style: const TextStyle(fontSize: 14)),
+                  Flexible(
+                    child: Text(system.name,
+                        maxLines: 2,
+                        style: TextStyle(fontSize: VType.body, fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
+                  ),
+                  if (selected) ...[const SizedBox(width: 6), const Icon(Icons.check, size: 16, color: VColors.signalSoft)],
                 ]),
               ),
             ),

@@ -11,8 +11,17 @@ class AppState extends ChangeNotifier {
   final TirelusApi api;
 
   MissionEnv env = MissionEnv.iss;
+  Locale locale = const Locale('es');
   String selectedSystem = 'cardio';
   List<String> medicalSummary = [];
+
+  void setLocale(Locale value) {
+    locale = value;
+    api.lang = value.languageCode;
+    notifyListeners();
+  }
+
+  void toggleLocale() => setLocale(locale.languageCode == 'es' ? const Locale('en') : const Locale('es'));
 
   void setEnv(MissionEnv value) {
     env = value;
@@ -24,9 +33,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addToSummary(String item) async {
-    medicalSummary = await api.addToSummary(item);
-    notifyListeners();
+  /// Agrega un hallazgo al resumen. Devuelve false si el motor no respondió:
+  /// en ese caso el hallazgo queda solo en memoria para no perderlo de la vista.
+  Future<bool> addToSummary(String item) async {
+    try {
+      medicalSummary = await api.addToSummary(item);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      if (!medicalSummary.contains(item)) medicalSummary = [...medicalSummary, item];
+      notifyListeners();
+      return false;
+    }
   }
 }
 

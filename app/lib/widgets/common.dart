@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 
 Color statusColor(VStatus s) => switch (s) {
@@ -69,19 +70,22 @@ class StatusChip extends StatelessWidget {
   final VStatus status;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        label: 'Estado: ${status.label}',
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return Semantics(
+        label: l.statusSemantics(l.status(status)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(color: statusColor(status), borderRadius: BorderRadius.circular(999)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             StatusShape(status, color: VColors.onStatus),
             const SizedBox(width: 8),
-            Text(status.label,
+            Text(l.status(status),
                 style: const TextStyle(color: VColors.onStatus, fontWeight: FontWeight.w600, fontSize: 14)),
           ]),
         ),
       );
+  }
 }
 
 class SectionCard extends StatelessWidget {
@@ -113,7 +117,8 @@ class SampleTag extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: VColors.borderStrong),
         ),
-        child: const Text('Datos de ejemplo', style: TextStyle(color: VColors.muted, fontSize: 12)),
+        child: Text(context.l10n.sampleData,
+            style: const TextStyle(color: VColors.muted, fontSize: VType.label)),
       );
 }
 
@@ -142,7 +147,7 @@ class AlertBanner extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
             const SizedBox(height: 4),
-            Text(body, style: const TextStyle(fontSize: 15, height: 1.5)),
+            Text(body, style: const TextStyle(fontSize: VType.body, height: 1.5)),
           ]),
         ),
         if (action != null) ...[const SizedBox(width: 12), action!],
@@ -166,7 +171,7 @@ class MetricTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(color: VColors.surface2, borderRadius: BorderRadius.circular(12)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: VColors.muted)),
+          Text(label, style: const TextStyle(fontSize: VType.label, color: VColors.muted)),
           const SizedBox(height: 6),
           Text.rich(TextSpan(children: [
             TextSpan(text: value, style: mono(size: valueSize, color: valueColor ?? VColors.text)),
@@ -180,27 +185,61 @@ class MetricTile extends StatelessWidget {
       );
 }
 
-/// Carga asíncrona con estados de espera y error.
-class AsyncView<T> extends StatelessWidget {
-  const AsyncView({super.key, required this.future, required this.builder});
-  final Future<T> future;
-  final Widget Function(BuildContext, T) builder;
+/// Bloque gris de relleno mientras llegan los datos (esqueleto de carga).
+class SkeletonBox extends StatelessWidget {
+  const SkeletonBox({super.key, this.height = 80, this.width});
+  final double height;
+  final double? width;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<T>(
-        future: future,
-        builder: (context, snap) {
-          if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text('No se pudo leer el servidor Python local.\n${snap.error}',
-                    textAlign: TextAlign.center, style: const TextStyle(color: VColors.critico)),
-              ),
-            );
-          }
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          return builder(context, snap.data as T);
-        },
+  Widget build(BuildContext context) => Container(
+        height: height,
+        width: width,
+        decoration: BoxDecoration(color: VColors.surface2, borderRadius: BorderRadius.circular(16)),
       );
+}
+
+/// Carga asíncrona con estados de espera y error (con "Reintentar" si se pasa [onRetry]).
+class AsyncView<T> extends StatelessWidget {
+  const AsyncView({super.key, required this.future, required this.builder, this.onRetry, this.loading});
+  final Future<T> future;
+  final Widget Function(BuildContext, T) builder;
+  final VoidCallback? onRetry;
+
+  /// Esqueleto propio de la pantalla; si es null, un indicador circular.
+  final Widget? loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return FutureBuilder<T>(
+      future: future,
+      builder: (context, snap) {
+        if (snap.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSpace.xxl),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(l.errorEngine, textAlign: TextAlign.center, style: const TextStyle(color: VColors.critico, fontSize: VType.body)),
+                const SizedBox(height: VSpace.sm),
+                Text('${snap.error}', textAlign: TextAlign.center, style: mono(size: 12, color: VColors.muted)),
+                if (onRetry != null) ...[
+                  const SizedBox(height: VSpace.lg),
+                  OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: Text(l.retry)),
+                ],
+              ]),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return Semantics(
+            label: l.loading,
+            liveRegion: true,
+            child: loading ?? const Center(child: CircularProgressIndicator()),
+          );
+        }
+        return builder(context, snap.data as T);
+      },
+    );
+  }
 }

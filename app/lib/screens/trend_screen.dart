@@ -2,68 +2,412 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app_state.dart';
+import '../core/summary_export.dart';
+import '../core/touch.dart';
 import '../data/models.dart';
+import '../l10n/labels.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/hold_button.dart';
 import '../widgets/trend_chart.dart';
 
-/// Tendencia de 14 días con alerta por desviación sostenida (regla en Python).
-/// Sirve para cualquier métrica del catálogo de `/metrics`.
+/// Tendencia con alerta por desviación sostenida (la regla vive en Python).
+///
+/// Objetivo: ver la dirección del cambio y decidir si escalar.
 class TrendScreen extends StatefulWidget {
-  const TrendScreen({super.key, this.initialMetric = 'systolic'});
+  const TrendScreen({super.key, this.onGoTo, this.initialMetric = 'systolic'});
+
+  /// Métrica con la que abre (por defecto presión sistólica).
   final String initialMetric;
+
+  /// Para ir a Medición desde el estado "sin dato".
+  final ValueChanged<int>? onGoTo;
 
   @override
   State<TrendScreen> createState() => _TrendScreenState();
 }
 
-/// Plan sugerido por métrica. Texto orientativo: la app no diagnostica.
-const _plans = {
-  'systolic': '1. Mide dos veces al día (mañana y noche) durante 3 días.\n'
-      '2. Registra sal en la dieta, sueño y estrés del día.\n'
-      '3. Comparte el resumen en tu conferencia médica privada.',
-  'sleep_hours': '1. Revisa luz, ruido y temperatura de tu estación de descanso.\n'
-      '2. Respeta tu periodo de sueño programado durante 3 noches.\n'
-      '3. Comparte el resumen en tu conferencia médica privada.',
-};
-const _defaultPlan = '1. Repite la medición a la misma hora durante 3 días.\n'
-    '2. Anota lo que pudo influir (sueño, carga de trabajo, ejercicio).\n'
-    '3. Comparte el resumen en tu conferencia médica privada.';
-
 class _TrendScreenState extends State<TrendScreen> {
+  Future<List<Map<String, dynamic>>>? _metrics;
+  final Map<String, Future<Trend>> _trends = {};
   late String _metric = widget.initialMetric;
-  Future<Trend>? _future;
+  int _days = 14; // la API entrega 14 días; 7 muestra los últimos 7
+  bool _table = false;
+  int? _selected; // índice dentro de la ventana visible; null = último punto
+  bool _cmoSent = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _future ??= AppScope.of(context).api.trend(_metric);
+    _metrics ??= AppScope.of(context).api.metrics();
   }
 
-  void _select(String metric) {
-    if (metric == _metric) return;
-    setState(() {
-      _metric = metric;
-      _future = AppScope.of(context).api.trend(metric);
-    });
-  }
+  Future<Trend> _trendFor(String id) => _trends.putIfAbsent(id, () => AppScope.of(context).api.trend(id));
+
+  void _reload() => setState(() {
+        _metrics = AppScope.of(context).api.metrics();
+        _trends.clear();
+      });
+
+  bool _isOut(double v, Trend t) => v > t.baseHigh || v < t.baseLow;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          MetricSelector(selected: _metric, onSelected: _select),
-          const SizedBox(height: 20),
-          AsyncView<Trend>(
-            key: ValueKey(_metric),
-            future: _future!,
-            builder: (context, trend) => trend.hasData ? _TrendBody(trend: trend) : _NoData(trend: trend),
-          ),
+  Widget build(BuildContext context) {
+    return AsyncView<List<Map<String, dynamic>>>(
+      future: _metrics!,
+      onRetry: _reload,
+      builder: (context, metrics) {
+        final info = metrics.firstWhere((m) => m['id'] == _metric, orElse: () => metrics.first);
+        return LayoutBuilder(builder: (context, c) {
+          final wide = c.maxWidth >= 1000;
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(c.maxWidth < 600 ? VSpace.lg : 28),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              _controls(context, metrics),
+              const SizedBox(height: 20),
+              AsyncView<Trend>(
+                future: _trendFor(info['id'] as String),
+                onRetry: _reload,
+                loading: const Column(children: [SkeletonBox(height: 360)]),
+                builder: (context, trend) => !trend.hasData
+                    ? _empty(context)
+                    : _content(context, trend, info, wide),
+              ),
+            ]),
+          );
+        });
+      },
+    );
+  }
+
+  Widget _controls(BuildContext context, List<Map<String, dynamic>> metrics) {
+    final l = context.l10n;
+    const style = ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(Size(Touch.min, Touch.min)),
+      tapTargetSize: MaterialTapTargetSize.padded,
+    );
+    return Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      for (final m in metrics)
+        ChoiceChip(
+          key: Key('metric-${m['id']}'),
+          label: Text('${m['label']}', style: const TextStyle(fontSize: VType.body)),
+          selected: _metric == m['id'],
+          onSelected: (_) => setState(() {
+            _metric = m['id'] as String;
+            _selected = null;
+          }),
+        ),
+      SegmentedButton<int>(
+        showSelectedIcon: false,
+        style: style,
+        segments: [
+          ButtonSegment(value: 7, label: Text(l.trendRange7)),
+          ButtonSegment(value: 14, label: Text(l.trendRange14)),
+        ],
+        selected: {_days},
+        onSelectionChanged: (s) => setState(() {
+          _days = s.first;
+          _selected = null;
+        }),
+      ),
+      SegmentedButton<bool>(
+        showSelectedIcon: false,
+        style: style,
+        segments: [
+          ButtonSegment(value: false, icon: const Icon(Icons.show_chart), label: Text(l.trendViewChart)),
+          ButtonSegment(value: true, icon: const Icon(Icons.table_rows_outlined), label: Text(l.trendViewTable)),
+        ],
+        selected: {_table},
+        onSelectionChanged: (s) => setState(() => _table = s.first),
+      ),
+    ]);
+  }
+
+  Widget _empty(BuildContext context) {
+    final l = context.l10n;
+    return SectionCard(
+      padding: const EdgeInsets.all(28),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const StatusShape(VStatus.sinDato, size: 18),
+          const SizedBox(width: VSpace.md),
+          Expanded(child: Text(l.trendNoData, style: Theme.of(context).textTheme.titleLarge)),
         ]),
-      );
+        if (widget.onGoTo != null) ...[
+          const SizedBox(height: VSpace.lg),
+          OutlinedButton.icon(onPressed: () => widget.onGoTo!(1), icon: const Icon(Icons.straighten), label: Text(l.trendMeasure)),
+        ],
+      ]),
+    );
+  }
+
+  Widget _content(BuildContext context, Trend trend, Map<String, dynamic> info, bool wide) {
+    final l = context.l10n;
+    final unit = trend.unit.isNotEmpty ? trend.unit : '${info['unit']}';
+    final label = trend.label.isNotEmpty ? trend.label : '${info['label']}';
+    final t = Theme.of(context).textTheme;
+
+    final n = _days.clamp(1, trend.series.length);
+    final start = trend.series.length - n;
+    final series = trend.series.sublist(start);
+    final firstDay = trend.firstDay + start;
+    final idx = (_selected ?? series.length - 1).clamp(0, series.length - 1);
+    final value = series[idx];
+    final out = _isOut(value, trend);
+    final dir = l.direction(trend.alertsWhenBelow);
+
+    final detail = SectionCard(
+      padding: const EdgeInsets.symmetric(horizontal: VSpace.sm, vertical: VSpace.sm),
+      child: Row(children: [
+        IconButton(
+          tooltip: l.trendPrev,
+          constraints: const BoxConstraints(minWidth: Touch.min, minHeight: Touch.min),
+          onPressed: idx > 0 ? () => setState(() => _selected = idx - 1) : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+        Expanded(
+          child: Column(children: [
+            Text(l.trendPointDetail(firstDay + idx, trend.fmt(value), unit), style: mono(size: 22)),
+            const SizedBox(height: 4),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              StatusShape(out ? VStatus.atencion : VStatus.nominal, size: 12),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  out ? l.trendOutOfRange : l.trendInRange,
+                  style: const TextStyle(fontSize: VType.body),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ]),
+          ]),
+        ),
+        IconButton(
+          tooltip: l.trendNext,
+          constraints: const BoxConstraints(minWidth: Touch.min, minHeight: Touch.min),
+          onPressed: idx < series.length - 1 ? () => setState(() => _selected = idx + 1) : null,
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ]),
+    );
+
+    final chart = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(
+        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, spacing: 16, children: [
+            Text(label, style: t.headlineSmall),
+            Text.rich(TextSpan(children: [
+              TextSpan(text: trend.fmt(trend.series.last), style: mono(size: 34)),
+              TextSpan(text: ' $unit', style: mono(size: 14, color: VColors.muted)),
+            ])),
+          ]),
+          const SizedBox(height: 16),
+          if (_table)
+            _DataTable(series: series, firstDay: firstDay, trend: trend, unit: unit)
+          else
+            TrendChart(
+              series: series,
+              firstDay: firstDay,
+              baseLow: trend.baseLow,
+              baseHigh: trend.baseHigh,
+              selected: idx,
+              onSelect: (i) => setState(() => _selected = i),
+              decimals: trend.decimals,
+              baseLabel: l.rangeBase(trend.fmt(trend.baseLow), trend.fmt(trend.baseHigh)),
+              semanticsLabel: l.trendChartSemantics(label, series.length, trend.fmt(series.first),
+                  trend.fmt(series.last), trend.fmt(trend.baseLow), trend.fmt(trend.baseHigh)),
+            ),
+        ]),
+      ),
+      const SizedBox(height: 16),
+      detail,
+      const SizedBox(height: 16),
+      Wrap(spacing: 14, runSpacing: 14, children: [
+        SizedBox(width: 220, child: MetricTile(label: l.trendAvg7, value: '${trend.avg7}', unit: unit, valueSize: 26)),
+        SizedBox(
+          width: 220,
+          child: MetricTile(
+            label: l.trendOutDays,
+            value: l.trendOutDaysValue(trend.daysOutOfRange, trend.series.length),
+            valueColor: trend.daysOutOfRange > 0 ? VColors.atencion : null,
+            valueSize: 26,
+          ),
+        ),
+        SizedBox(
+          width: 220,
+          child: MetricTile(label: l.trendStreakLabel(dir), value: l.trendStreakValue(trend.sustainedStreak), valueSize: 26),
+        ),
+      ]),
+    ]);
+
+    final aside = _aside(context, trend, label, unit);
+
+    return wide
+        ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: chart),
+            const SizedBox(width: 24),
+            SizedBox(width: 360, child: aside),
+          ])
+        : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [chart, const SizedBox(height: 20), aside]);
+  }
+
+  Widget _aside(BuildContext context, Trend trend, String label, String unit) {
+    final l = context.l10n;
+    final state = AppScope.of(context);
+    final dir = l.direction(trend.alertsWhenBelow);
+    final streak = trend.sustainedStreak;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (trend.status == VStatus.nominal)
+        AlertBanner(title: l.trendNoAlertTitle, body: l.trendNoAlertBody, status: VStatus.nominal)
+      else
+        AlertBanner(
+          title: l.trendAlertTitle(l.status(trend.status)),
+          body: l.trendAlertBody(streak, dir),
+          status: trend.status,
+        ),
+      const SizedBox(height: 16),
+      SectionCard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.trendPlanTitle, style: overline()),
+          const SizedBox(height: 10),
+          Text(trend.metric == 'systolic' ? l.trendPlanBody : (trend.metric == 'sleep_hours' ? l.trendPlanSleep : l.trendPlanDefault), style: const TextStyle(fontSize: VType.body, height: 1.6)),
+        ]),
+      ),
+      const SizedBox(height: 16),
+      FilledButton(
+        onPressed: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final ok = await state.addToSummary(l.trendSummaryEntry(label, streak, dir, trend.fmt(trend.series.last), unit));
+          messenger.showSnackBar(SnackBar(content: Text(ok ? l.trendAddedSummary : l.summaryOffline)));
+        },
+        child: Text(l.trendAddSummary),
+      ),
+      const SizedBox(height: Touch.gapCritical),
+      OutlinedButton.icon(
+        onPressed: () => _export(trend, label, unit),
+        icon: const Icon(Icons.copy_all_outlined),
+        label: Text(l.trendExport),
+      ),
+      const SizedBox(height: Touch.gapCritical),
+      HoldToConfirmButton(label: l.trendHoldCmo, onConfirmed: _notifyCmo),
+      if (_cmoSent) ...[
+        const SizedBox(height: VSpace.sm),
+        Row(children: [
+          const StatusShape(VStatus.nominal, size: 12),
+          const SizedBox(width: 8),
+          Expanded(child: Text(l.trendCmoSent, style: const TextStyle(fontSize: VType.label, color: VColors.muted))),
+        ]),
+      ],
+      const SizedBox(height: 12),
+      Text(trend.rule, style: const TextStyle(fontSize: VType.label, color: VColors.muted, height: 1.5)),
+      if (state.medicalSummary.isNotEmpty) ...[
+        const SizedBox(height: 20),
+        SectionCard(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(l.trendSummaryBoxTitle, style: overline()),
+            const SizedBox(height: 10),
+            for (final item in state.medicalSummary)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('• $item', style: const TextStyle(fontSize: 14, height: 1.5)),
+              ),
+          ]),
+        ),
+      ],
+    ]);
+  }
+
+  /// Copia el resumen al portapapeles y lo confirma de forma visible.
+  ///
+  /// La fuente principal es `GET /summary/export` (Python). Si el motor no responde,
+  /// el texto se arma aquí con lo que ya hay en pantalla, para que Exportar siempre funcione.
+  Future<void> _export(Trend trend, String label, String unit) async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final state = AppScope.of(context);
+    String text;
+    String? filename;
+    try {
+      final export = await state.api.exportSummary();
+      text = export['text'] as String;
+      filename = export['filename'] as String?;
+    } catch (_) {
+      text = buildSummaryText(l, metricLabel: label, unit: unit, trend: trend, items: state.medicalSummary);
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    messenger.showSnackBar(SnackBar(content: Text(filename == null ? l.trendExported : l.trendExportedFile(filename))));
+  }
+
+  /// Aviso al CMO con ventana para deshacer: se "envía" al cerrarse el aviso sin pulsar Deshacer.
+  void _notifyCmo() {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    final controller = messenger.showSnackBar(SnackBar(
+      duration: Touch.undoWindow,
+      content: Text(l.trendCmoQueued),
+      action: SnackBarAction(label: l.trendCmoUndo, onPressed: () {}),
+    ));
+    controller.closed.then((reason) {
+      if (!mounted) return;
+      if (reason == SnackBarClosedReason.action) {
+        setState(() => _cmoSent = false);
+        messenger.showSnackBar(SnackBar(content: Text(l.trendCmoCancelled)));
+      } else {
+        setState(() => _cmoSent = true);
+      }
+    });
+  }
 }
 
-/// Fila de chips con las métricas del catálogo de Python.
+/// Tabla alternativa a la gráfica (para lectores de pantalla y lectura exacta).
+class _DataTable extends StatelessWidget {
+  const _DataTable({required this.series, required this.firstDay, required this.trend, required this.unit});
+  final List<double> series;
+  final int firstDay;
+  final Trend trend;
+  final String unit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    TextStyle head() => overline(color: VColors.muted);
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.only(bottom: VSpace.sm),
+        child: Row(children: [
+          Expanded(child: Text(l.trendTableDay, style: head())),
+          Expanded(child: Text('${l.trendTableValue} ($unit)', style: head())),
+          Expanded(flex: 2, child: Text(l.trendTableState, style: head())),
+        ]),
+      ),
+      for (var i = series.length - 1; i >= 0; i--)
+        Container(
+          constraints: const BoxConstraints(minHeight: Touch.min),
+          decoration: const BoxDecoration(border: Border(top: BorderSide(color: VColors.border))),
+          child: Row(children: [
+            Expanded(child: Text('D${firstDay + i}', style: mono(size: 14, color: VColors.muted))),
+            Expanded(child: Text(trend.fmt(series[i]), style: mono(size: 18))),
+            Expanded(
+              flex: 2,
+              child: Row(children: [
+                StatusShape(series[i] > trend.baseHigh || series[i] < trend.baseLow ? VStatus.atencion : VStatus.nominal, size: 12),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    series[i] > trend.baseHigh || series[i] < trend.baseLow ? l.trendOutOfRange : l.trendInRange,
+                    style: const TextStyle(fontSize: VType.body),
+                  ),
+                ),
+              ]),
+            ),
+          ]),
+        ),
+    ]);
+  }
+}
+
+/// Fila de chips con las métricas del catálogo de Python. La usan Medición y Tendencia.
 class MetricSelector extends StatefulWidget {
   const MetricSelector({super.key, required this.selected, required this.onSelected});
   final String selected;
@@ -88,164 +432,15 @@ class _MetricSelectorState extends State<MetricSelector> {
         builder: (context, snap) {
           final metrics = snap.data ?? const [];
           if (metrics.isEmpty) return const SizedBox.shrink();
-          return Wrap(spacing: 10, runSpacing: 10, children: [
+          return Wrap(spacing: Touch.gapCritical, runSpacing: Touch.gapCritical, children: [
             for (final m in metrics)
               ChoiceChip(
                 key: Key('metric-${m['id']}'),
-                label: Text(m['label'] as String),
+                label: Text(m['label'] as String, style: const TextStyle(fontSize: VType.body)),
                 selected: m['id'] == widget.selected,
                 onSelected: (_) => widget.onSelected(m['id'] as String),
               ),
           ]);
         },
       );
-}
-
-class _NoData extends StatelessWidget {
-  const _NoData({required this.trend});
-  final Trend trend;
-
-  @override
-  Widget build(BuildContext context) => SectionCard(
-        padding: const EdgeInsets.all(28),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            Text(trend.label, style: Theme.of(context).textTheme.headlineSmall),
-            const StatusChip(VStatus.sinDato),
-          ]),
-          const SizedBox(height: 14),
-          const Text('Aún no hay datos de ejemplo para esta métrica. '
-              'En cuanto haya línea base y lecturas, aquí aparece la tendencia con su alerta.',
-              style: TextStyle(fontSize: 15, height: 1.55)),
-          const SizedBox(height: 14),
-          Text(trend.rule, style: const TextStyle(fontSize: 12, color: VColors.muted, height: 1.5)),
-          if (trend.source.isNotEmpty)
-            Text(trend.source, style: const TextStyle(fontSize: 12, color: VColors.muted, height: 1.5)),
-        ]),
-      );
-}
-
-class _TrendBody extends StatelessWidget {
-  const _TrendBody({required this.trend});
-  final Trend trend;
-
-  @override
-  Widget build(BuildContext context) {
-    final state = AppScope.of(context);
-    final t = Theme.of(context).textTheme;
-    final last = trend.series.last;
-    final streak = trend.sustainedStreak;
-    final dir = trend.directionWord;
-
-    final chart = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      SectionCard(
-        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, spacing: 16, children: [
-            Text(trend.label, style: t.headlineSmall),
-            Text.rich(TextSpan(children: [
-              TextSpan(text: trend.fmt(last), style: mono(size: 34)),
-              TextSpan(text: ' ${trend.unit} hoy', style: mono(size: 14, color: VColors.muted)),
-            ])),
-          ]),
-          const SizedBox(height: 16),
-          TrendChart(trend: trend),
-        ]),
-      ),
-      const SizedBox(height: 16),
-      Wrap(spacing: 14, runSpacing: 14, children: [
-        SizedBox(width: 220, child: MetricTile(label: 'Promedio 7 días', value: '${trend.avg7}', unit: trend.unit, valueSize: 26)),
-        SizedBox(
-          width: 220,
-          child: MetricTile(
-            label: 'Días fuera de rango',
-            value: '${trend.daysOutOfRange} de ${trend.series.length}',
-            valueColor: trend.daysOutOfRange > 0 ? VColors.atencion : null,
-            valueSize: 26,
-          ),
-        ),
-        SizedBox(width: 220, child: MetricTile(label: 'Racha $dir tu base', value: '$streak días', valueSize: 26)),
-      ]),
-    ]);
-
-    final aside = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      if (trend.status == VStatus.nominal)
-        const AlertBanner(title: 'Sin alertas', body: 'Tus lecturas recientes están dentro de tu rango.', status: VStatus.nominal)
-      else
-        AlertBanner(
-          title: '${trend.status.label}: tendencia sostenida',
-          body: 'Llevas $streak días seguidos $dir tu rango prevuelo. No es una emergencia, '
-              'pero conviene que tu flight surgeon lo vea.',
-          status: trend.status,
-        ),
-      const SizedBox(height: 16),
-      SectionCard(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('PLAN SUGERIDO', style: overline()),
-          const SizedBox(height: 10),
-          Text(_plans[trend.metric] ?? _defaultPlan, style: const TextStyle(fontSize: 15, height: 1.6)),
-        ]),
-      ),
-      const SizedBox(height: 16),
-      FilledButton(
-        onPressed: () async {
-          final messenger = ScaffoldMessenger.of(context);
-          await state.addToSummary('${trend.label}: $streak días $dir la base (hoy ${trend.fmt(last)} ${trend.unit})');
-          messenger.showSnackBar(const SnackBar(content: Text('Agregado al resumen médico.')));
-        },
-        child: const Text('Agregar al resumen médico'),
-      ),
-      const SizedBox(height: 12),
-      OutlinedButton(
-        onPressed: () => ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Aviso enviado al CMO de la tripulación.'))),
-        child: const Text('Avisar al CMO ahora'),
-      ),
-      const SizedBox(height: 12),
-      OutlinedButton.icon(
-        onPressed: () async {
-          final messenger = ScaffoldMessenger.of(context);
-          try {
-            final export = await state.api.exportSummary();
-            await Clipboard.setData(ClipboardData(text: export['text'] as String));
-            messenger.showSnackBar(SnackBar(
-              content: Text('Resumen copiado al portapapeles (${export['filename']}). '
-                  'Solo para ti, el CMO y el flight surgeon.'),
-            ));
-          } catch (_) {
-            messenger.showSnackBar(const SnackBar(content: Text('No se pudo exportar el resumen. Intenta de nuevo.')));
-          }
-        },
-        icon: const Icon(Icons.ios_share),
-        label: const Text('Exportar resumen médico'),
-      ),
-      const SizedBox(height: 12),
-      Text(trend.rule, style: const TextStyle(fontSize: 12, color: VColors.muted, height: 1.5)),
-      if (state.medicalSummary.isNotEmpty) ...[
-        const SizedBox(height: 20),
-        SectionCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('RESUMEN PARA LA CONFERENCIA MÉDICA', style: overline()),
-            const SizedBox(height: 10),
-            for (final item in state.medicalSummary)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text('• $item', style: const TextStyle(fontSize: 14, height: 1.5)),
-              ),
-          ]),
-        ),
-      ],
-    ]);
-
-    return LayoutBuilder(builder: (context, c) {
-      final wide = c.maxWidth >= 1000;
-      return wide
-          ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: chart),
-              const SizedBox(width: 24),
-              SizedBox(width: 360, child: aside),
-            ])
-          : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [chart, const SizedBox(height: 20), aside]);
-    });
-  }
 }

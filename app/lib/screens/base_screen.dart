@@ -52,7 +52,7 @@ class _BaseScreenState extends State<BaseScreen> {
             ]),
             const SizedBox(height: 12),
             const Text('Dosis acumulada de radiación de cada quien: solo en su vista personal.',
-                style: TextStyle(fontSize: 12, color: VColors.muted)),
+                style: TextStyle(fontSize: 13, color: VColors.muted)),
           ]),
         );
 
