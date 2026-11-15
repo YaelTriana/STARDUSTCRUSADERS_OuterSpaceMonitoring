@@ -89,16 +89,17 @@ class StatusChip extends StatelessWidget {
 }
 
 class SectionCard extends StatelessWidget {
-  const SectionCard({super.key, required this.child, this.padding = const EdgeInsets.all(22), this.highlight = false});
+  const SectionCard({super.key, required this.child, this.padding = const EdgeInsets.all(22), this.highlight = false, this.color = VColors.surface});
   final Widget child;
   final EdgeInsets padding;
   final bool highlight;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: VColors.surface,
+          color: color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: highlight ? VColors.signal : VColors.border, width: highlight ? 2 : 1),
         ),

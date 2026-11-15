@@ -268,10 +268,13 @@ class _TrendScreenState extends State<TrendScreen> {
         ),
       const SizedBox(height: 16),
       SectionCard(
+        color: VColors.surface2,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(l.trendPlanTitle, style: overline()),
           const SizedBox(height: 10),
-          Text(trend.metric == 'systolic' ? l.trendPlanBody : (trend.metric == 'sleep_hours' ? l.trendPlanSleep : l.trendPlanDefault), style: const TextStyle(fontSize: VType.body, height: 1.6)),
+          _NumberedPlan(
+            text: trend.metric == 'systolic' ? l.trendPlanBody : (trend.metric == 'sleep_hours' ? l.trendPlanSleep : l.trendPlanDefault),
+          ),
         ]),
       ),
       const SizedBox(height: 16),
@@ -401,6 +404,38 @@ class _DataTable extends StatelessWidget {
                 ),
               ]),
             ),
+          ]),
+        ),
+    ]);
+  }
+}
+
+/// "Plan sugerido": cada paso numerado ("1. ...", "2. ...") se pinta con un
+/// círculo signal en vez del número como texto plano.
+class _NumberedPlan extends StatelessWidget {
+  const _NumberedPlan({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = <MapEntry<String, String>>[
+      for (final line in text.split('\n'))
+        if (RegExp(r'^(\d+)\.\s*(.*)$').firstMatch(line) case final m?) MapEntry(m.group(1)!, m.group(2)!),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      for (final s in steps)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: VColors.signal, shape: BoxShape.circle),
+              child: Text(s.key, style: mono(size: 13, color: VColors.onStatus, weight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(s.value, style: const TextStyle(fontSize: VType.body, height: 1.6))),
           ]),
         ),
     ]);

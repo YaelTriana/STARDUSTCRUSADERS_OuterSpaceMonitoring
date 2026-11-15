@@ -82,6 +82,7 @@ class _Key extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: onTap,
+            enableFeedback: false, // sin haptics: InkWell los dispara por defecto
             child: SizedBox(height: Touch.primary, child: Center(child: child)),
           ),
         ),

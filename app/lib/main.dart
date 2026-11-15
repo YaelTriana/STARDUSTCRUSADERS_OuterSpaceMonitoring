@@ -266,7 +266,13 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: Row(children: [
-        const TirelusMark(size: 30),
+        Image.asset(
+          'assets/brand/tirelus-isotipo.png',
+          width: 32,
+          height: 32,
+          filterQuality: FilterQuality.high,
+          excludeFromSemantics: true,
+        ),
         const SizedBox(width: 12),
         Flexible(
           child: Text('TIRELUS',
