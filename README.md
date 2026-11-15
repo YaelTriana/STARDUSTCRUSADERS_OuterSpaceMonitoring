@@ -179,28 +179,67 @@ Prioridad: **P0** = sin esto no hay demo · **P1** = importante para el MVP · *
 
 ### Falta
 
+#### Base de datos
+
+##### Servidor · Francisco (db)
+
 | Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
 |---|---|---|---|---|
+| **P2** | Activar TLS en el servidor PostgreSQL | El cliente ya soporta `TIRELUS_DB_SSL=require\|verify` (`tests_py/test_db_tls.py`), pero **el servidor responde `ssl = off`** y rechaza el cifrado ("Server refuses SSL"). Lo hace quien administra el servidor: certificado, `ssl = on` y regla `hostssl` en `pg_hba.conf`. Solo importa si algún día hay datos reales. | Administrador del servidor | 30 min |
+| **P2** | Rotar la contraseña del servidor después de la demo | La contraseña del usuario `tirelus_equipo` se compartió por chat. Cambiarla al terminar y avisar al equipo por un canal privado. | Administrador del servidor | 5 min |
+| **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | — | 1 h |
+
+##### Datos · Prina y Angel
+
+Fuente única de los datos sintéticos: el repo [`SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring`](https://github.com/MerelyMeredith/SyntheticData_STARDUSTCRUSADERS_OuterSpaceMonitoring) (genera `dataset.csv`, 68 columnas; Angel elabora el dataset). El CSV no se versiona aquí: va en `db/datosdb/`.
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P1** | Cargar la tripulación sintética en el servidor del equipo | Ya probado contra un PostgreSQL local: `tools/sim_sinteticos.py cargar` mete tripulación, línea base y lecturas (sistólica, diastólica, FC, SpO₂, temperatura, respiratoria, HRV, sueño, masa corporal, ánimo). Falta correrlo contra `192.168.10.2` para que todo el equipo vea los mismos datos. **SANS sigue corto** por el límite del generador. | Generar los CSV y la contraseña del equipo | 20 min |
+| **P1** | Citar el repo de datos y anotar cómo se generó el dataset | TIRELUS no cita el repo de datos en ningún archivo y `data.py` aún nombra `Claude outputs/TIRELUS_matriz_simulacion.xlsx` como origen. El repo documenta 30 × 60 = 1800 filas y el poblado usa 3000 (30 × 100): anotar commit y parámetros. | Dataset de Angel | 15 min |
+| **P2** | Umbrales de respaldo que faltan | `body_mass`, `hrv`, `macular_thickness`, `rnfl_thickness`, `cup_to_disc_ratio` y `near_vision_logmar` no tienen umbral. No se inventan: son supuestos de diseño que decide la persona de ciencia (`db/AUDITORIA.md` §5.1). | Criterio de la persona de ciencia | 30 min |
+| **P2** | Examen retiniano periódico en el generador | `generate.py` programa el OCT con `{0}` y un segundo examen solo `if days >= 90` (80 y 90 escritos a mano, ignorando `retinal_exam_interval_days_*` del config). Sin eso, la serie de SANS se queda en 1–2 puntos. | Repo del generador | 30 min |
+
+#### Decisiones
+
+| Prioridad | Qué decidir | Detalle / contexto | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P1** | Decidir sistema de usuarios | Hoy no hay usuarios: la API lee un tripulante fijo (`TIRELUS_ASTRONAUT_ID` o el primero de la base). Opciones: selección de perfil con rol (astronauta, CMO, flight surgeon) para la demo, o login real. Recomendado para la demo: selección de perfil. La base tampoco tiene roles ni RLS. | Decisión del equipo | 1–2 h |
+| **P1** | Decidir `heart_rate`: `above` o `both` | En la base `heart_rate` alerta en ambos sentidos (`both`); en la app solo hacia arriba (`evaluate_trend` acepta `above` o `below`). Lo mismo pasa con `respiratory_rate`, `temperature`, `intraocular_pressure`, `rnfl_thickness` y `cup_to_disc_ratio`. Hoy no falla porque `db.py` no lee `alert_when` de la base. Hay que elegir una fuente de verdad para los umbrales (base o `data.py`). Ver `db/AUDITORIA.md` §5.2. | Criterio de la persona de ciencia | 30 min |
+| **P1** | Decidir qué hacer con `Claude outputs/` | Carpeta sin versionar con `TIRELUS_matriz_simulacion.xlsx`, que `data.py` cita como origen de las series. Como la fuente de datos ya es el repo de datos sintéticos, lo recomendado es cambiar la referencia y no subir la carpeta. | — | 5 min |
+
+#### Backend · Angel
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P2** | Valores de ejemplo en `data.py` (camino sin base de datos) | Con PostgreSQL cargado las pantallas ya muestran las 6 métricas. **Sin** base, `data.py` sigue con FC, sueño, ánimo, diastólica y SpO₂ vacíos (`>>> DATOS:`), así que la demo de respaldo diría "Sin dato". Se pueden copiar del CSV de un tripulante. | Un CSV del generador | 20 min |
+| **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` (del dataset, como cambio de RNFL) y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
 | **P1** | Guardar lo que captura el astronauta | No hay endpoint de escritura de lecturas: lo que se mide se evalúa y se tira, así que la alerta por desviación sostenida no puede nacer durante la demo. `measurements` ya está diseñada para esto (`client_id` idempotente). Ver A2 en [`planning/AUDITORIA.md`](planning/AUDITORIA.md). | — | 1–2 h |
 | **P1** | Cerrar CORS por defecto | `main.py` monta `allow_origins=["*"]`: cualquier página abierta en ese equipo puede leer `/summary` y `/trend/*`. Montarlo solo con `TIRELUS_DEV_CORS`. Ver C en la auditoría. | — | 10 min |
 | **P1** | Día de misión real | `/trend/{metric}` calcula el eje con `MISSION_DAY = 47` fijo y `lib/main.dart:194` imprime "DÍA DE MISIÓN 047" como texto literal: con datos de la base el día que muestra el gráfico no coincide. Ver A6 en la auditoría. | — | 30 min |
-| **P2** | Examen retiniano periódico en el generador | `generate.py` programa el OCT con `{0}` y un segundo examen solo `if days >= 90` (80 y 90 escritos a mano, ignorando `retinal_exam_interval_days_*` del config). Sin eso, la serie de SANS se queda en 1–2 puntos. | Repo del generador | 30 min |
-| **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación, texto del formulario y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). El hackathon va del 14 al 15 de nov. Ya hay un prompt listo para producirlo en otra cuenta de Claude; falta revisar los requisitos de entrega vigentes de Space Apps 2026 (duración del video, límites de texto) y preparar capturas de la app. | Capturas de la app, nombres del equipo | 3–4 h |
-| **P1** | Cargar la tripulación sintética en el servidor del equipo | Ya probado contra un PostgreSQL local: `tools/sim_sinteticos.py cargar` mete tripulación, línea base y lecturas (sistólica, diastólica, FC, SpO₂, temperatura, respiratoria, HRV, sueño, masa corporal, ánimo). Falta correrlo contra `192.168.10.2` para que todo el equipo vea los mismos datos. **SANS sigue corto** por el límite del generador. | Generar los CSV y la contraseña del equipo | 20 min |
-| **P2** | Valores de ejemplo en `data.py` (camino sin base de datos) | Con PostgreSQL cargado las pantallas ya muestran las 6 métricas. **Sin** base, `data.py` sigue con FC, sueño, ánimo, diastólica y SpO₂ vacíos (`>>> DATOS:`), así que la demo de respaldo diría "Sin dato". Se pueden copiar del CSV de un tripulante. | Un CSV del generador | 20 min |
-| **P1** | Medición y tendencia de SANS | Pestaña "Ojos" (`lib/screens/sans_screen.dart`) ya evalúa el cambio de grosor con Python y muestra los umbrales +20/55 µm. **Falta solo:** serie de ejemplo en `SANS_SERIES` y `SANS_DAYS` de `data.py` y la referencia NASA exacta de los umbrales en `SANS_SOURCE` (hoy dice "por confirmar"). | Datos y referencia NASA | 15 min |
-| **P1** | Decidir sistema de usuarios | Hoy no hay usuarios: la API lee un tripulante fijo (`TIRELUS_ASTRONAUT_ID` o el primero de la base). Opciones: selección de perfil con rol (astronauta, CMO, flight surgeon) para la demo, o login real. Recomendado para la demo: selección de perfil. La base tampoco tiene roles ni RLS. | Decisión del equipo | 1–2 h |
-| **P1** | Decidir `heart_rate`: `above` o `both` | En la base `heart_rate` alerta en ambos sentidos (`both`); en la app solo hacia arriba (`evaluate_trend` acepta `above` o `below`). Hay que elegir una fuente de verdad para los umbrales (base o `data.py`). Ver `db/AUDITORIA.md`. | Criterio de la persona de ciencia | 30 min |
-| **P1** | Decidir qué hacer con `Claude outputs/` | Carpeta sin versionar con `TIRELUS_matriz_simulacion.xlsx`, que `data.py` cita como origen de las series. O se sube al repo o se cambia la referencia. | — | 5 min |
-| **P2** | Activar TLS en el servidor PostgreSQL | El cliente ya soporta `TIRELUS_DB_SSL=require\|verify` (`tests_py/test_db_tls.py`), pero **el servidor responde `ssl = off`** y rechaza el cifrado ("Server refuses SSL"). Lo hace quien administra el servidor: certificado, `ssl = on` y regla `hostssl` en `pg_hba.conf`. Solo importa si algún día hay datos reales. | Administrador del servidor | 30 min |
-| **P2** | Rotar la contraseña del servidor después de la demo | La contraseña del usuario `tirelus_equipo` se compartió por chat. Cambiarla al terminar y avisar al equipo por un canal privado. | Administrador del servidor | 5 min |
 | **P2** | Android (recortado de la demo; se intenta al final) | `-p Android` en el comando de empaquetado y `flutter build apk`. Si uvicorn falla, cambiar a Flask o `http.server` (ver skill `tirelus-serious-python`). Decidir también cómo llega el Python embebido al servidor y si hay caché local. Va después de resolver el empaquetado, que está descartado para la demo. | Empaquetado | 2–3 h |
-| **P2** | PostgreSQL interno de la nave (concepto) | Para la versión final: documentar el despliegue local (sin Internet) y mostrarlo en la presentación. No hace falta implementarlo para la demo. | — | 1 h |
+
+#### Front · Jenny
+
+Sin pendientes: `frontend/jen-trabajo` se fusionó en `main` el 15 nov (ver Hecho).
+
+#### Ramas
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P2** | Cerrar `AngelPrueba` y borrar ramas ya fusionadas | `AngelPrueba` (`fc979d5`) es otra capa de PostgreSQL, anterior a la que entró a `main`; choca en `db.py`, `main.py` y `db/003_demo.sql`. Ya fusionadas: `feat/p0-export`, `feat/p1-*`, `feat/p2-pulido`, `feat/docker`, `feat/db-acceso`, `feat/db-postgres`, `docs/planning`, `feat/flutter-mockup`, `chore/claude-setup`. | Confirmación de Angel | 10 min |
+
+#### Entrega
+
+| Prioridad | Qué falta | Detalle / cómo hacerlo | Depende de | Esfuerzo |
+|---|---|---|---|---|
+| **P1** | Entrega: video, presentación y página del proyecto | Guion del video, presentación, texto del formulario y página con las fuentes citadas (NASA HRP, NTRS, CSA, ESA). El hackathon va del 14 al 15 de nov. Ya hay un prompt listo para producirlo en otra cuenta de Claude; falta revisar los requisitos de entrega vigentes de Space Apps 2026 (duración del video, límites de texto) y preparar capturas de la app. | Capturas de la app, nombres del equipo | 3–4 h |
 
 ### Hecho
 
 | Prioridad | Qué | Resultado |
 |---|---|---|
+| ~~P1~~ ✅ | ~~Fusionar `frontend/jen-trabajo` en `main`~~ | Fusionado el 15 nov (`707c4c6`), sin conflictos: ES/EN con `flutter_localizations`, navegación adaptable, teclado numérico propio, tendencia con puntos tocables, aviso al CMO con deshacer, modo Autónomo con protocolo guiado, SANS localizado, texto mínimo de 13 px y áreas táctiles de 44 px, avisos cuando el motor no responde. `flutter test`: 88 pruebas pasan. |
 | ~~P1~~ ✅ | ~~Panel calculado por el motor de reglas (los cinco sistemas)~~ | **Ojos** lleva el azulejo de SANS con los umbrales publicados (+20 / 55 µm, regla propia `evaluate_sans`) más los cinco indicadores de `002_ojos.sql`; **hueso** la masa corporal; **mente** sueño, ánimo y PVT; **inmune** la temperatura. `data.SYSTEMS` se quedó solo con el texto educativo y `_ind` desapareció. |
 | ~~P1~~ ✅ | ~~Módulo cardio del panel~~ | `python_app/panel.py` arma cada bloque desde `catalog.snapshot()` con `evaluate_trend`: estado del sistema, valor, variación frente a la línea base y conteo de días ("1 de 3 días", "4 días seguidos"). `data.py` perdió las cifras de cardio; las métricas ganaron `system` y se agregaron diastólica y SpO₂ con los rangos de `db/schema.sql`. Pruebas en `tests_py/test_panel.py` y `test/dashboard_screen_test.dart`. |
 | ~~P1~~ ✅ | ~~El panel se refresca solo~~ | `DashboardScreen` vuelve a preguntar cada `TIRELUS_REFRESH_SECONDS` (5 s por defecto), conserva el último dato bueno si el refresco falla ("Sin conexión · último dato HH:MM:SS") y muestra "Actualizado HH:MM:SS". |
