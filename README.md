@@ -11,6 +11,10 @@ App de automonitoreo de salud para astronautas — NASA Space Apps Challenge 202
 
 📋 **Plan de acción del hackathon** (fases, calendario, roles y riesgos): [`planning/PLAN.md`](planning/PLAN.md). Las tareas pendientes viven en la [matriz de abajo](#matriz-de-pendientes).
 
+🔍 **Auditoría del MVP frente al reto** (14 nov: qué mejorar, en qué orden y qué recortar): [`planning/AUDITORIA.md`](planning/AUDITORIA.md).
+
+🧪 **Simulación de datos en vivo** (qué del frontend cambia cuando cambia PostgreSQL, medido): [`planning/SIMULACION-TIEMPO-REAL.md`](planning/SIMULACION-TIEMPO-REAL.md) · herramienta: `tools/sim_tiempo_real.py`.
+
 ## Correr en desarrollo
 
 ```bash
@@ -55,7 +59,7 @@ PostgreSQL. Los scripts viven en `db/`: `schema.sql` (esquema), `002_ojos.sql` (
 - Flutter no habla con la base: solo con la API local; la lógica sigue en el Python embebido.
 - El servidor compartido solo guarda datos sintéticos ("Datos de ejemplo"). La privacidad médica aplica también en la base.
 - **Conexión opcional ya escrita** (`app/python_app/db.py` y `catalog.py`, driver `pg8000`): con `TIRELUS_DB_HOST` definido la API lee línea base, límites y series de la base; sin él, o si el servidor no responde, sigue con los datos de `data.py`. `GET /health` dice `data_source` (`db` o `ejemplo`).
-- Variables: `TIRELUS_DB_HOST` (obligatoria), `TIRELUS_DB_PORT` (5432), `TIRELUS_DB_NAME` (tirelus), `TIRELUS_DB_USER` (postgres), `TIRELUS_DB_PASSWORD`, `TIRELUS_DB_TIMEOUT` (3 s), `TIRELUS_DB_SSL` (`off` por defecto; `require` cifra sin verificar el certificado; `verify` cifra y verifica, con `TIRELUS_DB_SSL_CA` opcional) y `TIRELUS_ASTRONAUT_ID` (opcional).
+- Variables: `TIRELUS_DB_HOST` (obligatoria), `TIRELUS_DB_PORT` (5432), `TIRELUS_DB_NAME` (tirelus), `TIRELUS_DB_USER` (postgres), `TIRELUS_DB_PASSWORD`, `TIRELUS_DB_TIMEOUT` (3 s), `TIRELUS_DB_TTL` (30 s: cada cuánto se relee la base; 2 s para ver los cambios en vivo en la demo), `TIRELUS_DB_SSL` (`off` por defecto; `require` cifra sin verificar el certificado; `verify` cifra y verifica, con `TIRELUS_DB_SSL_CA` opcional) y `TIRELUS_ASTRONAUT_ID` (opcional).
 - **Probado el 14 nov contra el servidor del equipo** (PostgreSQL 18.7, red local 192.168.10.0/24, usuario sin permisos de DDL): `/health` dice `data_source: db` y la sistólica sale de la base. Las credenciales no están en el repo. La base solo trae la sistólica de ejemplo (`db/003_demo.sql`); faltan FC, sueño, ánimo y SANS. Ver [`db/AUDITORIA.md`](db/AUDITORIA.md) y la matriz de pendientes.
 
 ### Conectar tu app al servidor del equipo

@@ -7,8 +7,15 @@ import 'package:http/http.dart' as http;
 import 'data/models.dart';
 import 'python_starter_stub.dart' if (dart.library.io) 'python_starter_io.dart';
 
-/// Puerto del servidor Python local (se pasa a Python como TIRELUS_PORT).
-const tirelusPort = 8765;
+/// Puerto del servidor Python local. Se le pasa a Python en `TIRELUS_PORT` y se
+/// puede cambiar al compilar (`--dart-define=TIRELUS_PORT=8766`) cuando el 8765
+/// está ocupado o se corren dos servidores a la vez.
+const tirelusPort = int.fromEnvironment('TIRELUS_PORT', defaultValue: 8765);
+
+/// Cada cuánto el panel vuelve a preguntar por los datos: la base puede cambiar
+/// en cualquier momento (otro tripulante, el CMO, un script de carga). Ajustable
+/// sin tocar la lógica: `--dart-define=TIRELUS_REFRESH_SECONDS=2`.
+const dashboardRefresh = Duration(seconds: int.fromEnvironment('TIRELUS_REFRESH_SECONDS', defaultValue: 5));
 
 /// En desarrollo se puede correr el servidor aparte (`python python_app/main.py`)
 /// y lanzar Flutter con `--dart-define=TIRELUS_DEV_SERVER=true` para no

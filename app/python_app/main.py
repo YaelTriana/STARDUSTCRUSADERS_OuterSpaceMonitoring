@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 import data  # noqa: E402
+import panel  # noqa: E402
 from catalog import build_catalog  # noqa: E402
 from rules import (  # noqa: E402
     SANS_ATTENTION_UM,
@@ -98,11 +99,21 @@ def health() -> dict:
     return body
 
 
+# Sistemas del panel ya calculados por el motor de reglas; el resto sigue siendo
+# mockup y se sirve tal cual (cada bloque dice si viene calculado en "computed").
+PANEL_CALCULADO = ("cardio",)
+
+
 @app.get("/dashboard")
 def dashboard() -> dict:
+    metrics = catalog.snapshot().metrics
+    systems = [
+        panel.build_system(s["id"], metrics, s) if s["id"] in PANEL_CALCULADO else {**s, "computed": False}
+        for s in data.SYSTEMS
+    ]
     return {
         "mission_day": data.MISSION_DAY,
-        "systems": data.SYSTEMS,
+        "systems": systems,
         "tasks": data.TASKS,
         "exercise": data.EXERCISE,
         "streak_days": data.STREAK_DAYS,

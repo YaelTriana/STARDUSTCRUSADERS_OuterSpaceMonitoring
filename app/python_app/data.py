@@ -16,6 +16,8 @@ SYSTOLIC_ABS_HIGH = 160.0  # límite clínico terrestre de respaldo (supuesto de
 #
 # Cada métrica necesita:
 #   label, unit       → texto para la UI
+#   system            → sistema del panel: cardio, ojos, hueso, mente o inmune
+#                       (mismos ids que body_system en db/schema.sql)
 #   base              → Baseline(low, high) personal prevuelo, o None si aún no hay dato
 #   abs_high/abs_low  → límite clínico terrestre de respaldo (supuesto de diseño) o None
 #   series            → últimos 14 días (D34–D47), la última lectura es hoy
@@ -30,6 +32,7 @@ METRICS: dict[str, dict] = {
     "systolic": {
         "label": "Presión sistólica",
         "unit": "mmHg",
+        "system": "cardio",
         "valid_range": (50, 260),  # límite de captura (supuesto de diseño); igual a db/schema.sql
         "base": SYSTOLIC_BASE,
         "abs_high": SYSTOLIC_ABS_HIGH,
@@ -39,9 +42,26 @@ METRICS: dict[str, dict] = {
         "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
         "source": "Captura en examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
+    "diastolic": {
+        "label": "Presión diastólica",
+        "unit": "mmHg",
+        "system": "cardio",
+        "valid_range": (30, 160),
+        # >>> DATOS: línea base prevuelo de diastólica, p. ej. Baseline(70, 82).
+        "base": None,
+        # >>> DATOS: límite terrestre de respaldo (supuesto de diseño), p. ej. 100.0.
+        "abs_high": None,
+        "abs_low": None,
+        # >>> DATOS: 14 lecturas diarias D34–D47, junto con la sistólica.
+        "series": [],
+        "alert_when": "above",
+        "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
+        "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
     "heart_rate": {
         "label": "FC en reposo",
         "unit": "lpm",
+        "system": "cardio",
         "valid_range": (20, 230),
         # >>> DATOS: línea base prevuelo de FC en reposo, p. ej. Baseline(55, 66).
         "base": None,
@@ -54,9 +74,27 @@ METRICS: dict[str, dict] = {
         "rule": "Supuesto de diseño: 3 días consecutivos sobre la base personal.",
         "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
     },
+    "spo2": {
+        "label": "SpO₂",
+        "unit": "%",
+        "system": "cardio",
+        "valid_range": (50, 100),
+        # >>> DATOS: línea base prevuelo de saturación, p. ej. Baseline(95, 100).
+        "base": None,
+        "abs_high": None,
+        # >>> DATOS: mínimo de respaldo (supuesto de diseño), p. ej. 90.0.
+        "abs_low": None,
+        # >>> DATOS: 14 lecturas diarias D34–D47.
+        "series": [],
+        # Aquí preocupa la baja: evaluate_trend recibe direction="below".
+        "alert_when": "below",
+        "rule": "Supuesto de diseño: saturación por debajo de la base personal.",
+        "source": "Examen periódico de salud (NTRS 20250000330). Umbral: supuesto de diseño.",
+    },
     "sleep_hours": {
         "label": "Horas de sueño",
         "unit": "h",
+        "system": "mente",
         "valid_range": (0, 24),
         # >>> DATOS: línea base prevuelo de sueño, p. ej. Baseline(6.5, 8.5).
         "base": None,
@@ -73,6 +111,7 @@ METRICS: dict[str, dict] = {
     "mood": {
         "label": "Ánimo (1–5)",
         "unit": "pts",
+        "system": "mente",
         "valid_range": (1, 5),
         # >>> DATOS: rango habitual del tripulante, p. ej. Baseline(3, 5).
         "base": None,
@@ -116,14 +155,10 @@ def _ind(label, value, unit, note, status="nominal"):
 
 SYSTEMS = [
     {
+        # Calculado: el estado y los azulejos los arma panel.py desde METRICS
+        # (sistólica, diastólica, FC y SpO₂). Aquí solo vive el texto educativo.
         "id": "cardio",
         "name": "Corazón y circulación",
-        "status": "atencion",
-        "indicators": [
-            _ind("Presión arterial", "132/84", "mmHg", "▲ base 118/76", "atencion"),
-            _ind("FC en reposo", "64", "lpm", "base 60"),
-            _ind("SpO₂", "98", "%", "en rango"),
-        ],
         "why": "En microgravedad los líquidos se desplazan hacia la cabeza y el corazón y los vasos "
         "se adaptan. La presión puede variar en las primeras semanas.",
         "action": "Repite la medición tras 5 min en reposo. Si sigue sobre tu base 3 días, TIRELUS "
