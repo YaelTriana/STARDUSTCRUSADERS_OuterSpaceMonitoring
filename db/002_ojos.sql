@@ -9,7 +9,7 @@ BEGIN;
 -- retinal_disorders_dataset.csv completo (columnas en el orden del CSV para \copy).
 -- OJO: las columnas no cambian entre clases de retinal_disorder → solo población de referencia,
 -- nunca para entrenar un clasificador (además la app no diagnostica).
-CREATE TABLE ref.retinal (
+CREATE TABLE IF NOT EXISTS ref.retinal (
     optic_disc_area            numeric,
     optic_cup_area             numeric,
     cup_to_disc_ratio          numeric,
@@ -50,13 +50,13 @@ CREATE TABLE ref.retinal (
 );
 
 -- Snellen "20/40" → logMAR 0.30 (0 = normal; +0.1 = una línea peor).
-CREATE FUNCTION ref.snellen_to_logmar(snellen text) RETURNS numeric
+CREATE OR REPLACE FUNCTION ref.snellen_to_logmar(snellen text) RETURNS numeric
 LANGUAGE sql IMMUTABLE RETURNS NULL ON NULL INPUT AS $$
     SELECT round(log(split_part(snellen, '/', 2)::numeric / split_part(snellen, '/', 1)::numeric), 2)
 $$;
 
 -- Rango poblacional de cada indicador de ojos (p05–p95). Supuesto de diseño.
-CREATE VIEW ref.eye_reference AS
+CREATE OR REPLACE VIEW ref.eye_reference AS
 SELECT v.indicator_id,
        count(*)                                                      AS n,
        percentile_cont(0.05) WITHIN GROUP (ORDER BY v.value::float8) AS p05,
@@ -89,11 +89,21 @@ INSERT INTO indicators (id, name, unit, system, alert_when, valid_min, valid_max
      'Indicador secundario: el desplazamiento de líquidos cambia la presión dentro del ojo.'),
     ('cup_to_disc_ratio', 'Relación copa/disco', 'ratio', 'ojos', 'both', 0, 1,
      'Se calcula de la imagen del nervio óptico (fondo de ojo u OCT).',
-     'Indicador secundario: con edema del disco la copa se rellena y la relación baja.');
+     'Indicador secundario: con edema del disco la copa se rellena y la relación baja.')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    unit = EXCLUDED.unit,
+    system = EXCLUDED.system,
+    alert_when = EXCLUDED.alert_when,
+    valid_min = EXCLUDED.valid_min,
+    valid_max = EXCLUDED.valid_max,
+    how_to = EXCLUDED.how_to,
+    why_space = EXCLUDED.why_space;
 
 -- Rango clínico terrestre de presión intraocular (10–21 mmHg). Supuesto de diseño para el espacio.
 INSERT INTO thresholds (indicator_id, atencion_low, atencion_high, source) VALUES
-    ('intraocular_pressure', 10, 21, 'Rango clínico terrestre habitual. Supuesto de diseño, sin umbral publicado en vuelo.');
+    ('intraocular_pressure', 10, 21, 'Rango clínico terrestre habitual. Supuesto de diseño, sin umbral publicado en vuelo.')
+ON CONFLICT (indicator_id, body_state) WHERE environment IS NULL DO NOTHING;
 
 -- Peligro → indicador → efecto → acción preventiva
 INSERT INTO indicator_hazards (indicator_id, hazard, health_effect, preventive_action, source) VALUES
@@ -106,6 +116,7 @@ INSERT INTO indicator_hazards (indicator_id, hazard, health_effect, preventive_a
     ('intraocular_pressure', 'gravedad', 'Cambio de presión intraocular por redistribución de líquidos.',
      'Medir junto con el OCT y seguir la tendencia.', 'NASA HRP · Risk of SANS'),
     ('cup_to_disc_ratio',    'gravedad', 'Cambio en el nervio óptico asociado a edema del disco.',
-     'Revisar la imagen del nervio óptico en cada ciclo de OCT.', 'NASA HRP · Risk of SANS');
+     'Revisar la imagen del nervio óptico en cada ciclo de OCT.', 'NASA HRP · Risk of SANS')
+ON CONFLICT (indicator_id, hazard) DO NOTHING;
 
 COMMIT;

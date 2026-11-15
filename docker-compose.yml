@@ -19,8 +19,11 @@ services:
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ./db/002_ojos.sql:/docker-entrypoint-initdb.d/02_ojos.sql:ro
       - ./db/003_demo.sql:/docker-entrypoint-initdb.d/03_demo.sql:ro
-      # Carga opcional de los datasets de referencia (.\tirelus.ps1 datos); datosdb/ no esta en el repo.
+      - ./db/004_populate.sql:/docker-entrypoint-initdb.d/04_populate.sql:ro
+      # Carga opcional de los datasets de referencia (.\tirelus.ps1 datos).
       - ./db/load_datos.sql:/carga/load_datos.sql:ro
+      - ./db/datosdb:/carga/db/datosdb:ro
+      - ./db/datosdb:/carga/datosdb:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
