@@ -77,14 +77,14 @@ Preparar el entorno de Python (una sola vez):
 
 ```powershell
 cd app
-python -m venv .venv-py
-.\.venv-py\Scripts\python -m pip install -r python_app/requirements.txt pytest httpx
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -r python_app/requirements.txt pytest httpx
 ```
 
 Correr la app en dos terminales, ambas desde `app/`:
 
 ```powershell
-.\.venv-py\Scripts\python python_app/main.py
+.\.venv\Scripts\python python_app/main.py
 ```
 
 ```powershell
@@ -93,12 +93,27 @@ flutter run -d windows --dart-define=TIRELUS_DEV_SERVER=true
 
 Sin más configuración la app usa los datos de ejemplo de `data.py`. Para leer de PostgreSQL, ver [Base de datos](#base-de-datos).
 
+### Compilar el .exe repartible
+
+Las tres variables de `serious_python` deben fijarse en **la misma terminal** antes de empaquetar y antes de compilar; una sesión nueva las pierde y el `.exe` queda sin `app/` o sin `site-packages`:
+
+```powershell
+cd app
+$env:SERIOUS_PYTHON_VERSION = "3.12"
+$env:SERIOUS_PYTHON_SITE_PACKAGES = "$PWD\build\site-packages"
+$env:SERIOUS_PYTHON_APP = "$PWD\build\python_app"
+dart run serious_python:main package python_app -p Windows -r -r -r python_app/requirements.txt --cleanup
+flutter build windows --release
+```
+
+El `.exe` queda en `build\windows\x64\runner\Release\tirelus.exe`. Más detalle (y los tropiezos conocidos) en [`.claude/skills/tirelus-serious-python/`](.claude/skills/tirelus-serious-python/) y [`planning/EMPAQUETADO.md`](planning/EMPAQUETADO.md).
+
 ## Pruebas
 
 Desde `app/`:
 
 ```powershell
-.\.venv-py\Scripts\python -m pytest tests_py -q
+.\.venv\Scripts\python -m pytest tests_py -q
 ```
 
 ```powershell
@@ -226,12 +241,13 @@ Lo que falta está en [`pendientes.md`](pendientes.md).
 
 Inspirado en el Horizon Design System de NASA, con marca propia.
 
-- **Tipografía:** Inter (títulos), Public Sans (texto) y DM Mono (cifras y etiquetas).
-- **Tema oscuro de cabina:** espacio `#060B18`, superficie `#0E1830`, señal `#4D8DFF`, texto `#E8EEF9`.
-- **Estados:** nominal `#3DD68C`, atención `#F7B23B`, crítico `#FF6B5E`.
+- **Tipografía:** Inter (títulos), Public Sans (texto) y DM Mono (cifras y etiquetas). Las tres son software libre bajo licencia **SIL Open Font License (OFL)** y se empaquetan sin conexión en `app/assets/google_fonts/`.
+- **Tema oscuro de cabina:** espacio `#060B18`, superficie `#0B1326`, superficie 2 `#162647`, borde `#1C2B4B`, señal `#4D8DFF`, texto `#E8EEF9`.
+- **Estados:** nominal `#16E093`, atención `#F7B23B`, crítico `#FF6B5E`. Cada estado combina color + forma + palabra.
 - **Accesibilidad:** contraste mínimo de 4.5:1 y áreas táctiles de al menos 44 px, verificados por pruebas.
+- **Isotipo y holograma** (`app/assets/brand/tirelus-isotipo.png`, `holograma-tirelus.png`): recursos propios del equipo STARDUST CRUSADERS.
 
-Este proyecto no usa la insignia, el logotipo ni ninguna marca oficial de NASA, y no está afiliado a NASA ni respaldado por ella.
+Este proyecto no usa la insignia ("meatball"), el logotipo ("worm") ni ninguna marca oficial de NASA, y no está afiliado a NASA ni respaldado por ella.
 
 ## Fuentes
 
