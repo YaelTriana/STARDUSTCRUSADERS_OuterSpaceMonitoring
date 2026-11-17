@@ -1,8 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- El Python embebido sirve la API local en 127.0.0.1; sin este permiso
+         el socket ni siquiera abre en Android. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="tirelus"
+        android:label="TIRELUS"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
