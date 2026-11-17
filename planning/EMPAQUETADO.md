@@ -94,3 +94,20 @@ Dos tropiezos propios de macOS:
 escritorio que escriben en PostgreSQL. El binario trae `sim.py`, que no necesita servidor.
 Si se quiere el binario leyendo la base compartida, basta arrancarlo con `TIRELUS_DB_HOST`
 definido (y sin `TIRELUS_SIM`), porque `pg8000` es Python puro y sí se empaqueta.
+
+## 6. Android: sin PostgreSQL
+
+El acceso a PostgreSQL desde Android sigue sin diseñarse (CLAUDE.md, "por definir"). `db.py`
+importa `pg8000` solo dentro de `connect()`, nunca al arrancar, así que no hace falta tocar esa
+lógica. Lo que sí hace falta es no empaquetar `pg8000` ni sus 4 dependencias (`scramp`,
+`asn1crypto`, `python-dateutil`, `tzdata`) en el `.apk`: son peso muerto porque `TIRELUS_DB_HOST`
+no se define en el celular, así que `connect()` nunca se llama. Para Android se usa
+`python_app/requirements-android.txt` (los mismos 7 paquetes del servidor, sin la fila de la
+base) en vez de `python_app/requirements.txt`:
+
+```powershell
+cd app
+$env:SERIOUS_PYTHON_VERSION = "3.12"
+dart run serious_python:main package python_app -p Android -r -r -r python_app/requirements-android.txt --cleanup
+flutter build apk --dart-define=TIRELUS_SIM=vivo --dart-define=TIRELUS_SIM_CADA=15
+```
