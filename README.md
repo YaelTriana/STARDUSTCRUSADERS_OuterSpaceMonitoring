@@ -6,6 +6,10 @@ Proyecto del equipo **STARDUST CRUSADERS** (Instituto Tecnológico de Tijuana) p
 
 > **TIRELUS no diagnostica.** Señala desviaciones y sugiere el siguiente paso (astronauta → CMO → flight surgeon). Todos los umbrales son supuestos de diseño, salvo los de SANS. Los datos de la demo son sintéticos y se muestran como "Datos de ejemplo".
 
+<p align="center">
+  <img src="docs/tirelus-demo.gif" alt="Demo de TIRELUS: panel por sistema, alerta de presión arterial y medición guiada" width="900">
+</p>
+
 ## Contenido
 
 - [Qué hace](#qué-hace)
