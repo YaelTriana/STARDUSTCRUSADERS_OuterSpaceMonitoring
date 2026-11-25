@@ -1,0 +1,3 @@
+# Synthetic demo data (~7 MB of INSERTs) is generated, not hand-written code.
+# Marking it keeps GitHub's language bar showing Dart/Python instead of PLpgSQL.
+db/004_populate.sql linguist-generated=true
