@@ -23,6 +23,7 @@ Proyecto del equipo **STARDUST CRUSADERS** (Instituto Tecnológico de Tijuana) p
 - [Estructura del repositorio](#estructura-del-repositorio)
 - [Estado del proyecto](#estado-del-proyecto)
 - [Documentación](#documentación)
+- [Desarrollo asistido por IA](#desarrollo-asistido-por-ia)
 - [Diseño](#diseño)
 - [Fuentes](#fuentes)
 - [Equipo](#equipo)
@@ -240,6 +241,18 @@ Lo que falta está en [`pendientes.md`](pendientes.md).
 | [`planning/FUTURO.md`](planning/FUTURO.md) | Lo que queda para después de la demo: umbrales de respaldo y deuda técnica |
 | [`planning/SIMULACION-TIEMPO-REAL.md`](planning/SIMULACION-TIEMPO-REAL.md) | Qué cambia en la interfaz cuando cambia la base, medido |
 | [`db/README.md`](db/README.md) · [`db/AUDITORIA.md`](db/AUDITORIA.md) | Detalle y auditoría de la base de datos |
+
+## Desarrollo asistido por IA
+
+El equipo desarrolló TIRELUS con **Claude Code** como asistente durante el hackathon. Para que sus respuestas siguieran las decisiones del proyecto, el repo incluye su configuración:
+
+| Archivo | Para qué sirve |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Contexto del proyecto, arquitectura y reglas de dominio que no se negocian: la app no diagnostica, los umbrales se etiquetan como supuestos de diseño y los datos médicos son privados |
+| [`.claude/skills/`](.claude/skills/) | Skills para Flutter/Dart, FastAPI, pruebas en Python, TDD y accesibilidad, más una propia (`tirelus-serious-python`) para embeber la lógica de Python en Flutter |
+| [`.claude/SKILLS-SOURCES.md`](.claude/SKILLS-SOURCES.md) | Origen, commit y licencia de cada skill, y qué se ajustó para serious_python |
+
+Las decisiones de diseño, la lógica del motor de reglas y la revisión del código son del equipo. Las skills de terceros conservan sus licencias originales (MIT y BSD-3-Clause).
 
 ## Diseño
 
